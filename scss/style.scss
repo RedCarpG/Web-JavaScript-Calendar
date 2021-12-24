@@ -1,0 +1,52 @@
+/** style.scss
+------------------------------------------
+        Style sheet for CV
+------------------------------------------
+*/
+
+@import "base/color";
+// @import "base/font";
+// @import "base/size";
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
+@import "calendar/calendar";
+
+*, *:before, *:after {
+	-moz-box-sizing: border-box; 
+	-webkit-box-sizing: border-box; 
+	box-sizing: border-box;
+	padding: 0;
+	margin: 0;
+}
+
+body {
+	overflow: hidden;
+	font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+	font-weight: 100;
+	color: $col_base-font;
+	margin: 0;
+	padding: 0;
+	background: #4A4A4A;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+// #calendar {
+// 	width: 90%;
+// }
+
+
+// #bazi {
+// 	position: fixed;
+// 	right: 0;
+// 	top: 0;
+// 	bottom: 0;
+// 	width: 10%;
+	
+// 	background: rgba(255, 70, 70, 0.507);
+
+// }
+
