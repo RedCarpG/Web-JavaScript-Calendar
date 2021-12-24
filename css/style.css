@@ -1,0 +1,486 @@
+/** style.scss
+------------------------------------------
+        Style sheet for CV
+------------------------------------------
+*/
+@import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
+#calendar {
+  width: 440px;
+  min-height: 590px;
+  margin: 0 auto;
+  margin-top: 20px;
+  padding: 10px;
+  overflow: hidden;
+  -webkit-transform: translate3d(0, 0, 0);
+  -moz-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  /* Animations are cool!  */
+}
+#calendar .header {
+  position: relative;
+  height: 110px;
+  width: 100%;
+  z-index: 100;
+  text-align: center;
+}
+#calendar .header h1 {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI Black";
+  font-size: 20px;
+  line-height: 50px;
+  font-weight: 100;
+  letter-spacing: 1px;
+}
+#calendar .header h2 {
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  font-family: "Segoe UI SemiBold";
+  font-size: 16px;
+  line-height: 40px;
+  font-weight: 100;
+  letter-spacing: 1px;
+}
+#calendar .header .header_year, #calendar .header .header_month {
+  position: relative;
+  margin-top: 2px;
+  margin-bottom: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  background: #323232;
+}
+#calendar .header .header_year .current, #calendar .header .header_month .current {
+  color: white;
+}
+#calendar .header .left, #calendar .header .right {
+  position: absolute;
+  width: 0px;
+  height: 0px;
+  top: 50%;
+  border-style: solid;
+  margin-top: -7.5px;
+  cursor: pointer;
+}
+#calendar .header .left {
+  left: 20px;
+  border-width: 7.5px 10px 7.5px 0;
+  border-color: transparent #a09fa0 transparent transparent;
+}
+#calendar .header .right {
+  right: 20px;
+  border-width: 7.5px 0 7.5px 10px;
+  border-color: transparent transparent transparent #a09fa0;
+}
+#calendar .mon_list {
+  /*overflow: hidden;*/
+  opacity: 0;
+  background: #323232;
+}
+#calendar .mon_list .week_title {
+  font-weight: bold;
+  position: relative;
+  width: 60px;
+  height: 50px;
+  padding: 10px;
+  display: inline-block;
+  z-index: 100;
+  text-align: center;
+  vertical-align: top;
+  font-size: 12px;
+  line-height: 30px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+#calendar .mon_list .week .day {
+  display: inline-block;
+  width: 60px;
+  padding: 10px;
+  text-align: center;
+  vertical-align: top;
+  cursor: pointer;
+  position: relative;
+}
+#calendar .mon_list .week .day.chosen_month {
+  background-color: #191919;
+}
+#calendar .mon_list .week .day.chosen_month.before_today {
+  color: rgba(255, 255, 255, 0.4);
+}
+#calendar .mon_list .week .day.chosen_month.after_today {
+  color: rgba(255, 255, 255, 0.8);
+}
+#calendar .mon_list .week .day.today {
+  color: rgba(255, 255, 255, 0.9);
+  background-color: black;
+  font-weight: bold;
+}
+#calendar .mon_list .week .day.before_today {
+  color: rgba(255, 255, 255, 0.2);
+}
+#calendar .mon_list .week .day.after_today {
+  color: rgba(255, 255, 255, 0.6);
+}
+#calendar .mon_list .week .day .day-events {
+  list-style: none;
+  margin-top: 3px;
+  text-align: center;
+  height: 12px;
+  line-height: 6px;
+  overflow: hidden;
+}
+#calendar .mon_list .week .day .day-events span {
+  vertical-align: top;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  width: 5px;
+  height: 5px;
+  line-height: 5px;
+  margin: 0 1px;
+}
+#calendar .mon_list .week .day .day-number {
+  font-size: 24px;
+  letter-spacing: 1.5px;
+}
+#calendar .mon_list .week .details {
+  position: relative;
+  width: 100%;
+  min-height: 75px;
+  background: #a4a4a4;
+  z-index: 100;
+}
+#calendar .mon_list .week .details.in {
+  -webkit-animation: moveFromTopFade 0.5s ease both;
+  -moz-animation: moveFromTopFade 0.5s ease both;
+  animation: moveFromTopFade 0.5s ease both;
+}
+#calendar .mon_list .week .details.out {
+  -webkit-animation: moveToTopFade 0.5s ease both;
+  -moz-animation: moveToTopFade 0.5s ease both;
+  animation: moveToTopFade 0.5s ease both;
+}
+#calendar .mon_list .week .details.out .events {
+  -webkit-animation: fadeOutShrink 0.4s ease both;
+  -moz-animation: fadeOutShink 0.4s ease both;
+  animation: fadeOutShink 0.4s ease both;
+}
+#calendar .mon_list .week .arrow {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  margin-left: -2px;
+  width: 0px;
+  height: 0px;
+  border-style: solid;
+  border-width: 0 5px 5px 5px;
+  border-color: transparent transparent rgba(255, 255, 255, 0.7) transparent;
+  transition: all 0.7s ease;
+}
+#calendar .mon_list.new {
+  -webkit-animation: fadeIn 1s ease-out;
+  opacity: 1;
+}
+#calendar .mon_list.in.next {
+  -webkit-animation: fadeIn 0.4s ease-out;
+  -moz-animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.4s ease-out;
+  opacity: 1;
+}
+#calendar .mon_list.out.next {
+  -webkit-animation: moveToBottomFadeMonth 0.4s ease-out;
+  -moz-animation: moveToBottomFadeMonth 0.4s ease-out;
+  animation: moveToBottomFadeMonth 0.4s ease-out;
+  opacity: 1;
+}
+#calendar .mon_list.in.prev {
+  -webkit-animation: moveFromBottomFadeMonth 0.4s ease-out;
+  -moz-animation: moveFromBottomFadeMonth 0.4s ease-out;
+  animation: moveFromBottomFadeMonth 0.4s ease-out;
+  opacity: 1;
+}
+#calendar .mon_list.out.prev {
+  -webkit-animation: fadeOut 0.4s ease-in;
+  -moz-animation: fadeOut 0.4s ease-in;
+  animation: fadeOut 0.4s ease-in;
+  opacity: 1;
+}
+#calendar .blue {
+  background: #9ccaeb;
+}
+#calendar .orange {
+  background: #f7a700;
+}
+#calendar .green {
+  background: #99c66d;
+}
+#calendar .yellow {
+  background: #f9e900;
+}
+#calendar .events {
+  height: 75px;
+  padding: 7px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+#calendar .events.in {
+  -webkit-animation: fadeIn 0.3s ease both;
+  -moz-animation: fadeIn 0.3s ease both;
+  animation: fadeIn 0.3s ease both;
+  -webkit-animation-delay: 0.3s;
+  -moz-animation-delay: 0.3s;
+  animation-delay: 0.3s;
+}
+#calendar .events.out {
+  -webkit-animation: fadeOut 0.3s ease both;
+  -moz-animation: fadeOut 0.3s ease both;
+  animation: fadeOut 0.3s ease both;
+}
+#calendar .event {
+  font-size: 16px;
+  line-height: 22px;
+  letter-spacing: 0.5px;
+  padding: 2px 16px;
+  vertical-align: top;
+}
+#calendar .event.empty {
+  color: #eee;
+}
+#calendar .event span {
+  display: inline-block;
+  padding: 0 0 0 7px;
+}
+#calendar .event-category {
+  height: 10px;
+  width: 10px;
+  display: inline-block;
+  margin: 6px 0 0;
+  vertical-align: top;
+}
+#calendar .legend {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 30px;
+  background: #3c3c3c;
+  line-height: 30px;
+}
+#calendar .entry {
+  position: relative;
+  padding: 0 0 0 25px;
+  font-size: 13px;
+  display: inline-block;
+  line-height: 30px;
+  background: transparent;
+}
+#calendar .entry:after {
+  position: absolute;
+  content: "";
+  height: 5px;
+  width: 5px;
+  top: 12px;
+  left: 14px;
+}
+#calendar .entry.blue:after {
+  background: #9ccaeb;
+}
+#calendar .entry.orange:after {
+  background: #f7a700;
+}
+#calendar .entry.green:after {
+  background: #99c66d;
+}
+#calendar .entry.yellow:after {
+  background: #f9e900;
+}
+@-webkit-keyframes moveFromTopFade {
+  from {
+    opacity: 0.3;
+    min-height: 0px;
+    margin-top: 0px;
+    -webkit-transform: translateY(-100%);
+  }
+}
+@-moz-keyframes moveFromTopFade {
+  from {
+    min-height: 0px;
+    margin-top: 0px;
+    -moz-transform: translateY(-100%);
+  }
+}
+@keyframes moveFromTopFade {
+  from {
+    min-height: 0px;
+    margin-top: 0px;
+    transform: translateY(-100%);
+  }
+}
+@-webkit-keyframes moveToTopFade {
+  to {
+    opacity: 0.3;
+    min-height: 0px;
+    margin-top: 0px;
+    opacity: 0.3;
+    -webkit-transform: translateY(-100%);
+  }
+}
+@-moz-keyframes moveToTopFade {
+  to {
+    min-height: 0px;
+    -moz-transform: translateY(-100%);
+  }
+}
+@keyframes moveToTopFade {
+  to {
+    min-height: 0px;
+    transform: translateY(-100%);
+  }
+}
+@-webkit-keyframes moveToTopFadeMonth {
+  to {
+    opacity: 0;
+    -webkit-transform: translateY(-30%) scale(0.95);
+  }
+}
+@-moz-keyframes moveToTopFadeMonth {
+  to {
+    opacity: 0;
+    -moz-transform: translateY(-30%);
+  }
+}
+@keyframes moveToTopFadeMonth {
+  to {
+    opacity: 0;
+    transform: translateY(-30%);
+  }
+}
+@-webkit-keyframes moveFromTopFadeMonth {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(30%) scale(0.95);
+  }
+}
+@-moz-keyframes moveFromTopFadeMonth {
+  from {
+    opacity: 0;
+    -moz-transform: translateY(30%);
+  }
+}
+@keyframes moveFromTopFadeMonth {
+  from {
+    opacity: 0;
+    transform: translateY(30%);
+  }
+}
+@-webkit-keyframes moveToBottomFadeMonth {
+  to {
+    opacity: 0;
+    -webkit-transform: translateY(30%) scale(0.95);
+  }
+}
+@-moz-keyframes moveToBottomFadeMonth {
+  to {
+    opacity: 0;
+    -moz-transform: translateY(30%);
+  }
+}
+@keyframes moveToBottomFadeMonth {
+  to {
+    opacity: 0;
+    transform: translateY(30%);
+  }
+}
+@-webkit-keyframes moveFromBottomFadeMonth {
+  from {
+    opacity: 0;
+    -webkit-transform: translateY(30%) scale(0.95);
+  }
+}
+@-moz-keyframes moveFromBottomFadeMonth {
+  from {
+    opacity: 0;
+    -moz-transform: translateY(30%);
+  }
+}
+@keyframes moveFromBottomFadeMonth {
+  from {
+    opacity: 0;
+    transform: translateY(30%);
+  }
+}
+@-webkit-keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+@-moz-keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+@-webkit-keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+@-moz-keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+@-webkit-keyframes fadeOutShink {
+  to {
+    opacity: 0;
+    padding: 0px;
+    height: 0px;
+  }
+}
+@-moz-keyframes fadeOutShink {
+  to {
+    opacity: 0;
+    padding: 0px;
+    height: 0px;
+  }
+}
+@keyframes fadeOutShink {
+  to {
+    opacity: 0;
+    padding: 0px;
+    height: 0px;
+  }
+}
+
+*, *:before, *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+  font-weight: 100;
+  color: white;
+  margin: 0;
+  padding: 0;
+  background: #4A4A4A;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/*# sourceMappingURL=style.css.map */
