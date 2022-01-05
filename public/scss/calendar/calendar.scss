@@ -1,55 +1,46 @@
 @import "../base/color";
 
 #calendar {
-	width: 440px;
-	min-height: 590px;
-
-	margin: 0 auto;
-    margin-top: 20px;
-    padding: 10px;
-
+    width: 430px;
+    min-height: auto;
 	overflow: hidden;
+	background: $col_bg_base;
 
-	-webkit-transform: translate3d(0, 0, 0);
-	-moz-transform: translate3d(0, 0, 0);
-	transform: translate3d(0, 0, 0);
-    
     .header {
+        margin: 5px;
+        margin-bottom: 0;
+
         position:relative;
-        height: 110px;
-        width: 100%;
         z-index: 100;
 
         text-align: center;
 
-        h1 {
-            margin: 0;
-            padding: 0;
+        .year {
+            height: 55px;
+            line-height: 55px;
 
             font-family: 'Segoe UI Black';
             font-size: 20px;
-            line-height: 50px;
             font-weight: 100;
             letter-spacing: 1px;
+            
         }
+        .month {
+            height: 45px;
+            line-height: 45px;
 
-        h2 {
-            margin: 0;
-            padding: 0;
             text-transform: uppercase;
             font-family: 'Segoe UI SemiBold';
             font-size: 16px;
-            line-height: 40px;
             font-weight: 100;
             letter-spacing: 1px;
         }
-        .header_year, .header_month {
+        .header_year, .header_month { 
+            background: $col_bg_base1;
+            margin-bottom: 5px;
             position: relative;
-            margin-top: 2px;
-            margin-bottom: 10px;
-            color: $col_grey3;
 
-            background: $col_bg_base;
+            color: $col_grey3;
             .current {
                 color: white;
             }
@@ -63,58 +54,81 @@
             border-style: solid;
             margin-top: -7.5px;
             cursor: pointer;
+            
         }
         .left {
             left: 20px;
             border-width: 7.5px 10px 7.5px 0;
-            border-color: transparent rgba(160, 159, 160, 1) transparent transparent;
+            border-color: transparent $col_grey1 transparent transparent;
+            &:hover{
+                border-color: transparent $col_grey5 transparent transparent;
+            }
         }
         .right {
             right: 20px;
             border-width: 7.5px 0 7.5px 10px;
-            border-color: transparent transparent transparent rgba(160, 159, 160, 1);
+            border-color: transparent transparent transparent $col_grey1;
+            &:hover{
+                border-color: transparent transparent transparent $col_grey5;
+            }
         }
     
+        .week_titles {
+            display: grid;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            grid-template-columns: repeat(7, 60px);
+        }
+        .week_title {
+            height: 100%;
+            line-height: 40px;
+            
+            z-index: 100;
+            font-size: 12px;
+            text-transform: uppercase;
+            text-align: center;
+            letter-spacing: .7px;
+            border: 1px solid $col_bg_base;
+        }
     }
 
     .mon_list {
         /*overflow: hidden;*/
         opacity: 0;
         background: $col_bg_base;
-
-        .week_title {
-            font-weight: bold;
-            position: relative;
-            width: 60px;
-            height: 50px;
-            padding: 10px;
-            display: inline-block;
-            z-index: 100;
-
-            text-align: center;
-            vertical-align: top;
-
-            font-size: 12px;
-            line-height: 30px;
-            text-transform: uppercase;
-            letter-spacing: .7px;
-        }
+        margin: 5px;
+        margin-top: 0;
 
         .week {
+            display: grid;
+            align-items: center;
+            min-height: 70px;
+            height: auto;
+            grid-template-columns: repeat(7, 60px);
             
             .day {
-                display: inline-block;
-                width: 60px;
-                padding: 10px;
-                
-                text-align: center;
-                vertical-align: top;
-                cursor: pointer;
                 position: relative;
+                min-height: inherit;
+                border: 1px solid $col_bg_base;
 
+                cursor: pointer;
+
+                display: flex;
+                flex-direction: column;
+                justify-content: space-around;
+                text-align: center;
                 // &.other_month {
                 //     color: rgba(255, 255, 255, .3);
                 // }        
+                &.before_today {
+                    background-color: $col_dark;
+                    color: $col_grey8;
+                }        
+                &.after_today {
+                    background-color: $col_dark;
+                    color: $col_grey4;
+                }
                 &.chosen_month {
                     background-color: $col_bg_chosenmonth;
                     
@@ -130,12 +144,6 @@
                     background-color: black;
                     font-weight: bold;
                 } 
-                &.before_today {
-                    color: $col_grey8;
-                }        
-                &.after_today {
-                    color: $col_grey4;
-                }
                 .day-events {
                     list-style: none;
                     margin-top: 3px;
@@ -159,14 +167,20 @@
                     font-size: 24px;
                     letter-spacing: 1.5px;
                 }
+
+                &:hover {
+                    background-color: $col_grey9;
+                }
             }
         
             .details {
                 position: relative;
-                width: 100%;
+                grid-column: span 7;
                 min-height: 75px;
-                background: $col_bg_detail;
                 z-index: 100;
+                border-left: 1px solid $col_bg_base;
+                border-right: 1px solid $col_bg_base;
+                background: $col_bg_detail;
                 &.in {
                     -webkit-animation: moveFromTopFade .5s ease both;
                     -moz-animation: moveFromTopFade .5s ease both;
@@ -200,6 +214,8 @@
     
         &.new {
             -webkit-animation: fadeIn 1s ease-out;
+            -moz-animation: fadeIn .1s ease-out;
+            animation: fadeIn .1s ease-out;
             opacity: 1;
         }
         &.in.next {

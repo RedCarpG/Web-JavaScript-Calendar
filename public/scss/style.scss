@@ -10,6 +10,10 @@
 @import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
 @import "calendar/calendar";
 
+a {
+	color: #00B7FF;
+}
+  
 *, *:before, *:after {
 	-moz-box-sizing: border-box; 
 	-webkit-box-sizing: border-box; 
@@ -20,12 +24,12 @@
 
 body {
 	overflow: hidden;
-	font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+	font-family: 'Lucida Grande', 'Segoe UI', Arial, Helvetica, sans-serif;
 	font-weight: 100;
 	color: $col_base-font;
 	margin: 0;
 	padding: 0;
-	background: #4A4A4A;
+	background: #000000;
 	-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;

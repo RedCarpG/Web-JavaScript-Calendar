@@ -1,1 +1,0 @@
-sass G:\Project\Web\calendar\scss\:G:\Project\Web\calendar\css\
