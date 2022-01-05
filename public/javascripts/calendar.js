@@ -70,7 +70,7 @@ class Calendar {
 			this.header = createElement('div', 'header');
 
 			let header_year = createElement('div', 'header_year');
-			this.year = createElement('h1', 'year current', this.activeDate.getFullYear());
+			this.year = createElement('div', 'year current', this.activeDate.getFullYear());
 
 			let right_year = createElement('div', 'right');
 			right_year.addEventListener('click', function() {self.nextYear();});
@@ -79,7 +79,7 @@ class Calendar {
 			left_year.addEventListener('click', function() {self.prevYear();});
 
 			let header_month = createElement('div', 'header_month');
-			this.month = createElement('h2', 'month current', Calendar.MONTH_EN[this.activeDate.getMonth()]);
+			this.month = createElement('div', 'month current', Calendar.MONTH_EN[this.activeDate.getMonth()]);
 
 			let right_month = createElement('div', 'right');
 			right_month.addEventListener('click', function() {self.nextMonth();});
@@ -97,6 +97,12 @@ class Calendar {
 
 			this.header.appendChild(header_year);
 			this.header.appendChild(header_month);
+
+            let weekTitle = createElement('div', 'week_titles');
+            for (let i = 0; i < 7; i++) {
+                weekTitle.appendChild(createElement('div', 'week_title', Calendar.WEEK_TITLE_EN[i]));
+            }
+            this.header.appendChild(weekTitle);
 
 			this.el.appendChild(this.header);
         
@@ -121,11 +127,11 @@ class Calendar {
         }
 	}
 	drawMonth(year, month) {
-        let weekTitle = createElement('div', 'week_titles');
-        for (let i = 0; i < 7; i++) {
-            weekTitle.appendChild(createElement('div', 'week_title', Calendar.WEEK_TITLE_EN[i]));
-        }
-        this.monList.appendChild(weekTitle);
+        // let weekTitle = createElement('div', 'week_titles');
+        // for (let i = 0; i < 7; i++) {
+        //     weekTitle.appendChild(createElement('div', 'week_title', Calendar.WEEK_TITLE_EN[i]));
+        // }
+        // this.monList.appendChild(weekTitle);
 		// this.events.forEach(function(ev) {
 		// 	ev.date = self.current.clone().date(Math.random() * (29 - 1) + 1);
 		// });
@@ -425,18 +431,15 @@ class Calendar {
 		return year % 4 == 0 ? (year % 100 != 0 ? 1 : (year % 400 == 0 ? 1 : 0)) : 0;
 	}
 
+    static formatTimeZone(time, offset) {
+        let d = new Date(time); //创建一个Date对象 time时间 offset 时区 中国为 8
+        let localTime = d.getTime();//获取的是毫秒级
+        let localOffset = d.getTimezoneOffset() * 60000; //获得当地时间偏移的毫秒数,时区是以分钟为单位的
+        let utc = localTime + localOffset; //utc即GMT时间,世界时,格林威治时间
+        let wishTime = utc + (3600000 * offset);
+        return new Date(wishTime);
+    }
 }
 
 
-function createElement(tagName, className, innerText) {
-    let ele = document.createElement(tagName);
-    if(className) {
-        ele.className = className;
-    }
-    if(innerText) {
-        ele.innderText = ele.textContent = innerText;
-    }
-    return ele;
-}
-
-const calender = new Calendar();
+const c = new Calendar();
