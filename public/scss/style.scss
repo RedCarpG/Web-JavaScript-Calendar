@@ -23,6 +23,12 @@ a {
 }
 
 body {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	height: 100vh;
+
 	overflow: hidden;
 	font-family: 'Lucida Grande', 'Segoe UI', Arial, Helvetica, sans-serif;
 	font-weight: 100;

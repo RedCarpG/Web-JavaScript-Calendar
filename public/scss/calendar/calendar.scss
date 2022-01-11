@@ -35,7 +35,7 @@
             font-weight: 100;
             letter-spacing: 1px;
         }
-        .header_year, .header_month { 
+        .header-year, .header-month { 
             background: $col_bg_base1;
             margin-bottom: 5px;
             position: relative;
@@ -72,15 +72,15 @@
                 border-color: transparent transparent transparent $col_grey5;
             }
         }
-    
-        .week_titles {
+        
+        .week-titles {
             display: grid;
             align-items: center;
             justify-content: center;
             height: 40px;
             grid-template-columns: repeat(7, 60px);
         }
-        .week_title {
+        .week-title {
             height: 100%;
             line-height: 40px;
             
@@ -93,7 +93,7 @@
         }
     }
 
-    .mon_list {
+    .mon-list {
         /*overflow: hidden;*/
         opacity: 0;
         background: $col_bg_base;
@@ -103,39 +103,38 @@
         .week {
             display: grid;
             align-items: center;
-            min-height: 70px;
+            min-height: 90px;
             height: auto;
             grid-template-columns: repeat(7, 60px);
             
             .day {
+                height: 100%;
                 position: relative;
                 min-height: inherit;
                 border: 1px solid $col_bg_base;
-
+                padding: 5px;
                 cursor: pointer;
 
-                display: flex;
                 flex-direction: column;
                 justify-content: space-around;
+                align-content: space-around;
                 text-align: center;
-                // &.other_month {
-                //     color: rgba(255, 255, 255, .3);
-                // }        
-                &.before_today {
+
+                &.before-today {
                     background-color: $col_dark;
                     color: $col_grey8;
                 }        
-                &.after_today {
+                &.after-today {
                     background-color: $col_dark;
                     color: $col_grey4;
                 }
-                &.chosen_month {
+                &.active-month {
                     background-color: $col_bg_chosenmonth;
                     
-                    &.before_today {
+                    &.before-today {
                         color: $col_grey6;
                     }        
-                    &.after_today {
+                    &.after-today {
                         color: $col_grey2;
                     }        
                 }
@@ -143,36 +142,39 @@
                     color: $col_grey1;
                     background-color: black;
                     font-weight: bold;
-                } 
-                .day-events {
-                    list-style: none;
-                    margin-top: 3px;
-                    text-align: center;
-                    height: 12px;
-                    line-height: 6px;
-                    overflow: hidden;
-                    
-                    span {
-                        vertical-align: top;
-                        display: inline-block;
-                        padding: 0;
-                        margin: 0;
-                        width: 5px;
-                        height: 5px;
-                        line-height: 5px;
-                        margin: 0 1px;
-                    }
                 }
+
                 .day-number {
                     font-size: 24px;
                     letter-spacing: 1.5px;
+                    margin-bottom: 5px;
+                }
+
+                .day-ch {
+                    height: auto;
+                    overflow: hidden;
+                    font-size: 12px;
+                    color: rgba(190, 180, 170, 0.7);
+                    margin-bottom: 2px;
+                    &.jieqi {
+                        color: rgba(230, 150, 70, 0.8);
+                    }
+                    &.lunar-first {
+                        color: rgba(220, 170, 130, 0.7);
+                    }
+                }
+                .day-festival {
+                    height: auto;
+                    overflow: hidden;
+                    font-size: 14px;
+                    color: rgba(255, 80, 80, 0.8);
                 }
 
                 &:hover {
                     background-color: $col_grey9;
                 }
             }
-        
+            
             .details {
                 position: relative;
                 grid-column: span 7;
@@ -211,7 +213,7 @@
             }
 
         }
-    
+        
         &.new {
             -webkit-animation: fadeIn 1s ease-out;
             -moz-animation: fadeIn .1s ease-out;

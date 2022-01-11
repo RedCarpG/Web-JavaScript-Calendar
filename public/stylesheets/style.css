@@ -31,12 +31,12 @@
       font-size: 16px;
       font-weight: 100;
       letter-spacing: 1px; }
-    #calendar .header .header_year, #calendar .header .header_month {
+    #calendar .header .header-year, #calendar .header .header-month {
       background: #191919;
       margin-bottom: 5px;
       position: relative;
       color: rgba(255, 255, 255, 0.7); }
-      #calendar .header .header_year .current, #calendar .header .header_month .current {
+      #calendar .header .header-year .current, #calendar .header .header-month .current {
         color: white; }
     #calendar .header .left, #calendar .header .right {
       position: absolute;
@@ -58,13 +58,13 @@
       border-color: transparent transparent transparent rgba(255, 255, 255, 0.9); }
       #calendar .header .right:hover {
         border-color: transparent transparent transparent rgba(255, 255, 255, 0.5); }
-    #calendar .header .week_titles {
+    #calendar .header .week-titles {
       display: grid;
       align-items: center;
       justify-content: center;
       height: 40px;
       grid-template-columns: repeat(7, 60px); }
-    #calendar .header .week_title {
+    #calendar .header .week-title {
       height: 100%;
       line-height: 40px;
       z-index: 100;
@@ -73,65 +73,67 @@
       text-align: center;
       letter-spacing: .7px;
       border: 1px solid #323232; }
-  #calendar .mon_list {
+  #calendar .mon-list {
     /*overflow: hidden;*/
     opacity: 0;
     background: #323232;
     margin: 5px;
     margin-top: 0; }
-    #calendar .mon_list .week {
+    #calendar .mon-list .week {
       display: grid;
       align-items: center;
-      min-height: 70px;
+      min-height: 90px;
       height: auto;
       grid-template-columns: repeat(7, 60px); }
-      #calendar .mon_list .week .day {
+      #calendar .mon-list .week .day {
+        height: 100%;
         position: relative;
         min-height: inherit;
         border: 1px solid #323232;
+        padding: 5px;
         cursor: pointer;
-        display: flex;
         flex-direction: column;
         justify-content: space-around;
+        align-content: space-around;
         text-align: center; }
-        #calendar .mon_list .week .day.before_today {
+        #calendar .mon-list .week .day.before-today {
           background-color: rgba(0, 0, 0, 0.1);
           color: rgba(255, 255, 255, 0.2); }
-        #calendar .mon_list .week .day.after_today {
+        #calendar .mon-list .week .day.after-today {
           background-color: rgba(0, 0, 0, 0.1);
           color: rgba(255, 255, 255, 0.6); }
-        #calendar .mon_list .week .day.chosen_month {
+        #calendar .mon-list .week .day.active-month {
           background-color: #191919; }
-          #calendar .mon_list .week .day.chosen_month.before_today {
+          #calendar .mon-list .week .day.active-month.before-today {
             color: rgba(255, 255, 255, 0.4); }
-          #calendar .mon_list .week .day.chosen_month.after_today {
+          #calendar .mon-list .week .day.active-month.after-today {
             color: rgba(255, 255, 255, 0.8); }
-        #calendar .mon_list .week .day.today {
+        #calendar .mon-list .week .day.today {
           color: rgba(255, 255, 255, 0.9);
           background-color: black;
           font-weight: bold; }
-        #calendar .mon_list .week .day .day-events {
-          list-style: none;
-          margin-top: 3px;
-          text-align: center;
-          height: 12px;
-          line-height: 6px;
-          overflow: hidden; }
-          #calendar .mon_list .week .day .day-events span {
-            vertical-align: top;
-            display: inline-block;
-            padding: 0;
-            margin: 0;
-            width: 5px;
-            height: 5px;
-            line-height: 5px;
-            margin: 0 1px; }
-        #calendar .mon_list .week .day .day-number {
+        #calendar .mon-list .week .day .day-number {
           font-size: 24px;
-          letter-spacing: 1.5px; }
-        #calendar .mon_list .week .day:hover {
+          letter-spacing: 1.5px;
+          margin-bottom: 5px; }
+        #calendar .mon-list .week .day .day-ch {
+          height: auto;
+          overflow: hidden;
+          font-size: 12px;
+          color: rgba(190, 180, 170, 0.7);
+          margin-bottom: 2px; }
+          #calendar .mon-list .week .day .day-ch.jieqi {
+            color: rgba(230, 150, 70, 0.8); }
+          #calendar .mon-list .week .day .day-ch.lunar-first {
+            color: rgba(220, 170, 130, 0.7); }
+        #calendar .mon-list .week .day .day-festival {
+          height: auto;
+          overflow: hidden;
+          font-size: 14px;
+          color: rgba(255, 80, 80, 0.8); }
+        #calendar .mon-list .week .day:hover {
           background-color: rgba(255, 255, 255, 0.1); }
-      #calendar .mon_list .week .details {
+      #calendar .mon-list .week .details {
         position: relative;
         grid-column: span 7;
         min-height: 75px;
@@ -139,19 +141,19 @@
         border-left: 1px solid #323232;
         border-right: 1px solid #323232;
         background: #a4a4a4; }
-        #calendar .mon_list .week .details.in {
+        #calendar .mon-list .week .details.in {
           -webkit-animation: moveFromTopFade .5s ease both;
           -moz-animation: moveFromTopFade .5s ease both;
           animation: moveFromTopFade .5s ease both; }
-        #calendar .mon_list .week .details.out {
+        #calendar .mon-list .week .details.out {
           -webkit-animation: moveToTopFade .5s ease both;
           -moz-animation: moveToTopFade .5s ease both;
           animation: moveToTopFade .5s ease both; }
-          #calendar .mon_list .week .details.out .events {
+          #calendar .mon-list .week .details.out .events {
             -webkit-animation: fadeOutShrink .4s ease both;
             -moz-animation: fadeOutShink .4s ease both;
             animation: fadeOutShink .4s ease both; }
-      #calendar .mon_list .week .arrow {
+      #calendar .mon-list .week .arrow {
         position: absolute;
         top: -5px;
         left: 50%;
@@ -162,27 +164,27 @@
         border-width: 0 5px 5px 5px;
         border-color: transparent transparent rgba(255, 255, 255, 0.7) transparent;
         transition: all 0.7s ease; }
-    #calendar .mon_list.new {
+    #calendar .mon-list.new {
       -webkit-animation: fadeIn 1s ease-out;
       -moz-animation: fadeIn .1s ease-out;
       animation: fadeIn .1s ease-out;
       opacity: 1; }
-    #calendar .mon_list.in.next {
+    #calendar .mon-list.in.next {
       -webkit-animation: fadeIn .4s ease-out;
       -moz-animation: fadeIn .4s ease-out;
       animation: fadeIn .4s ease-out;
       opacity: 1; }
-    #calendar .mon_list.out.next {
+    #calendar .mon-list.out.next {
       -webkit-animation: moveToBottomFadeMonth .4s ease-out;
       -moz-animation: moveToBottomFadeMonth .4s ease-out;
       animation: moveToBottomFadeMonth .4s ease-out;
       opacity: 1; }
-    #calendar .mon_list.in.prev {
+    #calendar .mon-list.in.prev {
       -webkit-animation: moveFromBottomFadeMonth .4s ease-out;
       -moz-animation: moveFromBottomFadeMonth .4s ease-out;
       animation: moveFromBottomFadeMonth .4s ease-out;
       opacity: 1; }
-    #calendar .mon_list.out.prev {
+    #calendar .mon-list.out.prev {
       -webkit-animation: fadeOut .4s ease-in;
       -moz-animation: fadeOut .4s ease-in;
       animation: fadeOut .4s ease-in;
@@ -408,6 +410,10 @@ a {
   margin: 0; }
 
 body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
   overflow: hidden;
   font-family: 'Lucida Grande', 'Segoe UI', Arial, Helvetica, sans-serif;
   font-weight: 100;
