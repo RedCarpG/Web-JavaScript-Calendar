@@ -9,16 +9,52 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+        <link rel="stylesheet" href="stylesheets/style.css" />        
         
-        <link rel="stylesheet" href="stylesheets/style.css" />
-        <script src="javascripts/script.js"></script>
-    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js">
+            moment().format();
+        </script>
+        <script src="javascripts/common.js"></script>
+        <script src="javascripts/lunar.js"></script>
+        <script src="javascripts/calendar.js" defer></script>
     </head>
 
     <body>
 
-        <div id="calendar"></div>
-        <div id="bazi"></div>
+        <div id="calendar">
+            <!-- Header of Calendar -->
+            <div class="header">
+                <div class="header-year">
+                    <div class="year"> Year </div>
+                    <div class="right" onclick="nextYear()"></div>
+                    <div class="left" onclick="prevYear()"></div>
+                </div>
+                <div class="header-month">
+                    <div class="month"> Month </div>
+                    <div class="right" onclick="nextMonth()"></div>
+                    <div class="left" onclick="prevMonth()"></div>
+                </div>
+                <div class="week-titles">
+                    <div class="week-title"> SUN </div>
+                    <div class="week-title"> MON </div>
+                    <div class="week-title"> TUE </div>
+                    <div class="week-title"> WED </div>
+                    <div class="week-title"> THU </div>
+                    <div class="week-title"> FRI </div>
+                    <div class="week-title"> SAT </div>
+                </div>
+            </div>
+            <!-- Main grid of Calendar -->
+            <div class="mon-list new"></div>
+            <!-- Legend -->
+            <div class="legend">
+                <div class="chosen-year"></div>
+                <div class="chosen-month"></div>
+                <div class="chosen-day"></div>
+            </div>
+        </div>
+        <div id="bazi">
+        </div>
         
     </body>
 
