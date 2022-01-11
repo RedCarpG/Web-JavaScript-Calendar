@@ -18,12 +18,16 @@
    */
   var ExactDate = (function() {
     return {
-      _: function(date, y, m, d) {
-        if (y < 100) {
-          date.setFullYear(y);
-          date.setMonth(m-1);
-          date.setDate(d);
-        }
+      _: function(y, m, d) {
+        // if (y < 100) {
+        //   date.setFullYear(y);
+        //   date.setMonth(m-1);
+        //   date.setDate(d);
+        // }
+        date = new Date();
+        date.setFullYear(y);
+        date.setMonth(m-1);
+        date.setDate(d);
         date.setMilliseconds(0);
         return date;
       }, 
@@ -32,14 +36,20 @@
        * NOTE: the input date should be in GMT+0800 time zone (CCT)
        */
       fromYmd: function(y, m, d) {
-        return this._(new Date(y + '/' + m + '/' + d + ' 0: 0: 0 GMT+0800'), y, m, d);
+        // return this._(new Date(y + '/' + m + '/' + d + ' 0: 0: 0 GMT+0800'), y, m, d);
+        return this._(y, m, d);
       }, 
       /** fromYmdHms
        * return: Date object
        * NOTE: the input date should be in GMT+0800 time zone (CCT)
        */
       fromYmdHms: function(y, m, d, hour, minute, second) {
-        return this._(new Date(y + '/' + m + '/' + d + ' ' + hour + ': ' + minute + ': ' + second + ' GMT+0800'), y, m, d);
+        date = this._(y, m, d);
+        date.setHours(hour);
+        date.setMinutes(hour);
+        date.setSeconds(second);
+        // this._(new Date(y + '/' + m + '/' + d + ' ' + hour + ': ' + minute + ': ' + second + ' GMT+0800'), y, m, d);
+        return date;
       }
     };
   })();
