@@ -1,47 +1,31 @@
 /** Requirements */
-var createError = require('http-errors');
 const express = require('express'); // Express
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 const bycrypt = require("bcrypt"); // Bycrtpt
 /* Local Requirements */
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const config = require('./config');
+const indexRouter = require('./routes/index');
+const errorRouter = require('./routes/error');
 
-var app = express();
+const app = express();
 
 /** view engine setup */
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, './views'));
 app.set('view engine', 'ejs');
+/* Add static path */
+app.use(express.static(path.join(__dirname, './public')));
 
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false}));
 app.use(cookieParser());
-/* Add static path */
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use(errorRouter);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-app.listen(8080);
-
-console.log('Server running at http://127.0.0.1:8080/');
+app.listen(config.port);
+console.log('Server running at http://localhost:' + config.port + '/');
 
 module.exports = app;
