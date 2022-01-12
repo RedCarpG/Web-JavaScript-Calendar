@@ -72,7 +72,8 @@
     opacity: 0;
     background: #323232;
     margin: 5px;
-    margin-top: 0; }
+    margin-top: 0;
+    z-index: 50; }
     #calendar .mon-list .week {
       display: grid;
       align-items: center;
@@ -80,6 +81,7 @@
       height: auto;
       grid-template-columns: repeat(7, 60px); }
       #calendar .mon-list .week .day {
+        z-index: 75;
         height: 100%;
         position: relative;
         min-height: inherit;
@@ -126,38 +128,39 @@
           font-size: 14px;
           color: rgba(255, 80, 80, 0.8); }
         #calendar .mon-list .week .day:hover {
-          background-color: rgba(255, 255, 255, 0.1); }
-      #calendar .mon-list .week .details {
+          background-color: #3c3c3c; }
+        #calendar .mon-list .week .day.detailed {
+          border-color: #e69646; }
+      #calendar .mon-list .week .detail {
         position: relative;
         grid-column: span 7;
-        min-height: 75px;
-        z-index: 100;
+        z-index: 75;
         border-left: 1px solid #323232;
         border-right: 1px solid #323232;
         background: #a4a4a4; }
-        #calendar .mon-list .week .details.in {
-          -webkit-animation: moveFromTopFade .5s ease both;
-          -moz-animation: moveFromTopFade .5s ease both;
-          animation: moveFromTopFade .5s ease both; }
-        #calendar .mon-list .week .details.out {
-          -webkit-animation: moveToTopFade .5s ease both;
-          -moz-animation: moveToTopFade .5s ease both;
-          animation: moveToTopFade .5s ease both; }
-          #calendar .mon-list .week .details.out .events {
-            -webkit-animation: fadeOutShrink .4s ease both;
-            -moz-animation: fadeOutShink .4s ease both;
-            animation: fadeOutShink .4s ease both; }
-      #calendar .mon-list .week .arrow {
-        position: absolute;
-        top: -5px;
-        left: 50%;
-        margin-left: -2px;
-        width: 0px;
-        height: 0px;
-        border-style: solid;
-        border-width: 0 5px 5px 5px;
-        border-color: transparent transparent rgba(255, 255, 255, 0.7) transparent;
-        transition: all 0.7s ease; }
+        #calendar .mon-list .week .detail .text {
+          overflow: hidden; }
+        #calendar .mon-list .week .detail.in {
+          -webkit-animation: moveFromTopFade .7s ease both;
+          -moz-animation: moveFromTopFade .7s ease both;
+          animation: moveFromTopFade .7s ease both; }
+        #calendar .mon-list .week .detail.out {
+          -webkit-animation: moveToTopFade .7s ease both;
+          -moz-animation: moveToTopFade .7s ease both;
+          animation: moveToTopFade .7s ease both; }
+        #calendar .mon-list .week .detail.hidden {
+          display: none; }
+        #calendar .mon-list .week .detail .arrow {
+          position: absolute;
+          top: -5px;
+          left: 50%;
+          margin-left: -2px;
+          width: 0px;
+          height: 0px;
+          border-style: solid;
+          border-width: 0 5px 5px 5px;
+          border-color: transparent transparent rgba(255, 255, 255, 0.7) transparent;
+          transition: all 0.7s ease; }
     #calendar .mon-list.new {
       -webkit-animation: fadeIn 1s ease-out;
       -moz-animation: fadeIn .1s ease-out;
@@ -256,40 +259,39 @@
 
 @-webkit-keyframes moveFromTopFade {
   from {
-    opacity: .3;
-    min-height: 0px;
-    margin-top: 0px;
-    -webkit-transform: translateY(-100%); } }
+    opacity: 0;
+    height: 0;
+    -webkit-transform: translateY(-50%) scaleY(20%); } }
 
 @-moz-keyframes moveFromTopFade {
   from {
-    min-height: 0px;
-    margin-top: 0px;
-    -moz-transform: translateY(-100%); } }
+    opacity: 0;
+    height: 0;
+    -moz-transform: translateY(-50%) scaleY(20%); } }
 
 @keyframes moveFromTopFade {
   from {
-    min-height: 0px;
-    margin-top: 0px;
-    transform: translateY(-100%); } }
+    opacity: 0;
+    height: 0;
+    transform: translateY(-50%) scaleY(20%); } }
 
 @-webkit-keyframes moveToTopFade {
   to {
-    opacity: .3;
-    min-height: 0px;
-    margin-top: 0px;
-    opacity: 0.3;
-    -webkit-transform: translateY(-100%); } }
+    opacity: 0;
+    height: 0;
+    -webkit-transform: translateY(-50%) scaleY(20%); } }
 
 @-moz-keyframes moveToTopFade {
   to {
-    min-height: 0px;
-    -moz-transform: translateY(-100%); } }
+    opacity: 0;
+    height: 0;
+    -moz-transform: translateY(-50%) scaleY(20%); } }
 
 @keyframes moveToTopFade {
   to {
-    min-height: 0px;
-    transform: translateY(-100%); } }
+    opacity: 0;
+    height: 0;
+    transform: translateY(-50%) scaleY(20%); } }
 
 @-webkit-keyframes moveToTopFadeMonth {
   to {
@@ -379,16 +381,34 @@
   to {
     opacity: 0;
     padding: 0px;
-    height: 0px; } }
+    height: 0; } }
 
 @-moz-keyframes fadeOutShink {
   to {
     opacity: 0;
     padding: 0px;
-    height: 0px; } }
+    height: 0; } }
 
 @keyframes fadeOutShink {
   to {
     opacity: 0;
     padding: 0px;
-    height: 0px; } }
+    height: 0; } }
+
+@-webkit-keyframes fadeInShink {
+  from {
+    opacity: 0;
+    padding: 0px;
+    max-height: 0; } }
+
+@-moz-keyframes fadeInShink {
+  from {
+    opacity: 0;
+    padding: 0px;
+    max-height: 0; } }
+
+@keyframes fadeInShink {
+  from {
+    opacity: 0;
+    padding: 0px;
+    max-height: 0; } }
