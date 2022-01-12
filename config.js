@@ -5,7 +5,7 @@ if (process.env.NODE_ENV !== 'production') {
   
 module.exports = {
     users : [],
-    port : 8080,
+    port : process.env.PORT,
     mysql : {
         host: "localhost",
         user: "RedCarp",
