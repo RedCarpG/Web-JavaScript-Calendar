@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const bycrypt = require("bcrypt"); // Bycrtpt
 /* Local Requirements */
-const config = require('./config');
 const indexRouter = require('./routes/index');
 const errorRouter = require('./routes/error');
 
@@ -24,8 +23,5 @@ app.use(cookieParser());
 
 app.use('/', indexRouter);
 app.use(errorRouter);
-
-app.listen(config.port);
-console.log('Server running at http://localhost:' + config.port + '/');
 
 module.exports = app;

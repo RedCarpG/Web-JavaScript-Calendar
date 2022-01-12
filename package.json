@@ -6,7 +6,8 @@
   "main": "",
   "scripts": {
     "start": "node ./bin/www",
-    "devNodemon": "nodemon ./bin/www",
+    "dev": "nodemon ./bin/www",
+    "debug": "@powershell -Command $env:DEBUG='server';nodemon ./bin/www",
     "devSass": "node-sass -w ./public/scss/ -o ./public/stylesheets/"
   },
   "dependencies": {
