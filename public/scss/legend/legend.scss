@@ -1,0 +1,116 @@
+#legend {
+
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    background: rgba(60, 60, 60, 1);
+
+    .main {
+        display: flex;
+        text-align: center;
+
+        .overview {
+            width: 30%;
+            height: auto;
+
+            padding: 15px;
+            background: rgb(105, 105, 105);
+
+            display: grid;
+            grid-template-columns: repeat(2, auto);
+            align-items: center;
+            .left {
+                padding-right: 15px;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-evenly;
+                .year {
+                    font-size: 35px;
+                }
+                .month {
+                    font-size: 25px;
+                }
+            }
+            .right {
+                background-color: rgb(37, 37, 37);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-evenly;
+                padding: 15px;
+                .date {
+                    font-size: 60px;
+                }
+                cursor: pointer;
+                &:hover {
+                    background-color: rgb(80, 80, 80);
+                }
+
+            }
+
+        }
+        .detail {
+            width: 60%;
+
+            .detail-chinese {
+                height: 100%;
+                width: 100%;
+                background: rgb(58, 58, 58);
+
+                .top {
+                    height: 40%;
+                    display: grid;
+                    align-items: center;
+                    grid-column: span 2;
+                    grid-template-columns: repeat(3, 33%);
+                    padding: 10px;
+        
+                    font-size: 14px;
+                    .ganzhi {
+                        margin-top: 5px;
+                        font-size: 12px;
+                    }
+                }
+
+                .lower {
+                    text-align: left;
+                    background: rgb(85, 85, 85);
+                    height: 60%;
+                    padding: 10px 20px 10px 20px;
+                    ul {
+                        list-style: none;
+                        columns: 2;
+                        li {
+                            margin: 2px;
+                            display: block;
+                            .list-head {
+                                display: inline-block;
+                                width: 20%;
+                                padding: 3px;
+                            }
+                            .list-value {
+                                &::before {
+                                    content: ": ";
+                                    font-size: inherit;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .bottom {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        justify-items: center;
+        background: rgb(37, 37, 37);
+
+        padding: 5px;
+        cursor: pointer;
+    };
+}

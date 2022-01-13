@@ -90,6 +90,9 @@
             text-align: center;
             letter-spacing: .7px;
             border: 1px solid $col_bg_base;
+            &.week-end {
+                color: rgb(225, 90, 90);
+            }
         }
     }
 
@@ -99,7 +102,7 @@
         background: $col_bg_base;
         margin: 5px;
         margin-top: 0;
-        z-index: 50;
+        // z-index: 50;
 
         .week {
             display: grid;
@@ -109,7 +112,7 @@
             grid-template-columns: repeat(7, 60px);
             
             .day {
-                z-index: 75;
+                // z-index: 75;
                 height: 100%;
                 position: relative;
                 min-height: inherit;
@@ -123,26 +126,38 @@
                 text-align: center;
 
                 &.before-today {
-                    background-color: $col_dark;
-                    color: $col_grey8;
+                    background-color: $col_bg_othermonth;
+                    color: $col_font_othermonth_before;
+                    &.week-end {
+                        color: $col_font_othermonth_weekend;
+                        background-color: $col_bg_othermonth_weekend;
+                    }
                 }        
                 &.after-today {
-                    background-color: $col_dark;
-                    color: $col_grey4;
+                    background-color: $col_bg_othermonth;
+                    color: $col_font_othermonth_after;
+                    &.week-end {
+                        color: $col_font_othermonth_weekend;
+                        background-color: $col_bg_othermonth_weekend;
+                    }
                 }
                 &.active-month {
                     background-color: $col_bg_chosenmonth;
                     
                     &.before-today {
-                        color: $col_grey6;
+                        color: $col_font_chosenmonth_before;
                     }        
                     &.after-today {
-                        color: $col_grey2;
+                        color: $col_font_chosenmonth_after;
                     }        
+                    &.week-end {
+                        color: $col_font_chosenmonth_weekend;
+                        background-color: $col_bg_chosenmonth_weekend;
+                    }
                 }
                 &.today {
-                    color: $col_grey1;
-                    background-color: black;
+                    color: $col_font_today;
+                    background-color: $col_bg_today;
                     font-weight: bold;
                 }
 
@@ -174,6 +189,9 @@
 
                 &:hover {
                     background-color: $col_day_hover;
+                    &.week-end {
+                        background-color: $col_day_hover_weekend;
+                    }
                 }
 
                 &.detailed {
@@ -184,7 +202,7 @@
             .detail {
                 position: relative;
                 grid-column: span 7;
-                z-index: 75;
+                // z-index: 75;
                 border-left: 1px solid $col_bg_base;
                 border-right: 1px solid $col_bg_base;
                 background: $col_bg_detail;

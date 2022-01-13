@@ -67,13 +67,14 @@
       text-align: center;
       letter-spacing: .7px;
       border: 1px solid #323232; }
+      #calendar .header .week-title.week-end {
+        color: #e15a5a; }
   #calendar .mon-list {
     /*overflow: hidden;*/
     opacity: 0;
     background: #323232;
     margin: 5px;
-    margin-top: 0;
-    z-index: 50; }
+    margin-top: 0; }
     #calendar .mon-list .week {
       display: grid;
       align-items: center;
@@ -81,7 +82,6 @@
       height: auto;
       grid-template-columns: repeat(7, 60px); }
       #calendar .mon-list .week .day {
-        z-index: 75;
         height: 100%;
         position: relative;
         min-height: inherit;
@@ -93,17 +93,26 @@
         align-content: space-around;
         text-align: center; }
         #calendar .mon-list .week .day.before-today {
-          background-color: rgba(0, 0, 0, 0.1);
+          background-color: rgba(25, 25, 25, 0.3);
           color: rgba(255, 255, 255, 0.2); }
+          #calendar .mon-list .week .day.before-today.week-end {
+            color: rgba(205, 97, 85, 0.3);
+            background-color: rgba(55, 15, 10, 0.3); }
         #calendar .mon-list .week .day.after-today {
-          background-color: rgba(0, 0, 0, 0.1);
+          background-color: rgba(25, 25, 25, 0.3);
           color: rgba(255, 255, 255, 0.6); }
+          #calendar .mon-list .week .day.after-today.week-end {
+            color: rgba(205, 97, 85, 0.3);
+            background-color: rgba(55, 15, 10, 0.3); }
         #calendar .mon-list .week .day.active-month {
-          background-color: #191919; }
+          background-color: rgba(25, 25, 25, 0.8); }
           #calendar .mon-list .week .day.active-month.before-today {
             color: rgba(255, 255, 255, 0.4); }
           #calendar .mon-list .week .day.active-month.after-today {
             color: rgba(255, 255, 255, 0.8); }
+          #calendar .mon-list .week .day.active-month.week-end {
+            color: rgba(205, 97, 85, 0.8);
+            background-color: rgba(55, 15, 10, 0.8); }
         #calendar .mon-list .week .day.today {
           color: rgba(255, 255, 255, 0.9);
           background-color: black;
@@ -129,12 +138,13 @@
           color: rgba(255, 80, 80, 0.8); }
         #calendar .mon-list .week .day:hover {
           background-color: #3c3c3c; }
+          #calendar .mon-list .week .day:hover.week-end {
+            background-color: #733c32; }
         #calendar .mon-list .week .day.detailed {
           border-color: #e69646; }
       #calendar .mon-list .week .detail {
         position: relative;
         grid-column: span 7;
-        z-index: 75;
         border-left: 1px solid #323232;
         border-right: 1px solid #323232;
         background: #a4a4a4; }

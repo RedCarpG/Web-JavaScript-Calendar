@@ -10,17 +10,35 @@ $col_grey6: rgba(255, 255, 255, 0.4);
 $col_grey7: rgba(255, 255, 255, 0.3);
 $col_grey8: rgba(255, 255, 255, 0.2);
 $col_grey9: rgba(255, 255, 255, 0.1);
-$col_dark: rgba(0, 0, 0, 0.1);
+$col_dark: rgba(23, 32, 42, 0.3);
+
+$col_red1:rgba(205, 97, 85, 0.3);
+$col_red2:rgba(205, 97, 85, 0.8);
+$col_red3:rgba(55, 15, 10, 0.3);
+$col_red4:rgba(55, 15, 10, 0.8);
+$col_red5:rgb(115, 60, 50);
 // BG
 
 $col_bg_base: rgb(50, 50, 50);
 $col_bg_base1: rgb(25, 25, 25);
 $col_bg_base2: rgb(75, 75, 75);
 
-$col_bg_chosenmonth: rgb(25, 25, 25);
-$col_bg_chosenmonth_hover: rgb(25, 25, 25);
-$col_bg_detail:rgb(164, 164, 164);
+$col_font_othermonth_before: $col_grey8;
+$col_font_othermonth_after: $col_grey4;
+$col_font_othermonth_weekend: $col_red1;
+$col_bg_othermonth: rgba(25, 25, 25, 0.3);
+$col_bg_othermonth_weekend: $col_red3;
+
+$col_font_chosenmonth_before: $col_grey6;
+$col_font_chosenmonth_after: $col_grey2;
+$col_font_chosenmonth_weekend: $col_red2;
+$col_bg_chosenmonth: rgba(25, 25, 25, 0.8);
+$col_bg_chosenmonth_weekend: $col_red4;
+
+$col_font_today: $col_grey1;
+$col_bg_today: black;
 
 $col_day_hover: rgb(60, 60, 60);
+$col_day_hover_weekend: $col_red5;
 
-$col_red1:rgba(209, 5, 5, 0.1)
+$col_bg_detail:rgb(164, 164, 164);

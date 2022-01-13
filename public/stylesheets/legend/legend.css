@@ -1,0 +1,82 @@
+#legend {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: auto;
+  background: #3c3c3c; }
+  #legend .main {
+    display: flex;
+    text-align: center; }
+    #legend .main .overview {
+      width: 30%;
+      height: auto;
+      padding: 15px;
+      background: dimgray;
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      align-items: center; }
+      #legend .main .overview .left {
+        padding-right: 15px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly; }
+        #legend .main .overview .left .year {
+          font-size: 35px; }
+        #legend .main .overview .left .month {
+          font-size: 25px; }
+      #legend .main .overview .right {
+        background-color: #252525;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        padding: 15px;
+        cursor: pointer; }
+        #legend .main .overview .right .date {
+          font-size: 60px; }
+        #legend .main .overview .right:hover {
+          background-color: #505050; }
+    #legend .main .detail {
+      width: 60%; }
+      #legend .main .detail .detail-chinese {
+        height: 100%;
+        width: 100%;
+        background: #3a3a3a; }
+        #legend .main .detail .detail-chinese .top {
+          height: 40%;
+          display: grid;
+          align-items: center;
+          grid-column: span 2;
+          grid-template-columns: repeat(3, 33%);
+          padding: 10px;
+          font-size: 14px; }
+          #legend .main .detail .detail-chinese .top .ganzhi {
+            margin-top: 5px;
+            font-size: 12px; }
+        #legend .main .detail .detail-chinese .lower {
+          text-align: left;
+          background: #555555;
+          height: 60%;
+          padding: 10px 20px 10px 20px; }
+          #legend .main .detail .detail-chinese .lower ul {
+            list-style: none;
+            columns: 2; }
+            #legend .main .detail .detail-chinese .lower ul li {
+              margin: 2px;
+              display: block; }
+              #legend .main .detail .detail-chinese .lower ul li .list-head {
+                display: inline-block;
+                width: 20%;
+                padding: 3px; }
+              #legend .main .detail .detail-chinese .lower ul li .list-value::before {
+                content: ": ";
+                font-size: inherit; }
+  #legend .bottom {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    justify-items: center;
+    background: #252525;
+    padding: 5px;
+    cursor: pointer; }

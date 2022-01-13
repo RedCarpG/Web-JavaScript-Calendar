@@ -73,13 +73,14 @@
       text-align: center;
       letter-spacing: .7px;
       border: 1px solid #323232; }
+      #calendar .header .week-title.week-end {
+        color: #e15a5a; }
   #calendar .mon-list {
     /*overflow: hidden;*/
     opacity: 0;
     background: #323232;
     margin: 5px;
-    margin-top: 0;
-    z-index: 50; }
+    margin-top: 0; }
     #calendar .mon-list .week {
       display: grid;
       align-items: center;
@@ -87,7 +88,6 @@
       height: auto;
       grid-template-columns: repeat(7, 60px); }
       #calendar .mon-list .week .day {
-        z-index: 75;
         height: 100%;
         position: relative;
         min-height: inherit;
@@ -99,17 +99,26 @@
         align-content: space-around;
         text-align: center; }
         #calendar .mon-list .week .day.before-today {
-          background-color: rgba(0, 0, 0, 0.1);
+          background-color: rgba(25, 25, 25, 0.3);
           color: rgba(255, 255, 255, 0.2); }
+          #calendar .mon-list .week .day.before-today.week-end {
+            color: rgba(205, 97, 85, 0.3);
+            background-color: rgba(55, 15, 10, 0.3); }
         #calendar .mon-list .week .day.after-today {
-          background-color: rgba(0, 0, 0, 0.1);
+          background-color: rgba(25, 25, 25, 0.3);
           color: rgba(255, 255, 255, 0.6); }
+          #calendar .mon-list .week .day.after-today.week-end {
+            color: rgba(205, 97, 85, 0.3);
+            background-color: rgba(55, 15, 10, 0.3); }
         #calendar .mon-list .week .day.active-month {
-          background-color: #191919; }
+          background-color: rgba(25, 25, 25, 0.8); }
           #calendar .mon-list .week .day.active-month.before-today {
             color: rgba(255, 255, 255, 0.4); }
           #calendar .mon-list .week .day.active-month.after-today {
             color: rgba(255, 255, 255, 0.8); }
+          #calendar .mon-list .week .day.active-month.week-end {
+            color: rgba(205, 97, 85, 0.8);
+            background-color: rgba(55, 15, 10, 0.8); }
         #calendar .mon-list .week .day.today {
           color: rgba(255, 255, 255, 0.9);
           background-color: black;
@@ -135,12 +144,13 @@
           color: rgba(255, 80, 80, 0.8); }
         #calendar .mon-list .week .day:hover {
           background-color: #3c3c3c; }
+          #calendar .mon-list .week .day:hover.week-end {
+            background-color: #733c32; }
         #calendar .mon-list .week .day.detailed {
           border-color: #e69646; }
       #calendar .mon-list .week .detail {
         position: relative;
         grid-column: span 7;
-        z-index: 75;
         border-left: 1px solid #323232;
         border-right: 1px solid #323232;
         background: #a4a4a4; }
@@ -419,6 +429,89 @@
     padding: 0px;
     max-height: 0; } }
 
+#legend {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: auto;
+  background: #3c3c3c; }
+  #legend .main {
+    display: flex;
+    text-align: center; }
+    #legend .main .overview {
+      width: 30%;
+      height: auto;
+      padding: 15px;
+      background: dimgray;
+      display: grid;
+      grid-template-columns: repeat(2, auto);
+      align-items: center; }
+      #legend .main .overview .left {
+        padding-right: 15px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly; }
+        #legend .main .overview .left .year {
+          font-size: 35px; }
+        #legend .main .overview .left .month {
+          font-size: 25px; }
+      #legend .main .overview .right {
+        background-color: #252525;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        padding: 15px;
+        cursor: pointer; }
+        #legend .main .overview .right .date {
+          font-size: 60px; }
+        #legend .main .overview .right:hover {
+          background-color: #505050; }
+    #legend .main .detail {
+      width: 60%; }
+      #legend .main .detail .detail-chinese {
+        height: 100%;
+        width: 100%;
+        background: #3a3a3a; }
+        #legend .main .detail .detail-chinese .top {
+          height: 40%;
+          display: grid;
+          align-items: center;
+          grid-column: span 2;
+          grid-template-columns: repeat(3, 33%);
+          padding: 10px;
+          font-size: 14px; }
+          #legend .main .detail .detail-chinese .top .ganzhi {
+            margin-top: 5px;
+            font-size: 12px; }
+        #legend .main .detail .detail-chinese .lower {
+          text-align: left;
+          background: #555555;
+          height: 60%;
+          padding: 10px 20px 10px 20px; }
+          #legend .main .detail .detail-chinese .lower ul {
+            list-style: none;
+            columns: 2; }
+            #legend .main .detail .detail-chinese .lower ul li {
+              margin: 2px;
+              display: block; }
+              #legend .main .detail .detail-chinese .lower ul li .list-head {
+                display: inline-block;
+                width: 20%;
+                padding: 3px; }
+              #legend .main .detail .detail-chinese .lower ul li .list-value::before {
+                content: ": ";
+                font-size: inherit; }
+  #legend .bottom {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    justify-items: center;
+    background: #252525;
+    padding: 5px;
+    cursor: pointer; }
+
 a {
   color: #00B7FF; }
 
@@ -446,3 +539,13 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none; }
+  body .gan.jin, body .zhi.jin {
+    color: #cccc01; }
+  body .gan.mu, body .zhi.mu {
+    color: #16af16; }
+  body .gan.huo, body .zhi.huo {
+    color: red; }
+  body .gan.shui, body .zhi.shui {
+    color: #1891f3; }
+  body .gan.tu, body .zhi.tu {
+    color: #922727; }

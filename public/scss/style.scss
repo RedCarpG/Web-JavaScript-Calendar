@@ -9,6 +9,7 @@
 // @import "base/size";
 @import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
 @import "calendar/calendar";
+@import "legend/legend";
 
 a {
 	color: #00B7FF;
@@ -41,21 +42,20 @@ body {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+
+	.gan.jin, .zhi.jin {
+		color: rgb(204, 204, 1);
+	}
+	.gan.mu, .zhi.mu {
+		color: rgb(22, 175, 22);
+	}
+	.gan.huo, .zhi.huo {
+		color: red;
+	}
+	.gan.shui, .zhi.shui {
+		color: rgb(24, 145, 243);
+	}
+	.gan.tu, .zhi.tu {
+		color: rgb(146, 39, 39);
+	}
 }
-
-// #calendar {
-// 	width: 90%;
-// }
-
-
-// #bazi {
-// 	position: fixed;
-// 	right: 0;
-// 	top: 0;
-// 	bottom: 0;
-// 	width: 10%;
-	
-// 	background: rgba(255, 70, 70, 0.507);
-
-// }
-
