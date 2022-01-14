@@ -13,8 +13,10 @@
       height: auto;
       padding: 15px;
       background: dimgray;
+      display: -ms-grid;
       display: grid;
       grid-template-columns: repeat(2, auto);
+      -ms-grid-columns: repeat(2, auto);
       align-items: center; }
       #legend .main .overview .left {
         padding-right: 15px;
@@ -39,37 +41,40 @@
           background-color: #505050; }
     #legend .main .detail {
       width: 60%; }
-      #legend .main .detail .detail-chinese {
+      #legend .main .detail > .hidden {
+        display: none; }
+      #legend .main .detail > .selected {
         height: 100%;
         width: 100%;
         background: #3a3a3a; }
-        #legend .main .detail .detail-chinese .top {
+        #legend .main .detail > .selected.detail-chinese .top {
           height: 40%;
           display: grid;
           align-items: center;
+          -ms-grid-column: span 2;
           grid-column: span 2;
           grid-template-columns: repeat(3, 33%);
           padding: 10px;
           font-size: 14px; }
-          #legend .main .detail .detail-chinese .top .ganzhi {
+          #legend .main .detail > .selected.detail-chinese .top .ganzhi {
             margin-top: 5px;
             font-size: 12px; }
-        #legend .main .detail .detail-chinese .lower {
+        #legend .main .detail > .selected.detail-chinese .lower {
           text-align: left;
           background: #555555;
           height: 60%;
           padding: 10px 20px 10px 20px; }
-          #legend .main .detail .detail-chinese .lower ul {
+          #legend .main .detail > .selected.detail-chinese .lower ul {
             list-style: none;
             columns: 2; }
-            #legend .main .detail .detail-chinese .lower ul li {
+            #legend .main .detail > .selected.detail-chinese .lower ul li {
               margin: 2px;
               display: block; }
-              #legend .main .detail .detail-chinese .lower ul li .list-head {
+              #legend .main .detail > .selected.detail-chinese .lower ul li .list-head {
                 display: inline-block;
                 width: 20%;
                 padding: 3px; }
-              #legend .main .detail .detail-chinese .lower ul li .list-value::before {
+              #legend .main .detail > .selected.detail-chinese .lower ul li .list-value::before {
                 content: ": ";
                 font-size: inherit; }
   #legend .bottom {
