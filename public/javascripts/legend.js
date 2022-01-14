@@ -43,21 +43,34 @@
         date.innerText = _date.format("DD")
         day.innerText = _date.format("ddd")
 
-        let yearCh = _detail.querySelector('.year-chinese')
-        let monthCh = _detail.querySelector('.month-chinese')
-        let dayCh = _detail.querySelector('.day-chinese')
-        let yearGZ = _detail.querySelector('.year-ganzhi')
-        let monthGZ = _detail.querySelector('.month-ganzhi')
-        let dayGZ = _detail.querySelector('.day-ganzhi')
+        // According to detail class
+        let detailSelected = _detail.querySelector('.selected')
+        if (detailSelected.classList.contains('detail-chinese')) {
+            
+            let yearCh = detailSelected.querySelector('.year-chinese')
+            let monthCh = detailSelected.querySelector('.month-chinese')
+            let dayCh = detailSelected.querySelector('.day-chinese')
+            let yearGZ = detailSelected.querySelector('.year-ganzhi')
+            let monthGZ = detailSelected.querySelector('.month-ganzhi')
+            let dayGZ = detailSelected.querySelector('.day-ganzhi')
 
-        yearCh.innerText = _lunarDate.getYearInChinese() + " 年"
-        monthCh.innerText = _lunarDate.getMonthInChinese() + " 月"
-        dayCh.innerText = _lunarDate.getDayInChinese()
+            yearCh.innerText = _lunarDate.getYearInChinese() + " 年"
+            monthCh.innerText = _lunarDate.getMonthInChinese() + " 月"
+            dayCh.innerText = _lunarDate.getDayInChinese()
 
-        renderGanZhi(yearGZ, _lunarDate.getYearGan(), _lunarDate.getYearZhi())
-        renderGanZhi(monthGZ, _lunarDate.getMonthGan(), _lunarDate.getMonthZhi())
-        renderGanZhi(dayGZ, _lunarDate.getDayGan(), _lunarDate.getDayZhi())
+            renderGanZhi(yearGZ, _lunarDate.getYearGan(), _lunarDate.getYearZhi())
+            renderGanZhi(monthGZ, _lunarDate.getMonthGan(), _lunarDate.getMonthZhi())
+            renderGanZhi(dayGZ, _lunarDate.getDayGan(), _lunarDate.getDayZhi())
 
+            let shengxiao = detailSelected.querySelector('.shengxiao')
+            let xingzuo = detailSelected.querySelector('.xingzuo')
+            let xingxiu = detailSelected.querySelector('.xingxiu')
+            let sha = detailSelected.querySelector('.sha')
+            shengxiao.innerText = _lunarDate.getShengxiao()
+            xingzuo.innerText = _solarDate.getXingzuo()
+            xingxiu.innerText = _lunarDate.getXiu()
+            sha.innerText = _lunarDate.getSha()
+        }
     }
 
     _update()
