@@ -561,7 +561,14 @@ function StarItem({ star: s, layers }: { star: ZiweiStar; layers: ZiweiLayer[] }
 /** Centre-panel summary of the selected palace's 三方四正, or a hint when none is selected. */
 function SanFangSummary({ chart, active }: { chart: ReturnType<typeof buildZiwei>; active: string | null }) {
   const term = useTerm()
-  if (!active) return <p className="zc-hint muted">悬停或点按宫位，这里会列出它的{term('三方四正')}</p>
+  // Hint and summary share one fixed-height slot: if the centre grew on hover, the
+  // whole board would reflow under the pointer and the hover would flicker.
+  if (!active)
+    return (
+      <div className="zc-sf-area">
+        <p className="zc-hint muted">悬停或点按宫位，这里会列出它的{term('三方四正')}</p>
+      </div>
+    )
   const { opposite, trines } = sanFangSiZheng(active)
   const rows: [Role, string][] = [
     ['self', active],
@@ -570,22 +577,24 @@ function SanFangSummary({ chart, active }: { chart: ReturnType<typeof buildZiwei
     ['trine', trines[1]],
   ]
   return (
-    <div className="zc-sanfang">
-      <strong>{term('三方四正')}</strong>
-      {rows.map(([role, b]) => {
-        const p = chart.palaces[b]
-        return (
-          <div key={b} className={`zc-sf-row sf-${role}`}>
-            <span className="zc-sf-role">{ROLE_LABEL[role]}</span>
-            <b>{term(p.name)}</b>
-            <span className="muted">
-              {p.major.length
-                ? p.major.map((s) => term(s.name)).join(' ')
-                : `空宫，借对宫 ${chart.palaces[sanFangSiZheng(b).opposite].major.map((s) => term(s.name)).join(' ')}`}
-            </span>
-          </div>
-        )
-      })}
+    <div className="zc-sf-area">
+      <div className="zc-sanfang" key={active}>
+        <strong>{term('三方四正')}</strong>
+        {rows.map(([role, b]) => {
+          const p = chart.palaces[b]
+          return (
+            <div key={b} className={`zc-sf-row sf-${role}`}>
+              <span className="zc-sf-role">{ROLE_LABEL[role]}</span>
+              <b>{term(p.name)}</b>
+              <span className="muted">
+                {p.major.length
+                  ? p.major.map((s) => term(s.name)).join(' ')
+                  : `空宫，借对宫 ${chart.palaces[sanFangSiZheng(b).opposite].major.map((s) => term(s.name)).join(' ')}`}
+              </span>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
