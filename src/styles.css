@@ -80,6 +80,12 @@ footer { text-align: center; font-size: 13px; margin-top: 24px; }
 
 .cal-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .cal-title h2 { margin: 0; font-size: 22px; }
+.cal-pickers { display: flex; gap: 4px; }
+.cal-pickers select {
+  font: inherit; font-weight: 700; border: 1px solid transparent; border-radius: 8px; background: transparent;
+  padding: 0 4px; cursor: pointer;
+}
+.cal-pickers select:hover, .cal-pickers select:focus-visible { border-color: var(--border); background: var(--surface-2); }
 .cal-nav { display: flex; gap: 4px; }
 .cal-nav button {
   border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
