@@ -855,6 +855,8 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .star-wheel .planet { outline: none; cursor: pointer; transition: opacity 0.2s; }
 .star-wheel .aspect-line { transition: opacity 0.2s, stroke-width 0.2s; }
 .star-wheel.has-focus .planet:not(.on) { opacity: 0.25; }
+.star-wheel .outer-planet { outline: none; cursor: pointer; transition: opacity 0.2s; }
+.star-wheel.has-focus .outer-planet:not(.on) { opacity: 0.25; }
 .star-wheel.has-focus .aspect-line:not(.on) { opacity: 0.08; }
 .star-wheel.has-focus .aspect-line.on { stroke-width: 1.8; }
 .star-table tbody tr { outline: none; cursor: default; transition: background-color 0.2s; }
