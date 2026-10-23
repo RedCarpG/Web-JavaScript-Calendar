@@ -5,6 +5,7 @@ import type { SchoolSettings } from '../lib/schools'
 import { CITIES } from '../lib/solarTime'
 import { Char } from './Char'
 import { SchoolMark, SchoolSettingsPanel } from './Schools'
+import { ShenShaTip } from './ShenShaTip'
 
 interface Props {
   input: BaziInput
@@ -214,7 +215,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
                 <td key={p.label}>
                   {p.shenSha.map((s) => (
                     <div key={s.name}>
-                      {s.name}
+                      <ShenShaTip name={s.name} />
                       {s.school && <SchoolMark school={s.school} settings={schools} />}
                     </div>
                   ))}
