@@ -168,8 +168,7 @@ export function buildBazi(input: BaziInput, schools: SchoolSettings = DEFAULT_SC
   // tyme4ts selects these algorithms through static providers.
   LunarHour.provider = eightCharProviders[schools.ziHour]
   ChildLimit.provider = childLimitProviders[schools.childLimit]
-  const corrected = input.longitude == null ? undefined : toTrueSolarTime(input, input.longitude)
-  const t = corrected?.time ?? input
+  const { corrected, time: t } = effectiveTime(input)
   const time = SolarTime.fromYmdHms(t.year, t.month, t.day, t.hour, t.minute, 0)
   const lunarHour = time.getLunarHour()
   const ec = lunarHour.getEightChar()
@@ -223,8 +222,14 @@ export function buildBazi(input: BaziInput, schools: SchoolSettings = DEFAULT_SC
   }
 }
 
+/** The birth time charts are cast from: 真太阳时 when a longitude is set, else the clock time. */
+export function effectiveTime(input: BaziInput) {
+  const corrected = input.longitude == null ? undefined : toTrueSolarTime(input, input.longitude)
+  return { corrected, time: corrected?.time ?? input }
+}
+
 const pad = (n: number) => String(n).padStart(2, '0')
-const formatTime = (t: { year: number; month: number; day: number; hour: number; minute: number }) =>
+export const formatTime = (t: { year: number; month: number; day: number; hour: number; minute: number }) =>
   `${t.year}年${t.month}月${t.day}日 ${pad(t.hour)}:${pad(t.minute)}`
 
 function relationMembers(pillars: Pillar[]): RelationMember[] {

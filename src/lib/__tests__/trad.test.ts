@@ -6,7 +6,7 @@ import { toTrad } from '../trad'
 describe('繁體 terms', () => {
   // A short year span keeps this fast; name tables are still complete.
   // If this fails after adding UI terms, run `npm run gen:trad`.
-  const terms = collectTerms([2024, 2025])
+  const terms = collectTerms([2024, 2025], 40)
 
   it('matches OpenCC (plus overrides) for every displayed term', () => {
     const wrong = terms.filter((term) => toTrad(term) !== expectedTrad(term)).map((term) => `${term} → ${toTrad(term)} (expected ${expectedTrad(term)})`)

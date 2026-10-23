@@ -21,6 +21,7 @@ import { computeRelations } from '../src/lib/relations'
 import { DEFAULT_SCHOOLS } from '../src/lib/schools'
 import { CONCEPTS } from '../src/lib/glossary'
 import { SHENSHA_INFO } from '../src/lib/shenshaInfo'
+import { buildZiwei } from '../src/lib/ziwei'
 
 const STEMS = '甲乙丙丁戊己庚辛壬癸'
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥'
@@ -41,8 +42,9 @@ function literalTerms(): string[] {
 /**
  * @param years Year span for date-dependent names (festivals, solar terms,
  *   lunar month/day names). The generator uses a wide span; tests a short one.
+ * @param ziweiCharts How many sample 紫微 charts to collect star/palace names from.
  */
-export function collectTerms(years: [number, number] = [1990, 2035]): string[] {
+export function collectTerms(years: [number, number] = [1990, 2035], ziweiCharts = 300): string[] {
   const terms = new Set<string>(literalTerms())
   const add = (s: string | undefined) => s && terms.add(s)
 
@@ -79,6 +81,21 @@ export function collectTerms(years: [number, number] = [1990, 2035]): string[] {
     add(chart.zodiac)
     chart.pillars.forEach((p) => add(p.label))
   }
+  // 紫微斗数: palaces, stars, 亮度, 四化, 长生十二神, 五行局, 命主身主 from sample charts
+  for (let n = 0; n < ziweiCharts; n++) {
+    const i = n * 5
+    const day = SolarDay.fromYmd(1990, 1, 1).next(i)
+    const z = buildZiwei(
+      { year: day.getYear(), month: day.getMonth(), day: day.getDay(), hour: (i * 7) % 24, minute: 0, gender: (i % 2) as 0 | 1 },
+      DEFAULT_SCHOOLS,
+    )
+    ;[z.fiveElementsClass, z.soul, z.body, z.zodiac, z.lunarText, z.time].forEach(add)
+    for (const p of Object.values(z.palaces)) {
+      ;[p.name, p.changsheng].forEach(add)
+      for (const s of [...p.major, ...p.minor, ...p.adjective]) [s.name, s.brightness, s.mutagen].forEach(add)
+    }
+  }
+
   // Pillar tags in 刑冲合会 (年月日时 + 运/岁)
   add('年月日时运岁')
   add('大运流年流月流日')

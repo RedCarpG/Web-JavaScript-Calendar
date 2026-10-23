@@ -232,3 +232,29 @@ describe('术语说明', () => {
     expect([year.xun, year.empty]).toEqual(['甲子', '戌亥'])
   })
 })
+
+describe('紫微斗数', () => {
+  it('maps clock hours to 时辰 indexes', async () => {
+    const { timeIndex } = await import('../ziwei')
+    expect([0, 1, 2, 10, 11, 22, 23].map(timeIndex)).toEqual([0, 1, 1, 5, 6, 11, 12])
+  })
+
+  it('casts the chart (checked by hand: 命宫子, 身宫戌, 火六局)', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const z = buildZiwei(base, DEFAULT_SCHOOLS) // 1990-05-15 10:30 巳时 男
+    expect(z.chineseDate).toBe('庚午 辛巳 庚辰 辛巳') // same 四柱 as the bazi chart
+    expect(z.palaces['子'].isSoul).toBe(true)
+    expect(z.palaces['戌'].isBody).toBe(true)
+    expect(z.fiveElementsClass).toBe('火六局')
+    // 庚年四化: 太阳禄 武曲权 太阴科 天同忌
+    const mutagens = Object.values(z.palaces).flatMap((p) => p.major.filter((s) => s.mutagen).map((s) => s.name + s.mutagen))
+    expect(mutagens.sort()).toEqual(['天同忌', '太阳禄', '太阴科', '武曲权'].sort())
+  })
+
+  it('places every palace on the board once', async () => {
+    const { BOARD, buildZiwei } = await import('../ziwei')
+    const z = buildZiwei(base, DEFAULT_SCHOOLS)
+    expect(Object.keys(z.palaces).sort()).toEqual(Object.keys(BOARD).sort())
+    expect(new Set(Object.values(BOARD).map(String)).size).toBe(12)
+  })
+})
