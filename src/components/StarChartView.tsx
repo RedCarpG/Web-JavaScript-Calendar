@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { ASPECT_INFO, HOUSE_INFO, PLANET_INFO, SIGN_INFO } from '../lib/astroInfo'
 import {
   BODY_INFO,
@@ -7,6 +7,11 @@ import {
   SIGN_GLYPHS,
   SIGNS,
   buildStarChart,
+  progressions,
+  toUtc,
+  transits,
+  type Overlay,
+  type OverlayKind,
   formatCoords,
   formatLon,
   formatOffset,
@@ -36,6 +41,18 @@ interface Props {
 /** 西洋占星 natal chart: the shared birth form, a birthplace, the wheel and the tables. */
 export function StarChartView({ input, onChange, place, onPlaceChange, settings, onSettingsChange }: Props) {
   const chart = useMemo(() => buildStarChart(input, place, settings), [input, place, settings])
+  // 行运 / 推运: a moment to compare with the natal chart, read in the birthplace's time zone.
+  const [mode, setMode] = useState<'natal' | OverlayKind>('natal')
+  const [when, setWhen] = useState(nowLocal)
+  const overlay = useMemo<Overlay | null>(() => {
+    if (mode === 'natal') return null
+    const [y, m, d] = when.date.split('-').map(Number)
+    const [hh, mm] = when.time.split(':').map(Number)
+    if (!y || !m || !d) return null
+    const target = toUtc({ year: y, month: m, day: d, hour: hh || 0, minute: mm || 0 }, place.timeZone).date
+    if (target.getTime() <= chart.utc.getTime()) return null
+    return mode === 'transit' ? transits(chart, target, settings) : progressions(chart, target, settings)
+  }, [mode, when, chart, place.timeZone, settings])
   const byKey = (k: ChartPoint['key']) => chart.points.find((p) => p.key === k)!
   const sun = byKey('sun')
   const moon = byKey('moon')
@@ -75,13 +92,51 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
           })}
         </div>
         <p className="muted row-note star-meta">
-          {place.name}（{formatCoords(place.latitude, place.longitude)}）· 按出生地时间 {formatOffset(chart.offsetMinutes)}
+          {place.name}（{formatCoords(place.latitude, place.longitude)}）· 按出生地时间{' '}
+          {formatOffset(chart.offsetMinutes)}
           {chart.dst && '（当时实行夏令时，已换算）'} · 回归黄道 ·{' '}
           {STAR_SCHOOLS.houses.options.find((o) => o.value === settings.houses)?.label}
           {chart.housesFallback && '（极圈内无法使用普拉西度，已改用等宫制）'}
         </p>
+        <div className="overlay-bar">
+          <div className="seg small" role="group" aria-label="比较盘">
+            {(
+              [
+                ['natal', '本命'],
+                ['transit', '行运'],
+                ['progressed', '推运'],
+              ] as const
+            ).map(([v, label]) => (
+              <button key={v} className={mode === v ? 'on' : undefined} onClick={() => setMode(v)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {mode !== 'natal' && (
+            <>
+              <input
+                type="date"
+                aria-label="日期"
+                value={when.date}
+                min="1900-01-01"
+                max="2100-12-31"
+                onChange={(e) => e.target.value && setWhen({ ...when, date: e.target.value })}
+              />
+              <input
+                type="time"
+                aria-label="时间"
+                value={when.time}
+                onChange={(e) => e.target.value && setWhen({ ...when, time: e.target.value })}
+              />
+              <button type="button" className="ghost" onClick={() => setWhen(nowLocal())}>
+                现在
+              </button>
+            </>
+          )}
+        </div>
+        {mode !== 'natal' && !overlay && <p className="muted row-note">请选择出生之后的日期。</p>}
         <div className="star-layout">
-          <StarWheel chart={chart} />
+          <StarWheel chart={chart} overlay={overlay} />
           <div className="star-tables">
             <table className="star-table">
               <thead>
@@ -130,6 +185,8 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         </div>
       </section>
 
+      {overlay && <OverlayCard overlay={overlay} timeZone={place.timeZone} />}
+
       <section className="card">
         <h3 className="section-title">宫位</h3>
         <div className="house-grid">
@@ -163,7 +220,8 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         <p className="muted row-note">
           容许度：合、冲 8°，刑、拱 7°，六合 5°，涉及日月再加 2°。星体位置由{' '}
           <a href="https://github.com/cosinekitty/astronomy">astronomy-engine</a> 计算（误差约 1′）·{' '}
-          <a href="https://github.com/RedCarpG/web-paipan-ChroniQ/blob/main/docs/schools.md#星盘">宫位制说明</a> · 仅供参考
+          <a href="https://github.com/RedCarpG/web-paipan-ChroniQ/blob/main/docs/schools.md#星盘">宫位制说明</a> ·
+          仅供参考
         </p>
       </section>
     </div>
@@ -266,12 +324,14 @@ const R_HOUSE = 146
 const R_PLANET = 124
 const R_DEG = 104
 const R_ASPECT = 90
+const R_OUTER = 228
+const R_OUTER_PLANET = 213
 
 /**
  * Traditional orientation: the ascendant at nine o'clock, signs running
  * counter-clockwise, so houses 1–6 sit below the horizon.
  */
-function StarWheel({ chart }: { chart: StarChart }) {
+function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | null }) {
   const at = (lon: number, r: number) => {
     const d = ((lon - chart.asc) * Math.PI) / 180
     return [C - r * Math.cos(d), C + r * Math.sin(d)] as const
@@ -285,10 +345,30 @@ function StarWheel({ chart }: { chart: StarChart }) {
     return `M${x1},${y1} A${r1},${r1} 0 0 0 ${x2},${y2} L${x3},${y3} A${r2},${r2} 0 0 1 ${x4},${y4}Z`
   }
   const planets = chart.points.filter((p) => p.key !== 'asc' && p.key !== 'mc')
-  const shown = spread(planets.map((p) => p.lon), 7.5)
+  const shown = spread(
+    planets.map((p) => p.lon),
+    7.5,
+  )
+  // With 行运 / 推运, their bodies sit on an outer ring and the lines show their aspects to the natal chart.
+  const outer = overlay?.points.filter((p) => p.key !== 'southNode') ?? []
+  const outerShown = spread(
+    outer.map((p) => p.lon),
+    7,
+  )
+  const angles = new Set(['asc', 'mc'])
+  const lines = overlay
+    ? overlay.aspects.filter((a) => a.type.key !== 'conjunction' && !angles.has(a.a.key) && !angles.has(a.b.key))
+    : chart.aspects.filter((a) => a.type.key !== 'conjunction' && !angles.has(a.a.key) && !angles.has(a.b.key))
+  const pad = overlay ? 34 : 0
 
   return (
-    <svg className="star-wheel" viewBox="0 0 400 400" role="img" aria-label="星盘">
+    <svg
+      className={`star-wheel${overlay ? ` with-${overlay.kind}` : ''}`}
+      viewBox={`${-pad} ${-pad} ${400 + pad * 2} ${400 + pad * 2}`}
+      role="img"
+      aria-label="星盘"
+    >
+      {overlay && <circle cx={C} cy={C} r={R_OUTER} className="outer-band" />}
       {SIGNS.map((name, i) => {
         const el = SIGN_ELEMENT[i]
         const [gx, gy] = at(i * 30 + 15, (R_OUT + R_SIGN) / 2)
@@ -316,7 +396,7 @@ function StarWheel({ chart }: { chart: StarChart }) {
         const [x1, y1] = at(c, R_ASPECT)
         const [x2, y2] = at(c, R_SIGN)
         const next = chart.cusps[(i + 1) % 12]
-        const mid = c + (((next - c + 360) % 360) || 30) / 2
+        const mid = c + ((next - c + 360) % 360 || 30) / 2
         const [nx, ny] = at(mid, (R_SIGN + R_HOUSE) / 2)
         return (
           <g key={i}>
@@ -336,29 +416,27 @@ function StarWheel({ chart }: { chart: StarChart }) {
           </text>
         )
       })}
-      {chart.aspects
-        .filter((a) => a.type.key !== 'conjunction' && a.a.key !== 'asc' && a.a.key !== 'mc' && a.b.key !== 'asc' && a.b.key !== 'mc')
-        .map((a) => {
-          const [x1, y1] = at(a.a.lon, R_ASPECT)
-          const [x2, y2] = at(a.b.lon, R_ASPECT)
-          return (
-            <line
-              key={a.a.key + a.b.key}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              className={`aspect-line tone-${a.type.tone}`}
-              strokeOpacity={Math.max(0.25, 1 - a.orb / 8)}
-            >
-              <title>
-                {a.a.name}
-                {a.type.name}
-                {a.b.name}（{a.orb.toFixed(1)}°）
-              </title>
-            </line>
-          )
-        })}
+      {lines.map((a) => {
+        const [x1, y1] = at(a.a.lon, R_ASPECT)
+        const [x2, y2] = at(a.b.lon, R_ASPECT)
+        return (
+          <line
+            key={a.a.key + a.b.key}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            className={`aspect-line tone-${a.type.tone}`}
+            strokeOpacity={Math.max(0.25, 1 - a.orb / (overlay ? 2.5 : 8))}
+          >
+            <title>
+              {a.a.name}
+              {a.type.name}
+              {a.b.name}（{a.orb.toFixed(1)}°）
+            </title>
+          </line>
+        )
+      })}
       {planets.map((p, i) => {
         const [tx, ty] = at(p.lon, R_HOUSE)
         const [lx, ly] = at(p.lon, R_HOUSE - 5)
@@ -376,6 +454,31 @@ function StarWheel({ chart }: { chart: StarChart }) {
             </text>
             <text x={dx} y={dy} className="planet-deg" textAnchor="middle" dominantBaseline="central">
               {Math.floor(p.lon % 30)}°{p.retrograde ? '℞' : ''}
+            </text>
+          </g>
+        )
+      })}
+      {outer.map((p, i) => {
+        const [tx, ty] = at(p.lon, R_OUT)
+        const [lx, ly] = at(p.lon, R_OUT + 5)
+        const [px, py] = at(outerShown[i], R_OUTER_PLANET)
+        const isAngle = angles.has(p.key)
+        return (
+          <g key={p.key} className="outer-planet">
+            <title>
+              {overlay!.kind === 'transit' ? '行运' : '推运'}
+              {p.name} {formatLon(p.lon)}
+              {p.retrograde ? ' 逆行' : ''} · 本命第{p.house}宫
+            </title>
+            <line x1={tx} y1={ty} x2={lx} y2={ly} className="planet-tick" />
+            <text
+              x={px}
+              y={py}
+              className={isAngle ? 'outer-angle' : 'planet-glyph-svg'}
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
+              {isAngle ? (p.key === 'asc' ? 'AC' : 'MC') : p.glyph}
             </text>
           </g>
         )
@@ -405,4 +508,84 @@ function spread(lons: number[], gap: number): number[] {
   const out: number[] = []
   for (const o of order) out[o.i] = o.d
   return out
+}
+
+/** Today, now, as date / time input values (browser local time). */
+function nowLocal() {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return {
+    date: `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`,
+    time: `${p(d.getHours())}:${p(d.getMinutes())}`,
+  }
+}
+
+/** 行运 / 推运 positions and their aspects to the natal chart. */
+function OverlayCard({ overlay: o, timeZone }: { overlay: Overlay; timeZone: string }) {
+  const label = o.kind === 'transit' ? '行运' : '推运'
+  const fmt = (d: Date) =>
+    new Intl.DateTimeFormat('zh-CN', { timeZone, dateStyle: 'medium', timeStyle: 'short' }).format(d)
+  return (
+    <section className={`card overlay-card is-${o.kind}`}>
+      <h3 className="section-title">
+        {label} · {fmt(o.target)}
+      </h3>
+      <p className="muted row-note">
+        {o.kind === 'transit'
+          ? `此刻行星在天上的位置（${o.age.toFixed(1)} 岁），对照本命盘看它们落在哪一宫、与本命星体形成什么相位。`
+          : `二次推运：出生后一天对应人生一年。${o.age.toFixed(1)} 岁对应 ${fmt(o.progressedUtc!)} 的天象，上升、天顶按流派设置推进。`}
+        容许度 {o.kind === 'transit' ? '2°' : '1°'}。
+      </p>
+      <div className="star-layout">
+        <table className="star-table">
+          <thead>
+            <tr>
+              <th>{label}</th>
+              <th>位置</th>
+              <th>本命宫</th>
+            </tr>
+          </thead>
+          <tbody>
+            {o.points.map((p) => (
+              <tr key={p.key}>
+                <td>
+                  <span className="planet-glyph">{p.key === 'asc' || p.key === 'mc' ? '' : p.glyph}</span>
+                  <InfoTip label={p.name} title={p.name}>
+                    <span>{PLANET_INFO[p.key]}</span>
+                  </InfoTip>
+                  {p.retrograde && <span className="retro">℞</span>}
+                </td>
+                <td className={`el-${SIGN_ELEMENT[p.sign]}`}>{formatLon(p.lon)}</td>
+                <td>
+                  <InfoTip label={String(p.house)} title={`第${p.house}宫`}>
+                    <span>{HOUSE_INFO[p.house - 1]}</span>
+                  </InfoTip>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div>
+          <h4 className="overlay-subtitle">与本命的相位</h4>
+          {o.aspects.length === 0 ? (
+            <p className="muted">容许度内没有相位。</p>
+          ) : (
+            <div className="aspect-list">
+              {o.aspects.map((a) => (
+                <span key={a.a.key + a.b.key} className={`aspect-chip tone-${a.type.tone}`}>
+                  {label}
+                  {a.a.name}
+                  <InfoTip className="plain" label={`${a.type.glyph}${a.type.name}`} title={`${a.type.name}相`}>
+                    <span>{ASPECT_INFO[a.type.key]}</span>
+                  </InfoTip>
+                  本命{a.b.name}
+                  <small>{a.orb.toFixed(2)}°</small>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
 }

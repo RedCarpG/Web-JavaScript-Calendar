@@ -133,3 +133,44 @@ describe('星盘 overseas places', () => {
     }
   })
 })
+
+describe('星盘 行运 and 推运', () => {
+  const ulm = { name: 'Ulm', latitude: 48.4, longitude: 10, timeZone: 'UTC' }
+  const natal = { ...einstein, offsetMinutes: 0, dst: false, place: ulm }
+
+  it('places transiting planets for a moment, in the natal houses', async () => {
+    const { transits } = await import('../astrology')
+    // J2000.0: the Sun's apparent longitude is about 280.37° (摩羯 10°22′)
+    const t = transits(natal, new Date(Date.UTC(2000, 0, 1, 12)), DEFAULT_STAR_SETTINGS)
+    const sun = t.points.find((p) => p.key === 'sun')!
+    expect(formatLon(sun.lon)).toMatch(/^摩羯 10°2/)
+    expect(sun.house).toBe(houseOf(sun.lon, einstein.cusps))
+    expect(t.age).toBeCloseTo(120.8, 1)
+    for (const a of t.aspects) expect(a.orb).toBeLessThanOrEqual(2)
+  })
+
+  it('progresses one day per year of life', async () => {
+    const { progressions } = await import('../astrology')
+    const target = new Date(einstein.utc.getTime() + 30 * 365.24219 * 86400000)
+    const p = progressions(natal, target, DEFAULT_STAR_SETTINGS)
+    expect(p.age).toBeCloseTo(30, 9)
+    expect((p.progressedUtc!.getTime() - einstein.utc.getTime()) / 86400000).toBeCloseTo(30, 6)
+    const sun = p.points.find((x) => x.key === 'sun')!.lon
+    const arc = (sun - at('sun').lon + 360) % 360 // 双鱼 23° → 白羊, across 0°
+    expect(arc).toBeGreaterThan(29)
+    expect(arc).toBeLessThan(31)
+    // Solar arc: the MC moves exactly as far as the progressed Sun
+    expect(p.points.find((x) => x.key === 'mc')!.lon).toBeCloseTo((einstein.mc + arc) % 360, 6)
+    // Naibod: 0.98564736° per year
+    const n = progressions(natal, target, { ...DEFAULT_STAR_SETTINGS, progAngles: 'naibod' })
+    expect(n.points.find((x) => x.key === 'mc')!.lon).toBeCloseTo((einstein.mc + 30 * 0.98564736) % 360, 6)
+    for (const a of p.aspects) expect(a.orb).toBeLessThanOrEqual(1)
+  })
+
+  it('starts the progressed angles at the natal ones', async () => {
+    const { progressions } = await import('../astrology')
+    const p = progressions(natal, new Date(einstein.utc.getTime() + 1000), DEFAULT_STAR_SETTINGS)
+    expect(p.points.find((x) => x.key === 'asc')!.lon).toBeCloseTo(einstein.asc, 3)
+    expect(p.points.find((x) => x.key === 'mc')!.lon).toBeCloseTo(einstein.mc, 3)
+  })
+})

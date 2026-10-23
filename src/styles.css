@@ -820,3 +820,17 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .aspect-chip.tone-soft .tip-label { color: var(--water); font-weight: 600; }
 .aspect-chip.tone-hard .tip-label { color: var(--bad); font-weight: 600; }
 .aspect-chip.tone-major .tip-label { color: var(--accent); font-weight: 600; }
+/* 行运 / 推运 */
+.overlay-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.overlay-bar input { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.overlay-bar .ghost { margin-left: 0; height: 32px; font-size: 13px; }
+.star-wheel.with-transit { --overlay: var(--ly-yearly); }
+.star-wheel.with-progressed { --overlay: var(--ly-decadal); }
+.star-wheel .outer-band { fill: color-mix(in srgb, var(--overlay) 7%, transparent); stroke: var(--overlay); stroke-opacity: 0.4; }
+.star-wheel .outer-planet { color: var(--overlay); }
+.star-wheel .outer-angle { font-size: 9px; font-weight: 700; fill: var(--overlay); }
+.overlay-card.is-transit { border-color: color-mix(in srgb, var(--ly-yearly) 45%, var(--border)); }
+.overlay-card.is-progressed { border-color: color-mix(in srgb, var(--ly-decadal) 45%, var(--border)); }
+.overlay-card.is-transit .section-title { color: var(--ly-yearly); }
+.overlay-card.is-progressed .section-title { color: var(--ly-decadal); }
+.overlay-subtitle { margin: 0 0 6px; font-size: 14px; }

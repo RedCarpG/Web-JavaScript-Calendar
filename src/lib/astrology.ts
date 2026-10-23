@@ -237,6 +237,35 @@ export function houseOf(lon: number, cusps: number[]): number {
   return 1
 }
 
+function makePoint(key: ChartPoint['key'], name: string, glyph: string, l: number, cusps: number[], speed?: number): ChartPoint {
+  return {
+    key,
+    name,
+    glyph,
+    lon: norm(l),
+    speed,
+    retrograde: speed != null && speed < 0,
+    sign: Math.floor(norm(l) / 30),
+    house: houseOf(norm(l), cusps),
+  }
+}
+
+/** Planets and nodes at an instant, placed in the given houses. */
+function bodiesAt(utc: Date, settings: StarSettings, cusps: number[]): ChartPoint[] {
+  const t = A.MakeTime(utc)
+  const before = A.MakeTime(new Date(utc.getTime() - 43200000))
+  const after = A.MakeTime(new Date(utc.getTime() + 43200000))
+  const points = PLANETS.map(([key, body]) => {
+    // Degrees moved over the surrounding day; negative means retrograde.
+    const speed = norm(bodyLon(body, after) - bodyLon(body, before) + 180) - 180
+    return makePoint(key, BODY_INFO[key].name, BODY_INFO[key].glyph, bodyLon(body, t), cusps, speed)
+  })
+  const node = nodeLon(t, settings.node)
+  points.push(makePoint('node', BODY_INFO.node.name, BODY_INFO.node.glyph, node, cusps))
+  points.push(makePoint('southNode', BODY_INFO.southNode.name, BODY_INFO.southNode.glyph, node + 180, cusps))
+  return points
+}
+
 /** Chart for a UTC instant at a latitude / east longitude. */
 export function computeChart(
   utc: Date,
@@ -251,29 +280,9 @@ export function computeChart(
   const asc = norm(atan2d(cosd(ramc), -(sind(ramc) * cosd(eps) + tand(lat) * sind(eps))))
   const cusps = houseCusps(settings.houses, asc, mc, ramc, eps, lat)
 
-  const point = (key: ChartPoint['key'], name: string, glyph: string, l: number, speed?: number): ChartPoint => ({
-    key,
-    name,
-    glyph,
-    lon: norm(l),
-    speed,
-    retrograde: speed != null && speed < 0,
-    sign: Math.floor(norm(l) / 30),
-    house: houseOf(norm(l), cusps),
-  })
-  const before = A.MakeTime(new Date(utc.getTime() - 43200000))
-  const after = A.MakeTime(new Date(utc.getTime() + 43200000))
-  const points: ChartPoint[] = PLANETS.map(([key, body]) => {
-    const l = bodyLon(body, t)
-    // Degrees moved over the surrounding day; negative means retrograde.
-    const speed = norm(bodyLon(body, after) - bodyLon(body, before) + 180) - 180
-    return point(key, BODY_INFO[key].name, BODY_INFO[key].glyph, l, speed)
-  })
-  const node = nodeLon(t, settings.node)
-  points.push(point('node', BODY_INFO.node.name, BODY_INFO.node.glyph, node))
-  points.push(point('southNode', BODY_INFO.southNode.name, BODY_INFO.southNode.glyph, node + 180))
-  points.push(point('asc', '上升', 'ASC', asc))
-  points.push(point('mc', '天顶', 'MC', mc))
+  const points = bodiesAt(utc, settings, cusps)
+  points.push(makePoint('asc', '上升', 'ASC', asc, cusps))
+  points.push(makePoint('mc', '天顶', 'MC', mc, cusps))
 
   // Aspects between planets and the angles; the nodes are left out.
   const aspectable = points.filter((p) => p.key !== 'node' && p.key !== 'southNode')
@@ -317,5 +326,91 @@ export function buildStarChart(
     offsetMinutes,
     dst: offsetMinutes > standard,
     place,
+  }
+}
+
+/* ---------- 行运与推运 ---------- */
+
+export type OverlayKind = 'transit' | 'progressed'
+
+export interface Overlay {
+  kind: OverlayKind
+  /** The moment the overlay is for (the chosen date) */
+  target: Date
+  /** For progressions: the ephemeris instant used (birth + one day per year of life) */
+  progressedUtc?: Date
+  /** Years of life at the target date */
+  age: number
+  /** Overlay bodies (and progressed angles); house = natal house they fall in */
+  points: ChartPoint[]
+  /** Overlay body (a) to natal point (b) */
+  aspects: Aspect[]
+}
+
+/** Orbs for overlay-to-natal aspects: transits are read tightly, progressions tighter still. */
+export const OVERLAY_ORB: Record<OverlayKind, number> = { transit: 2, progressed: 1 }
+const TROPICAL_YEAR_MS = 365.24219 * 86400000
+/** Naibod rate: the Sun's mean daily motion, in degrees per year of life */
+const NAIBOD = 0.98564736
+
+/** Aspects from overlay points to natal points (planets and angles, no nodes). */
+function crossAspects(over: ChartPoint[], natal: ChartPoint[], orb: number): Aspect[] {
+  const usable = (p: ChartPoint) => p.key !== 'node' && p.key !== 'southNode'
+  const out: Aspect[] = []
+  for (const a of over.filter(usable)) {
+    for (const b of natal.filter(usable)) {
+      const sep = Math.abs(norm(a.lon - b.lon + 180) - 180)
+      for (const type of ASPECTS) {
+        const d = Math.abs(sep - type.angle)
+        if (d <= orb) {
+          out.push({ a, b, type, orb: d })
+          break
+        }
+      }
+    }
+  }
+  return out.sort((x, y) => x.orb - y.orb)
+}
+
+/** 行运: where the planets are at target, against the natal chart. */
+export function transits(natal: StarChart, target: Date, settings: StarSettings): Overlay {
+  const points = bodiesAt(target, settings, natal.cusps)
+  return {
+    kind: 'transit',
+    target,
+    age: (target.getTime() - natal.utc.getTime()) / TROPICAL_YEAR_MS,
+    points,
+    aspects: crossAspects(points, natal.points, OVERLAY_ORB.transit),
+  }
+}
+
+/**
+ * 推运 (secondary progressions): the sky one day after birth stands for the
+ * first year of life, two days for the second, and so on. The angles move by
+ * solar arc (the progressed Sun's advance) or at the Naibod rate.
+ */
+export function progressions(natal: StarChart, target: Date, settings: StarSettings): Overlay {
+  const age = (target.getTime() - natal.utc.getTime()) / TROPICAL_YEAR_MS
+  const progressedUtc = new Date(natal.utc.getTime() + age * 86400000)
+  const points = bodiesAt(progressedUtc, settings, natal.cusps)
+  const natalSun = natal.points.find((p) => p.key === 'sun')!.lon
+  const progSun = points.find((p) => p.key === 'sun')!.lon
+  const arc = settings.progAngles === 'naibod' ? age * NAIBOD : norm(progSun - natalSun + 180) - 180
+  const mc = norm(natal.mc + arc)
+  // The ascendant that goes with the progressed MC at the birth latitude.
+  const t = A.MakeTime(natal.utc)
+  const eps = A.e_tilt(t).tobl
+  const ramc = norm(atan2d(sind(mc) * cosd(eps), cosd(mc)))
+  const lat = natal.place.latitude
+  const asc = norm(atan2d(cosd(ramc), -(sind(ramc) * cosd(eps) + tand(lat) * sind(eps))))
+  points.push(makePoint('asc', '上升', 'ASC', asc, natal.cusps))
+  points.push(makePoint('mc', '天顶', 'MC', mc, natal.cusps))
+  return {
+    kind: 'progressed',
+    target,
+    progressedUtc,
+    age,
+    points,
+    aspects: crossAspects(points, natal.points, OVERLAY_ORB.progressed),
   }
 }

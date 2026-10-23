@@ -7,9 +7,11 @@ export interface StarSettings {
   houses: 'placidus' | 'whole' | 'equal'
   /** 月交点 */
   node: 'true' | 'mean'
+  /** 推运上升 / 天顶的推法 */
+  progAngles: 'solarArc' | 'naibod'
 }
 
-export const DEFAULT_STAR_SETTINGS: StarSettings = { houses: 'placidus', node: 'true' }
+export const DEFAULT_STAR_SETTINGS: StarSettings = { houses: 'placidus', node: 'true', progAngles: 'solarArc' }
 
 export const STAR_SCHOOLS: {
   [K in keyof StarSettings]: { title: string; summary: string; options: { value: StarSettings[K]; label: string; source: string }[] }
@@ -29,6 +31,14 @@ export const STAR_SCHOOLS: {
     options: [
       { value: 'true', label: '真交点（True Node）', source: '按月球瞬时轨道计算，多数现代软件默认' },
       { value: 'mean', label: '平交点（Mean Node）', source: '按平均运动计算，较早的星历与部分流派使用' },
+    ],
+  },
+  progAngles: {
+    title: '推运天顶',
+    summary: '二次推运中，上升与天顶怎样随年龄推进。行星的推运位置不受影响。',
+    options: [
+      { value: 'solarArc', label: '太阳弧（Solar Arc）', source: '天顶前进的度数等于推运太阳走过的弧度，较常用' },
+      { value: 'naibod', label: 'Naibod 平均弧', source: '每年按太阳平均日行 0°59′08″ 推进' },
     ],
   },
 }
