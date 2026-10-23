@@ -79,6 +79,7 @@ export function collectTerms(years: [number, number] = [1990, 2035]): string[] {
   }
   // Pillar tags in 刑冲合会 (年月日时 + 运/岁)
   add('年月日时运岁')
+  add('大运流年流月流日')
 
   // 刑冲合会: every pair, plus full trios, under both 午未 settings
   for (const wuWei of ['土', '火'] as const) {

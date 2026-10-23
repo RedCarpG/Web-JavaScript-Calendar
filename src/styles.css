@@ -465,3 +465,28 @@ button.fortune:hover { background: var(--surface-2); }
   .week-day .num { grid-row: 2 / span 3; }
   .year-view { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
 }
+
+/* ---------- 岁运：可折叠的大运 / 流年 / 流月 / 流日 ---------- */
+.fortunes-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.fortunes-head h3, .section-title { margin: 0; font-size: 16px; }
+.fortunes-head .ghost { margin-left: 0; height: 32px; font-size: 13px; }
+.fortune-group { border-top: 1px solid var(--border); }
+.fortune-toggle {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 2px;
+  border: 0; background: none; text-align: left;
+}
+.fortune-toggle:hover .fortune-title { color: var(--accent); }
+.chev { display: inline-block; width: 12px; color: var(--muted); transition: transform 0.15s; }
+.fortune-group.open .chev { transform: rotate(90deg); }
+.fortune-title { font-weight: 600; font-size: 15px; }
+.fortune-summary { font-size: 13px; }
+.fortune-body { padding: 0 0 12px; }
+.fortunes .row-note, .row-note { margin: 0 0 8px; font-size: 13px; }
+.fortune-row.months { grid-template-columns: repeat(12, minmax(52px, 1fr)); }
+.fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); }
+
+/* ---------- 岁运盘 ---------- */
+.section-title + .row-note { margin-top: 4px; }
+.table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.table-scroll .pillars { min-width: 640px; }
+.pillars th.divider, .pillars td.divider { border-left: 2px solid var(--border); }
