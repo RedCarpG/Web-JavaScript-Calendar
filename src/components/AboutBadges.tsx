@@ -29,7 +29,7 @@ export function AboutBadges() {
       {open && (
         <div id="about-panel" className="about-panel" role="dialog" aria-label="About">
           <strong className="about-title">
-            {term('时契')} <span className="muted">ChroniQ</span>
+            星曆 <span className="muted">ChroniQ</span>
           </strong>
           <p>中国传统历法与命理排盘的网页工具，打开即用，不需要注册。</p>
           <ul>
