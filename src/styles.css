@@ -15,6 +15,10 @@
   --metal: #c09a2a;
   --water: #2d6cb5;
   --weekend: #fcf5f2;
+  /* 紫微运限 layers: 大限, 流年, 流月 */
+  --ly-decadal: #23838a;
+  --ly-yearly: #c0661a;
+  --ly-monthly: #5a62c2;
   --radius: 14px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
   color-scheme: light;
@@ -40,6 +44,9 @@
     --metal: #e3c25c;
     --water: #6aa5ea;
     --weekend: #2a201d;
+    --ly-decadal: #5cc2c7;
+    --ly-yearly: #eb9a4f;
+    --ly-monthly: #959bf0;
     --shadow: none;
     color-scheme: dark;
   }
@@ -61,6 +68,9 @@
   --metal: #e3c25c;
   --water: #6aa5ea;
   --weekend: #2a201d;
+  --ly-decadal: #5cc2c7;
+  --ly-yearly: #eb9a4f;
+  --ly-monthly: #959bf0;
   --shadow: none;
   color-scheme: dark;
 }
@@ -514,10 +524,11 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .rel.hl-target { border-radius: 999px; }
 
 /* ---------- 紫微斗数命盘 ---------- */
-.ziwei-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+/* The board sizes itself to this container; below 250px it scrolls instead of squashing. */
+.ziwei-scroll { container: zw / inline-size; overflow-x: auto; }
 .ziwei-board {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(150px, auto));
-  min-width: 640px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--border); gap: 1px;
+  min-width: 250px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--border); gap: 1px;
 }
 .palace {
   position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
@@ -526,11 +537,21 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .palace.soul { background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .palace-stars { display: flex; flex-direction: column; gap: 4px; }
 .stars-major, .stars-minor { display: flex; flex-wrap: wrap; gap: 2px 8px; }
-.stars-major .star-name { font-size: 15px; font-weight: 700; color: var(--accent); }
+.stars-major .star-name { font-size: 15px; font-weight: 700; }
+/* 星曜配色: 按五行 uses the .el-* colours on each star; 按吉凶 overrides them */
+.color-luck .star-name.luck-major { color: var(--text); }
+.color-luck .star-name.luck-good { color: var(--good); }
+.color-luck .star-name.luck-bad { color: var(--bad); }
+.color-luck .star-name.luck-neutral { color: var(--muted); }
+.zc-legend .luck-major { font-weight: 700; }
+.zc-legend .luck-good { color: var(--good); }
+.zc-legend .luck-bad { color: var(--bad); }
+.zc-legend [class^='el-'], .zc-legend [class^='luck-'] { font-weight: 700; }
 .stars-minor .star-name { font-size: 13px; font-weight: 600; }
 .star-item { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
 .star-bright { font-size: 10px; color: var(--muted); }
 .stars-adj { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.stars-adj .star-name { font-weight: 400; color: inherit; }
 .mutagen {
   display: inline-block; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 3px; border-radius: 4px; color: #fff;
 }
@@ -553,7 +574,50 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .zc-title span { font-size: 15px; color: var(--accent); font-weight: 600; }
 .ziwei-center .kv { font-size: 13px; }
 .zc-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+/* 运限 layers: 四化 badges and tags take the layer colour, 流耀 its text colour */
+.lm-decadal { background: var(--ly-decadal); color: #fff; }
+.lm-yearly { background: var(--ly-yearly); color: #fff; }
+.lm-monthly { background: var(--ly-monthly); color: #fff; }
+.fl-decadal { color: var(--ly-decadal); }
+.fl-yearly { color: var(--ly-yearly); }
+.fl-monthly { color: var(--ly-monthly); }
+.zc-legend .mutagen.lm-decadal, .zc-legend .mutagen.lm-yearly, .zc-legend .mutagen.lm-monthly { padding: 2px 5px; }
+.stars-flow { display: flex; flex-wrap: wrap; gap: 0 5px; font-size: 11px; font-weight: 600; line-height: 1.5; }
+.layer-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; margin-top: auto; }
+.layer-tag { font-size: 10px; line-height: 1; padding: 2px 4px; border-radius: 4px; animation: tip-in 0.2s ease-out; }
+/* A layer's 命宫 gets a ring in the layer colour */
+.layer-tag.soul { font-weight: 800; }
+.layer-tag.soul.lm-decadal { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-decadal); }
+.layer-tag.soul.lm-yearly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-yearly); }
+.layer-tag.soul.lm-monthly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-monthly); }
+.fortune-row.decades { grid-template-columns: repeat(12, minmax(60px, 1fr)); }
+.fortunes-head .seg { flex-shrink: 0; }
+.fortune strong { font-size: 15px; }
+.zw-legends { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
 .ziwei-credit { margin: 10px 0 0; }
+/* 三方四正: the hovered palace, its 对宫 and 三合 stay lit; lines join them across the centre */
+.ziwei-board { position: relative; }
+.palace { outline: none; cursor: pointer; transition: opacity 0.2s, box-shadow 0.2s; }
+.sf-active .palace:not(.sf-self, .sf-opposite, .sf-trine) { opacity: 0.4; }
+.palace.sf-self { box-shadow: inset 0 0 0 2px var(--accent); }
+.palace.sf-opposite, .palace.sf-trine { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+.sf-tag {
+  position: absolute; right: 8px; bottom: 28px; font-size: 10px; line-height: 1; padding: 2px 5px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); animation: tip-in 0.2s ease-out;
+}
+.sf-self .sf-tag { background: var(--accent); color: #fff; }
+.sf-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; animation: tip-in 0.25s ease-out; }
+.sf-lines polygon, .sf-lines line {
+  fill: color-mix(in srgb, var(--accent) 5%, transparent); stroke: var(--accent); stroke-width: 1.5;
+  stroke-opacity: 0.55; vector-effect: non-scaling-stroke;
+}
+.sf-lines line { stroke-dasharray: 5 4; }
+.tip.plain .tip-label { border-bottom: none; }
+.stars-adj { display: flex; flex-wrap: wrap; gap: 0 5px; }
+@media (prefers-reduced-motion: reduce) {
+  .palace { transition: none; }
+  .sf-tag, .sf-lines { animation: none; }
+}
 /* Let the saved-chart row shrink on narrow phones (grid tracks default to min-content). */
 .saved-charts { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 360px) {
@@ -561,4 +625,45 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .topbar-right { gap: 4px; }
   .tabs button { padding: 6px 8px; font-size: 13px; }
   .icon-btn { width: 32px; height: 32px; }
+}
+
+/* 紫微盘 on narrow containers (phones): stars stand in vertical columns, as on
+   paper boards, so a palace a quarter of a phone wide still holds them all. */
+@container zw (max-width: 620px) {
+  .ziwei-board { grid-template-rows: repeat(4, minmax(112px, auto)); border-radius: 8px; }
+  .palace { padding: 4px 3px 3px; gap: 2px; }
+  .palace-stars { flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 4px 2px; }
+  .stars-major, .stars-minor, .stars-adj { display: contents; }
+  .star-item { flex-direction: column; align-items: center; gap: 1px; }
+  /* One character per line: a 1em-wide box wraps every character (writing-mode
+     collapses to zero height inside these flex items in Chromium). */
+  .palace-stars .tip-label { display: block; width: 1em; white-space: normal; word-break: break-all; line-height: 1.08; }
+  .stars-major .star-name { font-size: 14px; }
+  .stars-minor .star-name { font-size: 12px; }
+  .stars-adj .tip { font-size: 10px; }
+  .star-bright { font-size: 9px; line-height: 1; }
+  .star-item .mutagen { font-size: 9px; padding: 1px 2px; }
+  /* Footer: 大限 and 宫名 stacked at the left, 干支 and 长生 standing in the right corner */
+  .palace-foot { flex-direction: column; align-items: flex-start; gap: 1px; padding-right: 14px; }
+  .palace-decadal { font-size: 10px; }
+  .palace-name { font-size: 12px; gap: 2px; }
+  .body-tag { font-size: 9px; padding: 1px 2px; }
+  .palace-gz, .palace-cs { position: absolute; right: 3px; width: 1em; word-break: break-all; line-height: 1.1; text-align: center; }
+  .palace-gz { bottom: 3px; font-size: 12px; font-weight: 700; color: var(--text); }
+  .palace-cs { top: auto; bottom: 34px; font-size: 9px; }
+  .sf-tag { display: none; }
+  .palace-stars .stars-flow { display: contents; }
+  .flow-star { display: block; width: 1em; word-break: break-all; line-height: 1.08; font-size: 10px; }
+  .layer-tags { justify-content: flex-start; gap: 2px; padding-right: 14px; }
+  .layer-tag { font-size: 9px; padding: 1px 2px; }
+  .ziwei-center { padding: 6px 8px; gap: 4px; }
+  .zc-title { font-size: 14px; gap: 6px; }
+  .zc-title span { font-size: 12px; }
+  .ziwei-center .kv { font-size: 11px; gap: 2px 6px; }
+  .zc-extra { display: none; }
+}
+@container zw (max-width: 340px) {
+  .stars-major .star-name { font-size: 12.5px; }
+  .stars-minor .star-name { font-size: 11px; }
+  .ziwei-center .kv { font-size: 10px; }
 }

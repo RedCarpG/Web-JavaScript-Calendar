@@ -5,6 +5,7 @@ import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
+import { loadZiweiSchools, saveZiweiSchools, type ZiweiSchoolSettings } from './lib/ziweiSchools'
 import { applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
 import { toTrad } from './lib/trad'
 import { SettingsContext } from './settingsContext'
@@ -35,6 +36,11 @@ export function App() {
   const changeSchools = (next: SchoolSettings) => {
     setSchools(next)
     saveSchools(next)
+  }
+  const [ziweiSchools, setZiweiSchools] = useState<ZiweiSchoolSettings>(loadZiweiSchools)
+  const changeZiweiSchools = (next: ZiweiSchoolSettings) => {
+    setZiweiSchools(next)
+    saveZiweiSchools(next)
   }
   const [settings, setSettings] = useState<Settings>(loadSettings)
   const changeSettings = (next: Settings) => {
@@ -79,7 +85,12 @@ export function App() {
             <BaziView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
           ) : (
             <Suspense fallback={<div className="card muted">正在加载紫微斗数…</div>}>
-              <ZiweiView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
+              <ZiweiView
+                input={baziInput}
+                onChange={setBaziInput}
+                schools={ziweiSchools}
+                onSchoolsChange={changeZiweiSchools}
+              />
             </Suspense>
           )}
         </main>

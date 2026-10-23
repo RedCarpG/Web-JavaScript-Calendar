@@ -17,17 +17,29 @@ export function SchoolMark({ school, settings }: { school: SchoolKey; settings: 
   )
 }
 
-export function SchoolSettingsPanel({
+interface SchoolRegistryEntry {
+  title: string
+  summary: string
+  options: { value: string; label: string; source: string }[]
+}
+
+/**
+ * Selects for every rule in a 流派 registry (八字 SCHOOLS by default, or the
+ * 紫微 ZIWEI_SCHOOLS), each with its summary and the chosen option's source.
+ */
+export function SchoolSettingsPanel<S extends { [K in keyof S]: string }>({
   settings,
   onChange,
+  registry = SCHOOLS as unknown as Record<keyof S, SchoolRegistryEntry>,
 }: {
-  settings: SchoolSettings
-  onChange: (settings: SchoolSettings) => void
+  settings: S
+  onChange: (settings: S) => void
+  registry?: Record<keyof S, SchoolRegistryEntry>
 }) {
   return (
     <div className="school-panel">
-      {(Object.keys(SCHOOLS) as SchoolKey[]).map((key) => {
-        const info = SCHOOLS[key]
+      {(Object.keys(registry) as (keyof S & string)[]).map((key) => {
+        const info = registry[key]
         const current = info.options.find((o) => o.value === settings[key])
         return (
           <label key={key} className="school-item">

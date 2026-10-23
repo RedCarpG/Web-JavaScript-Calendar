@@ -22,6 +22,7 @@ import { DEFAULT_SCHOOLS } from '../src/lib/schools'
 import { CONCEPTS } from '../src/lib/glossary'
 import { SHENSHA_INFO } from '../src/lib/shenshaInfo'
 import { buildZiwei } from '../src/lib/ziwei'
+import { DEFAULT_ZIWEI_SCHOOLS } from '../src/lib/ziweiSchools'
 
 const STEMS = '甲乙丙丁戊己庚辛壬癸'
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥'
@@ -87,7 +88,7 @@ export function collectTerms(years: [number, number] = [1990, 2035], ziweiCharts
     const day = SolarDay.fromYmd(1990, 1, 1).next(i)
     const z = buildZiwei(
       { year: day.getYear(), month: day.getMonth(), day: day.getDay(), hour: (i * 7) % 24, minute: 0, gender: (i % 2) as 0 | 1 },
-      DEFAULT_SCHOOLS,
+      DEFAULT_ZIWEI_SCHOOLS,
     )
     ;[z.fiveElementsClass, z.soul, z.body, z.zodiac, z.lunarText, z.time].forEach(add)
     for (const p of Object.values(z.palaces)) {

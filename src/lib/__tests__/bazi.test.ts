@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { buildBazi, flowDays, flowMonths, fortunePillars, fortuneRelations } from '../bazi'
 import { computeRelations } from '../relations'
 import { DEFAULT_SCHOOLS } from '../schools'
+import { DEFAULT_ZIWEI_SCHOOLS } from '../ziweiSchools'
+import { STAR_ELEMENT, starLuck } from '../ziweiStars'
+import { BRIGHTNESS_INFO, MUTAGEN_INFO, STAR_INFO } from '../ziweiInfo'
 import { computeShenSha } from '../shensha'
 import { equationOfTime, toTrueSolarTime } from '../solarTime'
 
@@ -241,7 +244,7 @@ describe('紫微斗数', () => {
 
   it('casts the chart (checked by hand: 命宫子, 身宫戌, 火六局)', async () => {
     const { buildZiwei } = await import('../ziwei')
-    const z = buildZiwei(base, DEFAULT_SCHOOLS) // 1990-05-15 10:30 巳时 男
+    const z = buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS) // 1990-05-15 10:30 巳时 男
     expect(z.chineseDate).toBe('庚午 辛巳 庚辰 辛巳') // same 四柱 as the bazi chart
     expect(z.palaces['子'].isSoul).toBe(true)
     expect(z.palaces['戌'].isBody).toBe(true)
@@ -253,8 +256,100 @@ describe('紫微斗数', () => {
 
   it('places every palace on the board once', async () => {
     const { BOARD, buildZiwei } = await import('../ziwei')
-    const z = buildZiwei(base, DEFAULT_SCHOOLS)
+    const z = buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS)
     expect(Object.keys(z.palaces).sort()).toEqual(Object.keys(BOARD).sort())
     expect(new Set(Object.values(BOARD).map(String)).size).toBe(12)
+  })
+
+  it('has its own 流派设置: 庚年四化 and 安星法 variants', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const z = buildZiwei(base, { ...DEFAULT_ZIWEI_SCHOOLS, mutagenGeng: 'yangWuTongYin' })
+    const mutagens = Object.values(z.palaces).flatMap((p) => p.major.filter((s) => s.mutagen).map((s) => s.name + s.mutagen))
+    expect(mutagens).toContain('天同科')
+    expect(mutagens).toContain('太阴忌')
+    expect(buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS).soul).toBe('贪狼')
+    expect(buildZiwei(base, { ...DEFAULT_ZIWEI_SCHOOLS, algorithm: 'zhongzhou' }).soul).toBe('破军')
+  })
+
+  it('gives every 主星 and 辅星 an element and a 吉凶 class', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const z = buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS)
+    const stars = Object.values(z.palaces).flatMap((p) => [...p.major, ...p.minor])
+    expect(stars.length).toBeGreaterThanOrEqual(14)
+    for (const s of stars) expect(s.element, s.name).toBeDefined()
+    expect(Object.keys(STAR_ELEMENT)).toHaveLength(28)
+    expect(stars.filter((s) => s.luck === 'major')).toHaveLength(14)
+    expect(stars.find((s) => s.name === '擎羊')?.luck).toBe('bad')
+    expect(stars.find((s) => s.name === '禄存')?.luck).toBe('good')
+    expect(starLuck('adjective')).toBe('neutral')
+  })
+
+  it('places 天马 by year (年马) or by lunar month (月马)', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const where = (z: ReturnType<typeof buildZiwei>) =>
+      Object.values(z.palaces).filter((p) => p.minor.some((s) => s.name === '天马')).map((p) => p.branch)
+    // 1997-11-02 09:30: 丑年 → 马在亥; 农历十月 (亥月) → 马在巳, as 文墨天机 shows
+    const input = { ...base, year: 1997, month: 11, day: 2, hour: 9, minute: 30 }
+    expect(where(buildZiwei(input, DEFAULT_ZIWEI_SCHOOLS))).toEqual(['亥'])
+    expect(where(buildZiwei(input, { ...DEFAULT_ZIWEI_SCHOOLS, tianma: 'month' }))).toEqual(['巳'])
+    // 1990-05-15 is 农历四月 (巳月) of a 午年: 年马 申, 月马 亥
+    expect(where(buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS))).toEqual(['申'])
+    expect(where(buildZiwei(base, { ...DEFAULT_ZIWEI_SCHOOLS, tianma: 'month' }))).toEqual(['亥'])
+    // 2023 闰二月: the first half counts as 二月 (卯 → 巳), the second half as 三月 (辰 → 寅)
+    const month = { ...DEFAULT_ZIWEI_SCHOOLS, tianma: 'month' as const }
+    expect(where(buildZiwei({ ...base, year: 2023, month: 3, day: 25 }, month))).toEqual(['巳'])
+    expect(where(buildZiwei({ ...base, year: 2023, month: 4, day: 10 }, month))).toEqual(['寅'])
+  })
+
+  it('lists 大限 with their years, matching iztro\'s own 运限', async () => {
+    const { buildZiwei, buildHoroscope } = await import('../ziwei')
+    for (const input of [base, { ...base, year: 1997, month: 11, day: 2, hour: 9 }, { ...base, gender: 0 as const, year: 1984, month: 2, day: 3 }]) {
+      const z = buildZiwei(input, DEFAULT_ZIWEI_SCHOOLS)
+      expect(z.decades).toHaveLength(12)
+      for (const d of z.decades.slice(0, 6))
+        for (const y of [d.years[0], d.years[d.years.length - 1]]) {
+          const h = buildHoroscope(input, DEFAULT_ZIWEI_SCHOOLS, y, 6)
+          expect(h.decadal.branch, `${input.year} ${y}`).toBe(d.branch)
+          expect(h.yearly.branch).toBe('子丑寅卯辰巳午未申酉戌亥'[(y - 4) % 12])
+        }
+    }
+  })
+
+  it('gives each 运限 layer its palace names, 四化 and 流耀', async () => {
+    const { buildHoroscope } = await import('../ziwei')
+    // 1990 男, 2026 丙午年: 流年命宫 in 午; 丙干四化 天同禄 天机权 文昌科 廉贞忌
+    const h = buildHoroscope(base, DEFAULT_ZIWEI_SCHOOLS, 2026, 9)
+    expect(h.yearly.stem + h.yearly.branch).toBe('丙午')
+    expect(h.yearly.palaceNames['午']).toBe('命宫')
+    expect(h.yearly.mutagens).toEqual({ 天同: '禄', 天机: '权', 文昌: '科', 廉贞: '忌' })
+    expect(Object.values(h.yearly.stars).flat().map((s) => s.name)).toContain('流禄')
+    expect(Object.values(h.decadal.stars).flat().map((s) => s.name)).toContain('运禄')
+    expect(Object.values(h.monthly.stars).flat().map((s) => s.name)).toContain('月禄')
+    // 流禄 sits with 禄存's table: 丙 → 巳
+    expect(h.yearly.stars['巳'].map((s) => s.name)).toContain('流禄')
+  })
+
+  it('finds the 三方四正 of a palace', async () => {
+    const { sanFangSiZheng } = await import('../ziwei')
+    expect(sanFangSiZheng('子')).toEqual({ opposite: '午', trines: ['辰', '申'] })
+    expect(sanFangSiZheng('寅')).toEqual({ opposite: '申', trines: ['午', '戌'] })
+    expect(sanFangSiZheng('亥')).toEqual({ opposite: '巳', trines: ['卯', '未'] })
+  })
+
+  it('explains every star, 亮度 and 四化 iztro can place', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const missing = new Set<string>()
+    for (const algorithm of ['default', 'zhongzhou'] as const)
+      for (let i = 0; i < 24; i++) {
+        const input = { ...base, year: 1960 + i * 2, month: 1 + (i % 12), hour: i, gender: (i % 2) as 0 | 1 }
+        const z = buildZiwei(input, { ...DEFAULT_ZIWEI_SCHOOLS, algorithm })
+        for (const p of Object.values(z.palaces))
+          for (const s of [...p.major, ...p.minor, ...p.adjective]) {
+            if (!STAR_INFO[s.name]) missing.add(s.name)
+            if (s.brightness && !BRIGHTNESS_INFO[s.brightness]) missing.add(s.brightness)
+            if (s.mutagen && !MUTAGEN_INFO[s.mutagen]) missing.add(s.mutagen)
+          }
+      }
+    expect([...missing]).toEqual([])
   })
 })

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { FortuneRow } from './FortuneRow'
 import {
   ELEMENTS,
   buildBazi,
@@ -14,7 +15,7 @@ import type { Relation } from '../lib/relations'
 import type { SchoolSettings } from '../lib/schools'
 import { Char } from './Char'
 import { BirthForm } from './BirthForm'
-import { SchoolMark } from './Schools'
+import { SchoolMark, SchoolSettingsPanel } from './Schools'
 import { HighlightScope, useHighlight, useTrigger } from './highlight'
 import { ConceptTip } from './GlossaryTips'
 import { PillarTable } from './PillarTable'
@@ -95,7 +96,11 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
 
   return (
     <div className="bazi-layout">
-      <BirthForm input={input} onChange={update} schools={schools} onSchoolsChange={onSchoolsChange} />
+      <BirthForm
+        input={input}
+        onChange={update}
+        schoolsPanel={<SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
+      />
 
       <section className="card">
         <div className="chart-meta">
@@ -314,33 +319,6 @@ function Relations({
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function FortuneRow({
-  title,
-  summary,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string
-  summary: string
-  open: boolean
-  onToggle: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <div className={`fortune-group${open ? ' open' : ''}`}>
-      <button type="button" className="fortune-toggle" aria-expanded={open} onClick={onToggle}>
-        <span className="chev" aria-hidden="true">
-          ›
-        </span>
-        <span className="fortune-title">{title}</span>
-        <span className="muted fortune-summary">{summary}</span>
-      </button>
-      {open && <div className="fortune-body">{children}</div>}
     </div>
   )
 }

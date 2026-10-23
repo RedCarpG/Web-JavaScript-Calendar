@@ -1,21 +1,19 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { BaziInput } from '../lib/bazi'
-import type { SchoolSettings } from '../lib/schools'
 import { CITIES } from '../lib/solarTime'
 import { SavedCharts } from './SavedCharts'
-import { SchoolSettingsPanel } from './Schools'
 
 interface Props {
   input: BaziInput
   onChange: (input: BaziInput) => void
-  schools: SchoolSettings
-  onSchoolsChange: (schools: SchoolSettings) => void
+  /** The page's own 流派设置 panel (八字 and 紫微 each have one) */
+  schoolsPanel: ReactNode
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Birth date/time, gender, 真太阳时, 流派设置 and saved charts — shared by 八字 and 紫微. */
-export function BirthForm({ input, onChange, schools, onSchoolsChange }: Props) {
+export function BirthForm({ input, onChange, schoolsPanel }: Props) {
   const [showSchools, setShowSchools] = useState(false)
   const city = CITIES.find((c) => c.longitude === input.longitude)
   const dateValue = `${input.year}-${pad(input.month)}-${pad(input.day)}`
@@ -109,7 +107,7 @@ export function BirthForm({ input, onChange, schools, onSchoolsChange }: Props) 
       >
         流派设置
       </button>
-      {showSchools && <SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
+      {showSchools && schoolsPanel}
       <SavedCharts input={input} onLoad={(next) => change(next)} />
     </section>
   )

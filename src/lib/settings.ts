@@ -7,9 +7,11 @@ export interface Settings {
   weekStart: 'mon' | 'sun'
   /** 日历格子里显示日干支 */
   dayGanzhi: 'show' | 'hide'
+  /** 紫微星曜配色 */
+  ziweiColor: 'element' | 'luck'
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', script: 'trad', weekStart: 'mon', dayGanzhi: 'show' }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', script: 'trad', weekStart: 'mon', dayGanzhi: 'show', ziweiColor: 'element' }
 
 export const SETTING_OPTIONS: { [K in keyof Settings]: { title: string; options: { value: Settings[K]; label: string }[] } } = {
   theme: {
@@ -39,6 +41,13 @@ export const SETTING_OPTIONS: { [K in keyof Settings]: { title: string; options:
     options: [
       { value: 'show', label: '显示' },
       { value: 'hide', label: '隐藏' },
+    ],
+  },
+  ziweiColor: {
+    title: '紫微星曜配色',
+    options: [
+      { value: 'element', label: '按五行' },
+      { value: 'luck', label: '按吉凶' },
     ],
   },
 }
