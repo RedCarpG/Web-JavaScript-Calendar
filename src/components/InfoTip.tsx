@@ -32,11 +32,15 @@ export function InfoTip({
     const el = ref.current
     if (!el) return
     if (window.innerWidth <= SHEET_BREAKPOINT) return setPlace({ mode: 'sheet' })
+    // The page may be scaled by 显示大小 (CSS zoom); the bubble takes the same
+    // zoom, so its left/top are given in its own, zoomed, pixels.
+    const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1
+    const width = WIDTH * zoom
     const r = el.getBoundingClientRect()
-    const left = Math.min(Math.max(r.left + r.width / 2 - WIDTH / 2, GAP), window.innerWidth - WIDTH - GAP)
+    const left = Math.min(Math.max(r.left + r.width / 2 - width / 2, GAP), window.innerWidth - width - GAP)
     // Prefer above; flip below when there isn't room for a typical bubble.
-    const above = r.top > 180
-    setPlace({ mode: 'float', left, top: above ? r.top - GAP : r.bottom + GAP, above })
+    const above = r.top > 180 * zoom
+    setPlace({ mode: 'float', left: left / zoom, top: (above ? r.top - GAP : r.bottom + GAP) / zoom, above })
   }
   const hide = () => setPlace(null)
 

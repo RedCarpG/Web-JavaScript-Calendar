@@ -9,9 +9,11 @@ export interface Settings {
   dayGanzhi: 'show' | 'hide'
   /** 紫微星曜配色 */
   ziweiColor: 'element' | 'luck'
+  /** 显示大小: auto grows the page on large screens */
+  uiScale: 'auto' | '100' | '115' | '130'
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', script: 'trad', weekStart: 'mon', dayGanzhi: 'show', ziweiColor: 'element' }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', script: 'trad', weekStart: 'mon', dayGanzhi: 'show', ziweiColor: 'element', uiScale: 'auto' }
 
 export const SETTING_OPTIONS: { [K in keyof Settings]: { title: string; options: { value: Settings[K]; label: string }[] } } = {
   theme: {
@@ -50,6 +52,15 @@ export const SETTING_OPTIONS: { [K in keyof Settings]: { title: string; options:
       { value: 'luck', label: '按吉凶' },
     ],
   },
+  uiScale: {
+    title: '显示大小',
+    options: [
+      { value: 'auto', label: '自动' },
+      { value: '100', label: '标准' },
+      { value: '115', label: '大' },
+      { value: '130', label: '特大' },
+    ],
+  },
 }
 
 const STORAGE_KEY = 'chroniq-settings'
@@ -74,6 +85,13 @@ export function saveSettings(settings: Settings): void {
   } catch {
     // Storage unavailable (private mode): settings last for this visit only.
   }
+}
+
+/** Apply the 显示大小 to <html>; "auto" leaves it to the screen-width rules in styles.css. */
+export function applyScale(scale: Settings['uiScale']): void {
+  const root = document.documentElement
+  if (scale === 'auto') delete root.dataset.scale
+  else root.dataset.scale = scale
 }
 
 /** Apply the colour mode to <html>; "system" leaves it to prefers-color-scheme. */

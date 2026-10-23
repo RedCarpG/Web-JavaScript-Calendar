@@ -6,7 +6,7 @@ import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
 import { loadZiweiSchools, saveZiweiSchools, type ZiweiSchoolSettings } from './lib/ziweiSchools'
-import { applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
+import { applyScale, applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
 import { toTrad } from './lib/trad'
 import { SettingsContext } from './settingsContext'
 
@@ -48,6 +48,7 @@ export function App() {
     saveSettings(next)
   }
   useEffect(() => applyTheme(settings.theme), [settings.theme])
+  useEffect(() => applyScale(settings.uiScale), [settings.uiScale])
   const term = settings.script === 'trad' ? toTrad : (s: string) => s
 
   return (
