@@ -308,7 +308,7 @@ describe('紫微斗数', () => {
       expect(z.decades).toHaveLength(12)
       for (const d of z.decades.slice(0, 6))
         for (const y of [d.years[0], d.years[d.years.length - 1]]) {
-          const h = buildHoroscope(input, DEFAULT_ZIWEI_SCHOOLS, y, 6)
+          const h = buildHoroscope(input, DEFAULT_ZIWEI_SCHOOLS, { year: y, month: 6, day: 15, hour: 6 })
           expect(h.decadal.branch, `${input.year} ${y}`).toBe(d.branch)
           expect(h.yearly.branch).toBe('子丑寅卯辰巳午未申酉戌亥'[(y - 4) % 12])
         }
@@ -318,7 +318,7 @@ describe('紫微斗数', () => {
   it('gives each 运限 layer its palace names, 四化 and 流耀', async () => {
     const { buildHoroscope } = await import('../ziwei')
     // 1990 男, 2026 丙午年: 流年命宫 in 午; 丙干四化 天同禄 天机权 文昌科 廉贞忌
-    const h = buildHoroscope(base, DEFAULT_ZIWEI_SCHOOLS, 2026, 9)
+    const h = buildHoroscope(base, DEFAULT_ZIWEI_SCHOOLS, { year: 2026, month: 9, day: 15, hour: 6 })
     expect(h.yearly.stem + h.yearly.branch).toBe('丙午')
     expect(h.yearly.palaceNames['午']).toBe('命宫')
     expect(h.yearly.mutagens).toEqual({ 天同: '禄', 天机: '权', 文昌: '科', 廉贞: '忌' })
@@ -327,6 +327,23 @@ describe('紫微斗数', () => {
     expect(Object.values(h.monthly.stars).flat().map((s) => s.name)).toContain('月禄')
     // 流禄 sits with 禄存's table: 丙 → 巳
     expect(h.yearly.stars['巳'].map((s) => s.name)).toContain('流禄')
+  })
+
+  it('adds 流日 and 流时 layers for a lunar day and 时辰', async () => {
+    const { buildHoroscope, dayInfo, hourInfo } = await import('../ziwei')
+    // 2026 九月十四 (2026-10-23) is a 庚午 day; its 未时 is 癸未
+    const input = { ...base, year: 1997, month: 11, day: 2, hour: 9, minute: 30 }
+    const h = buildHoroscope(input, DEFAULT_ZIWEI_SCHOOLS, { year: 2026, month: 9, day: 14, hour: 7 })
+    expect(dayInfo(2026, 9, 14)).toEqual({ name: '十四', ganzhi: '庚午' })
+    expect(hourInfo(2026, 9, 14, 7)).toEqual({ name: '未时', ganzhi: '癸未' })
+    expect(h.daily.stem + h.daily.branch).toBe('庚午')
+    expect(h.hourly.stem + h.hourly.branch).toBe('癸未')
+    // 庚干四化 for the day, 癸干 for the hour
+    expect(h.daily.mutagens).toEqual({ 太阳: '禄', 武曲: '权', 太阴: '科', 天同: '忌' })
+    expect(h.hourly.mutagens).toEqual({ 破军: '禄', 巨门: '权', 太阴: '科', 贪狼: '忌' })
+    expect(Object.values(h.daily.stars).flat().map((s) => s.name)).toContain('日禄')
+    expect(Object.values(h.hourly.stars).flat().map((s) => s.name)).toContain('时禄')
+    expect(Object.values(h.daily.palaceNames).filter((n) => n === '命宫')).toHaveLength(1)
   })
 
   it('finds the 三方四正 of a palace', async () => {

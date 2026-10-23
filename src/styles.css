@@ -19,6 +19,8 @@
   --ly-decadal: #23838a;
   --ly-yearly: #c0661a;
   --ly-monthly: #5a62c2;
+  --ly-daily: #b0407a;
+  --ly-hourly: #5d7a1e;
   --radius: 14px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
   color-scheme: light;
@@ -47,6 +49,8 @@
     --ly-decadal: #5cc2c7;
     --ly-yearly: #eb9a4f;
     --ly-monthly: #959bf0;
+    --ly-daily: #e889b9;
+    --ly-hourly: #a8c95a;
     --shadow: none;
     color-scheme: dark;
   }
@@ -71,6 +75,8 @@
   --ly-decadal: #5cc2c7;
   --ly-yearly: #eb9a4f;
   --ly-monthly: #959bf0;
+  --ly-daily: #e889b9;
+  --ly-hourly: #a8c95a;
   --shadow: none;
   color-scheme: dark;
 }
@@ -637,10 +643,14 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .lm-decadal { background: var(--ly-decadal); color: #fff; }
 .lm-yearly { background: var(--ly-yearly); color: #fff; }
 .lm-monthly { background: var(--ly-monthly); color: #fff; }
+.lm-daily { background: var(--ly-daily); color: #fff; }
+.lm-hourly { background: var(--ly-hourly); color: #fff; }
 .fl-decadal { color: var(--ly-decadal); }
 .fl-yearly { color: var(--ly-yearly); }
 .fl-monthly { color: var(--ly-monthly); }
-.zc-legend .mutagen.lm-decadal, .zc-legend .mutagen.lm-yearly, .zc-legend .mutagen.lm-monthly { padding: 2px 5px; }
+.fl-daily { color: var(--ly-daily); }
+.fl-hourly { color: var(--ly-hourly); }
+.zc-legend .mutagen[class*='lm-'] { padding: 2px 5px; }
 .stars-flow { display: flex; flex-wrap: wrap; gap: 0 5px; font-size: 11px; font-weight: 600; line-height: 1.5; }
 .layer-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; margin-top: auto; }
 .layer-tag { font-size: 10px; line-height: 1; padding: 2px 4px; border-radius: 4px; animation: tip-in 0.2s ease-out; }
@@ -649,6 +659,8 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .layer-tag.soul.lm-decadal { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-decadal); }
 .layer-tag.soul.lm-yearly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-yearly); }
 .layer-tag.soul.lm-monthly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-monthly); }
+.layer-tag.soul.lm-daily { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-daily); }
+.layer-tag.soul.lm-hourly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-hourly); }
 .fortune-row.decades { grid-template-columns: repeat(12, minmax(60px, 1fr)); }
 .fortunes-head .seg { flex-shrink: 0; }
 .fortune strong { font-size: 15px; }

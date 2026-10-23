@@ -5,10 +5,14 @@ import {
   BOARD,
   buildHoroscope,
   buildZiwei,
+  dayInfo,
+  daysInMonth,
+  hourInfo,
   lunarToday,
   monthInfo,
   sanFangSiZheng,
   yearGanzhi,
+  type HoroscopeTarget,
   type LayerKind,
   type ZiweiLayer,
   type ZiweiPalace,
@@ -31,10 +35,19 @@ const DEPTHS: { value: Depth; label: string }[] = [
   { value: 'decadal', label: '大限' },
   { value: 'yearly', label: '流年' },
   { value: 'monthly', label: '流月' },
+  { value: 'daily', label: '流日' },
+  { value: 'hourly', label: '流时' },
 ]
-/** One-character layer prefix: 大命, 年财, 月兄 … */
-const LAYER_CHAR: Record<LayerKind, string> = { decadal: '大', yearly: '年', monthly: '月' }
-const LAYER_NAME: Record<LayerKind, string> = { decadal: '大限', yearly: '流年', monthly: '流月' }
+const LAYER_ORDER: LayerKind[] = ['decadal', 'yearly', 'monthly', 'daily', 'hourly']
+/** One-character layer prefix: 大命, 年财, 月兄, 日福, 时官 … */
+const LAYER_CHAR: Record<LayerKind, string> = { decadal: '大', yearly: '年', monthly: '月', daily: '日', hourly: '时' }
+const LAYER_NAME: Record<LayerKind, string> = {
+  decadal: '大限',
+  yearly: '流年',
+  monthly: '流月',
+  daily: '流日',
+  hourly: '流时',
+}
 
 interface Props {
   input: BaziInput
@@ -52,7 +65,7 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
   // The palace whose 三方四正 is shown (hover with a mouse, tap or focus otherwise)
   const [active, setActive] = useState<string | null>(null)
 
-  // 运限: picks default to the current 大限, year and month; the board only
+  // 运限: picks default to the current 大限, year, month, day and 时辰; the board only
   // shows layers once one is chosen (or 叠加 is set).
   const today = useMemo(lunarToday, [])
   const currentDecade = Math.max(
@@ -63,45 +76,66 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
   const [pickedDecade, setPickedDecade] = useState<number | null>(null)
   const [pickedYear, setPickedYear] = useState<number | null>(null)
   const [pickedMonth, setPickedMonth] = useState<number | null>(null)
+  const [pickedDay, setPickedDay] = useState<number | null>(null)
+  const [pickedHour, setPickedHour] = useState<number | null>(null)
   const decadeIndex = pickedDecade ?? currentDecade
   const decade = chart.decades[decadeIndex]
   const year = pickedYear ?? (decade.years.includes(today.year) ? today.year : decade.years[0])
   const month = pickedMonth ?? (year === today.year ? today.month : 1)
+  const isThisMonth = year === today.year && month === today.month
+  const day = Math.min(pickedDay ?? (isThisMonth ? today.day : 1), daysInMonth(year, month))
+  const isToday = isThisMonth && day === today.day
+  const hour = pickedHour ?? (isToday ? today.hour : 0)
   const horoscope = useMemo(
-    () => (depth === 'natal' ? null : buildHoroscope(input, schools, year, month)),
-    [depth, input, schools, year, month],
+    () => (depth === 'natal' ? null : buildHoroscope(input, schools, { year, month, day, hour })),
+    [depth, input, schools, year, month, day, hour],
   )
   const layers: ZiweiLayer[] = horoscope
-    ? (['decadal', 'yearly', 'monthly'] as const)
-        .slice(
-          0,
-          DEPTHS.findIndex((d) => d.value === depth),
-        )
-        .map((k) => horoscope[k])
+    ? LAYER_ORDER.slice(
+        0,
+        DEPTHS.findIndex((d) => d.value === depth),
+      ).map((k) => horoscope[k])
     : []
-  const [open, setOpen] = useState({ decade: true, year: true, month: true })
+  const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true, hour: true })
   const toggle = (key: keyof typeof open) => setOpen((o) => ({ ...o, [key]: !o[key] }))
   // Picking a coarser level resets the finer ones; picking any level shows it.
   const pickDecade = (i: number) => {
     setPickedDecade(i)
     setPickedYear(null)
     setPickedMonth(null)
+    setPickedDay(null)
+    setPickedHour(null)
     setDepth('decadal')
   }
   const pickYear = (y: number) => {
     setPickedYear(y)
     setPickedMonth(null)
+    setPickedDay(null)
+    setPickedHour(null)
     setDepth('yearly')
   }
   const pickMonth = (m: number) => {
     setPickedMonth(m)
+    setPickedDay(null)
+    setPickedHour(null)
     setDepth('monthly')
+  }
+  const pickDay = (d: number) => {
+    setPickedDay(d)
+    setPickedHour(null)
+    setDepth('daily')
+  }
+  const pickHour = (h: number) => {
+    setPickedHour(h)
+    setDepth('hourly')
   }
   const update = (next: BaziInput) => {
     setDepth('natal')
     setPickedDecade(null)
     setPickedYear(null)
     setPickedMonth(null)
+    setPickedDay(null)
+    setPickedHour(null)
     onChange(next)
   }
   const shows = (kind: LayerKind) => layers.some((l) => l.kind === kind)
@@ -155,7 +189,7 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
                 <dt>{term('身主')}</dt>
                 <dd>{term(chart.body)}</dd>
                 {layers.map((l) => (
-                  <LayerRow key={l.kind} layer={l} year={year} month={month} />
+                  <LayerRow key={l.kind} layer={l} target={{ year, month, day, hour }} />
                 ))}
                 <dt className="zc-extra">生肖 · 星座</dt>
                 <dd className="zc-extra">
@@ -307,9 +341,65 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
             })}
           </div>
         </FortuneRow>
+        <FortuneRow
+          title={term('流日')}
+          summary={`${dayInfo(year, month, day).name} ${dayInfo(year, month, day).ganzhi}`}
+          open={open.day}
+          onToggle={() => toggle('day')}
+        >
+          <div className="fortune-row days">
+            {Array.from({ length: daysInMonth(year, month) }, (_, i) => i + 1).map((d) => {
+              const info = dayInfo(year, month, d)
+              return (
+                <button
+                  key={d}
+                  className={[
+                    'fortune',
+                    isThisMonth && d === today.day && 'current',
+                    shows('daily') && d === day && 'selected',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => pickDay(d)}
+                >
+                  <small>{info.name}</small>
+                  <strong>{info.ganzhi}</strong>
+                </button>
+              )
+            })}
+          </div>
+        </FortuneRow>
+        <FortuneRow
+          title={term('流时')}
+          summary={`${term(hourInfo(year, month, day, hour).name)} ${hourInfo(year, month, day, hour).ganzhi}`}
+          open={open.hour}
+          onToggle={() => toggle('hour')}
+        >
+          <div className="fortune-row months">
+            {Array.from({ length: 12 }, (_, i) => i).map((h) => {
+              const info = hourInfo(year, month, day, h)
+              return (
+                <button
+                  key={h}
+                  className={[
+                    'fortune',
+                    isToday && h === today.hour && 'current',
+                    shows('hourly') && h === hour && 'selected',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => pickHour(h)}
+                >
+                  <small>{term(info.name)}</small>
+                  <strong>{info.ganzhi}</strong>
+                </button>
+              )
+            })}
+          </div>
+        </FortuneRow>
         <p className="muted row-note">
           流年按{schools.horoscopeDivide === 'exact' ? '立春' : '正月初一'}换年（可在流派设置中切换）；流月按 iztro
-          的斗君起月。
+          的斗君起月；流日、流时以农历日和时辰为准（子时取当日早子时）。
         </p>
       </section>
     </div>
@@ -317,14 +407,20 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
 }
 
 /** Centre-panel line naming a 运限 layer, e.g. 流年 2026 丙午 */
-function LayerRow({ layer: l, year, month }: { layer: ZiweiLayer; year: number; month: number }) {
+function LayerRow({ layer: l, target: t }: { layer: ZiweiLayer; target: HoroscopeTarget }) {
   const term = useTerm()
-  const when = l.kind === 'yearly' ? `${year} ` : l.kind === 'monthly' ? `${term(monthInfo(year, month).name)} ` : ''
+  const when: Record<LayerKind, string> = {
+    decadal: '',
+    yearly: `${t.year} `,
+    monthly: `${term(monthInfo(t.year, t.month).name)} `,
+    daily: `${dayInfo(t.year, t.month, t.day).name} `,
+    hourly: `${term(hourInfo(t.year, t.month, t.day, t.hour).name)} `,
+  }
   return (
     <>
       <dt className={`fl-${l.kind}`}>{term(LAYER_NAME[l.kind])}</dt>
       <dd>
-        {when}
+        {when[l.kind]}
         {l.stem}
         {l.branch}
       </dd>
