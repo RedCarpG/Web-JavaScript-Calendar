@@ -1,19 +1,26 @@
+import { InfoTip } from './InfoTip'
 import { SCHOOLS, optionLabel, type SchoolKey, type SchoolSettings } from '../lib/schools'
 
 /** Small "!" that explains a result depends on a 流派 choice. Opens on hover / tap. */
 export function SchoolMark({ school, settings }: { school: SchoolKey; settings: SchoolSettings }) {
   const info = SCHOOLS[school]
+  // Same portalled bubble as the glossary tips, so table cells (nowrap) and
+  // scrolling containers (岁运盘) can neither squeeze nor clip it.
   return (
-    <span className="school-mark">
-      <button type="button" aria-label={`流派差异：${info.title}`}>!</button>
-      <span className="school-pop" role="tooltip">
-        <strong>{info.title}</strong>
-        <span>{info.summary}</span>
-        <span>
-          当前：<b>{optionLabel(school, settings)}</b>（可在「流派设置」中更改）
+    <InfoTip
+      className="plain school-mark"
+      label={
+        <span className="school-dot" aria-label={`流派差异：${info.title}`}>
+          !
         </span>
+      }
+      title={info.title}
+    >
+      <span>{info.summary}</span>
+      <span>
+        当前：<b>{optionLabel(school, settings)}</b>（可在「流派设置」中更改）
       </span>
-    </span>
+    </InfoTip>
   )
 }
 
