@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
+import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
+import { applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
+import { toTrad } from './lib/trad'
+import { SettingsContext } from './settingsContext'
 
 type Tab = 'calendar' | 'bazi'
 
@@ -24,37 +28,50 @@ export function App() {
     setSchools(next)
     saveSchools(next)
   }
+  const [settings, setSettings] = useState<Settings>(loadSettings)
+  const changeSettings = (next: Settings) => {
+    setSettings(next)
+    saveSettings(next)
+  }
+  useEffect(() => applyTheme(settings.theme), [settings.theme])
+  const t = settings.script === 'trad' ? toTrad : (s: string) => s
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <h1>
-          时契<span className="brand-en">ChroniQ</span>
-        </h1>
-        <nav className="tabs">
-          <button className={tab === 'calendar' ? 'on' : undefined} onClick={() => setTab('calendar')}>
-            日历
-          </button>
-          <button className={tab === 'bazi' ? 'on' : undefined} onClick={() => setTab('bazi')}>
-            八字排盘
-          </button>
-        </nav>
-      </header>
-      <main>
-        {tab === 'calendar' ? (
-          <CalendarView
-            onPickBazi={(day) => {
-              setBaziInput((prev) => ({ ...prev, year: day.getYear(), month: day.getMonth(), day: day.getDay() }))
-              setTab('bazi')
-            }}
-          />
-        ) : (
-          <BaziView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
-        )}
-      </main>
-      <footer className="muted">
-        历法数据由 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> 提供 · 仅供参考
-      </footer>
-    </div>
+    <SettingsContext.Provider value={settings}>
+      <div className="app">
+        <header className="topbar">
+          <h1>
+            {t('时契')}
+            <span className="brand-en">ChroniQ</span>
+          </h1>
+          <div className="topbar-right">
+            <nav className="tabs">
+              <button className={tab === 'calendar' ? 'on' : undefined} onClick={() => setTab('calendar')}>
+                {t('日历')}
+              </button>
+              <button className={tab === 'bazi' ? 'on' : undefined} onClick={() => setTab('bazi')}>
+                {t('八字排盘')}
+              </button>
+            </nav>
+            <SettingsMenu settings={settings} onChange={changeSettings} />
+          </div>
+        </header>
+        <main>
+          {tab === 'calendar' ? (
+            <CalendarView
+              onPickBazi={(day) => {
+                setBaziInput((prev) => ({ ...prev, year: day.getYear(), month: day.getMonth(), day: day.getDay() }))
+                setTab('bazi')
+              }}
+            />
+          ) : (
+            <BaziView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
+          )}
+        </main>
+        <footer className="muted">
+          历法数据由 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> 提供 · 仅供参考
+        </footer>
+      </div>
+    </SettingsContext.Provider>
   )
 }

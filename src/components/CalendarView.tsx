@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { SolarDay } from 'tyme4ts'
 import { Char } from './Char'
-import { WEEK_TITLES, buildDayDetail, buildMonthGrid, sameDay, todaySolar } from '../lib/calendar'
+import { buildDayDetail, buildMonthGrid, sameDay, todaySolar, weekTitles } from '../lib/calendar'
+import { useSettings, useT } from '../settingsContext'
 
 // tyme4ts handles far wider ranges; this keeps the dropdown a manageable length.
 const MIN_YEAR = 1900
@@ -17,7 +18,9 @@ export function CalendarView({ onPickBazi }: Props) {
   const [selected, setSelected] = useState(todaySolar)
   const [view, setView] = useState(() => ({ year: selected.getYear(), month: selected.getMonth() }))
 
-  const cells = useMemo(() => buildMonthGrid(view.year, view.month), [view])
+  const { weekStart } = useSettings()
+  const t = useT()
+  const cells = useMemo(() => buildMonthGrid(view.year, view.month, weekStart), [view, weekStart])
   const detail = useMemo(() => buildDayDetail(selected), [selected])
 
   const shiftMonth = (delta: number) =>
@@ -64,7 +67,7 @@ export function CalendarView({ onPickBazi }: Props) {
               </select>
             </h2>
             <span className="muted">
-              {lunarYear.getName()}年 · {lunarYear.getEarthBranch().getZodiac().getName()}年
+              {lunarYear.getName()}年 · {t(lunarYear.getEarthBranch().getZodiac().getName())}年
             </span>
           </div>
           <div className="cal-nav">
@@ -77,9 +80,9 @@ export function CalendarView({ onPickBazi }: Props) {
         </header>
 
         <div className="grid week-titles">
-          {WEEK_TITLES.map((w, i) => (
-            <div key={w} className={i >= 5 ? 'weekend' : undefined}>
-              {w}
+          {weekTitles(weekStart).map((w) => (
+            <div key={w.name} className={w.weekend ? 'weekend' : undefined}>
+              {w.name}
             </div>
           ))}
         </div>
@@ -100,7 +103,7 @@ export function CalendarView({ onPickBazi }: Props) {
             >
               {c.holiday && <span className={`badge ${c.holiday === '休' ? 'off' : 'work'}`}>{c.holiday}</span>}
               <span className="num">{c.day}</span>
-              <span className={`sub ${c.subKind}`}>{c.sub}</span>
+              <span className={`sub ${c.subKind}`}>{t(c.sub)}</span>
             </button>
           ))}
         </div>
@@ -117,8 +120,9 @@ export function CalendarView({ onPickBazi }: Props) {
           </div>
         </div>
         <div className="lunar-line">
-          农历{detail.lunarText}
-          <span className="muted"> · 属{detail.zodiac}</span>
+          {t('农历')}
+          {t(detail.lunarText)}
+          <span className="muted"> · 属{t(detail.zodiac)}</span>
         </div>
         <div className="day-pillars" aria-label={detail.ganzhi}>
           {detail.pillars.map((p) => (
@@ -132,24 +136,26 @@ export function CalendarView({ onPickBazi }: Props) {
         {detail.festivals.length > 0 && (
           <div className="tags">
             {detail.festivals.map((f) => (
-              <span key={f} className="tag festival">{f}</span>
+              <span key={f} className="tag festival">
+                {t(f)}
+              </span>
             ))}
           </div>
         )}
         <dl className="kv">
-          <dt>节气</dt>
-          <dd>{detail.term}</dd>
-          <dt>建除</dt>
-          <dd>{detail.duty}日</dd>
-          <dt>值神</dt>
-          <dd>{detail.twelveStar}</dd>
-          <dt>星宿</dt>
-          <dd>{detail.twentyEightStar}宿</dd>
+          <dt>{t('节气')}</dt>
+          <dd>{t(detail.term)}</dd>
+          <dt>{t('建除')}</dt>
+          <dd>{t(detail.duty)}日</dd>
+          <dt>{t('值神')}</dt>
+          <dd>{t(detail.twelveStar)}</dd>
+          <dt>{t('星宿')}</dt>
+          <dd>{t(detail.twentyEightStar)}宿</dd>
         </dl>
-        <TagBlock title="宜" kind="good" items={detail.recommends} />
-        <TagBlock title="忌" kind="bad" items={detail.avoids} />
-        <TagBlock title="吉神" kind="neutral" items={detail.goodGods} />
-        <TagBlock title="凶煞" kind="neutral" items={detail.badGods} />
+        <TagBlock title={t('宜')} kind="good" items={detail.recommends.map(t)} />
+        <TagBlock title={t('忌')} kind="bad" items={detail.avoids.map(t)} />
+        <TagBlock title={t('吉神')} kind="neutral" items={detail.goodGods.map(t)} />
+        <TagBlock title={t('凶煞')} kind="neutral" items={detail.badGods.map(t)} />
         <button className="primary block" onClick={() => onPickBazi(selected)}>
           以此日排八字 →
         </button>

@@ -1,4 +1,4 @@
-# 时契 ChroniQ
+# 時契 ChroniQ
 
 中国传统历法与命理排盘工具：万年历、八字排盘，之后计划加入紫微斗数等。
 
@@ -13,6 +13,14 @@
   - **流派设置**：晚子时、起运算法、天乙贵人、阴干羊刃、神煞查法、午未合化都可以切换。受流派影响的结果会标一个「!」，说明和出处见 [docs/schools.md](docs/schools.md)。
   - **真太阳时**：选择出生城市或者手动输入经度，按经度差加均时差修正出生时间。
 
+- **设置**（右上角齿轮）：颜色模式（跟随系统 / 浅色 / 深色）、专有名词字形（繁體 / 简体，默认繁體）、每周起始（周一 / 周日）。设置保存在浏览器本地。
+
+## 繁體专有名词
+
+干支、神煞、十神、节气、宜忌等专有名词默认以繁體显示，说明文字保持简体。转换用的是一份按字对照的表 `src/lib/tradChars.ts`，由 [OpenCC](https://github.com/nk2028/opencc-js) 在开发时生成，网页运行时不加载 OpenCC。命理用字和 OpenCC 默认结果不同的地方（如「沖」不作「衝」，地支「丑」不作「醜」，「天干」不作「天幹」），在 `src/lib/tradOverrides.ts` 中单独指定。
+
+界面里新增专有名词时，用 `t('…')` 包起来，然后运行 `npm run gen:trad` 重新生成对照表；`npm test` 会检查每个名词的转换结果是否和 OpenCC 一致。
+
 ## 技术栈
 
 - [Vite](https://vite.dev) + [React 19](https://react.dev) + TypeScript
@@ -26,6 +34,7 @@ npm run dev       # 本地开发
 npm run build     # 类型检查并构建到 dist/
 npm run preview   # 预览构建结果
 npm test          # 单元测试（vitest）
+npm run gen:trad  # 重新生成繁體对照表（约 1 分钟）
 ```
 
 `dist/` 是纯静态文件。推送到 `main` 后，`.github/workflows/pages.yml` 会自动测试、构建并部署到 GitHub Pages；PR 只跑测试和构建，不部署。

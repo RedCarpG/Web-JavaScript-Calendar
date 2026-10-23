@@ -15,7 +15,18 @@ export interface DayCell {
   holiday?: '休' | '班'
 }
 
-export const WEEK_TITLES = ['一', '二', '三', '四', '五', '六', '日']
+export type WeekStart = 'mon' | 'sun'
+
+const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'] // tyme4ts index: 0 = Sunday
+
+/** Column headers starting from the given weekday, with weekend flags. */
+export function weekTitles(weekStart: WeekStart = 'mon'): { name: string; weekend: boolean }[] {
+  const offset = weekStart === 'mon' ? 1 : 0
+  return Array.from({ length: 7 }, (_, i) => {
+    const index = (i + offset) % 7
+    return { name: WEEKDAY_NAMES[index], weekend: index === 0 || index === 6 }
+  })
+}
 
 export function todaySolar(): SolarDay {
   const d = new Date()
@@ -36,11 +47,11 @@ function describe(solar: SolarDay): Pick<DayCell, 'sub' | 'subKind'> {
   return { sub: lunar.getName(), subKind: 'lunar' }
 }
 
-/** Six-week grid (Monday first) covering the given month. */
-export function buildMonthGrid(year: number, month: number): DayCell[] {
+/** Six-week grid covering the given month, starting on Monday or Sunday. */
+export function buildMonthGrid(year: number, month: number, weekStart: WeekStart = 'mon'): DayCell[] {
   const first = SolarDay.fromYmd(year, month, 1)
-  // tyme4ts weeks: 0 = Sunday … 6 = Saturday; shift so Monday is column 0.
-  const lead = (first.getWeek().getIndex() + 6) % 7
+  // tyme4ts weeks: 0 = Sunday … 6 = Saturday; shift so weekStart is column 0.
+  const lead = (first.getWeek().getIndex() + (weekStart === 'mon' ? 6 : 0)) % 7
   const start = first.next(-lead)
   const today = todaySolar()
   const cells: DayCell[] = []
@@ -53,7 +64,7 @@ export function buildMonthGrid(year: number, month: number): DayCell[] {
       day: solar.getDay(),
       inMonth: solar.getMonth() === month,
       isToday: sameDay(solar, today),
-      isWeekend: i % 7 >= 5,
+      isWeekend: solar.getWeek().getIndex() % 6 === 0,
       holiday: holiday ? (holiday.isWork() ? '班' : '休') : undefined,
       ...describe(solar),
     })

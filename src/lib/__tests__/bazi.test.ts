@@ -160,3 +160,25 @@ describe('流派 settings', () => {
     expect(new Set(texts).size).toBeGreaterThan(1)
   })
 })
+
+describe('神煞说明', () => {
+  it('has an explanation for every star computeShenSha can return', async () => {
+    const { SHENSHA_INFO } = await import('../shenshaInfo')
+    const { SCHOOLS } = await import('../schools')
+    const STEMS = '甲乙丙丁戊己庚辛壬癸'
+    const BRANCHES = '子丑寅卯辰巳午未申酉戌亥'
+    const sixty = Array.from({ length: 60 }, (_, i) => ({ stem: STEMS[i % 10], branch: BRANCHES[i % 12] }))
+    const seen = new Set<string>()
+    const variants = [DEFAULT_SCHOOLS, ...Object.entries(SCHOOLS).flatMap(([k, info]) =>
+      info.options.map((o) => ({ ...DEFAULT_SCHOOLS, [k]: o.value })))]
+    for (const schools of variants)
+      for (const year of sixty.filter((_, i) => i % 7 === 0))
+        for (const month of sixty.filter((_, i) => i < 12))
+          for (const day of sixty)
+            for (const s of computeShenSha([year, month, day, sixty[(sixty.indexOf(day) + 5) % 60]], schools).flat())
+              seen.add(s.name)
+    const missing = [...seen].filter((n) => !SHENSHA_INFO[n])
+    expect(missing).toEqual([])
+    expect(seen.size).toBe(Object.keys(SHENSHA_INFO).length)
+  })
+})
