@@ -1,28 +1,36 @@
 import { useMemo } from 'react'
 import type { BaziInput } from '../lib/bazi'
-import type { SchoolSettings } from '../lib/schools'
+import { ELEMENTS } from '../lib/bazi'
 import { BOARD, buildZiwei, type ZiweiPalace, type ZiweiStar } from '../lib/ziwei'
-import { useTerm } from '../settingsContext'
+import { ZIWEI_SCHOOLS, type ZiweiSchoolSettings } from '../lib/ziweiSchools'
+import { useSettings, useTerm } from '../settingsContext'
 import { BirthForm } from './BirthForm'
+import { SchoolSettingsPanel } from './Schools'
 
 interface Props {
   input: BaziInput
   onChange: (input: BaziInput) => void
-  schools: SchoolSettings
-  onSchoolsChange: (schools: SchoolSettings) => void
+  /** 紫微's own 流派设置, separate from 八字 */
+  schools: ZiweiSchoolSettings
+  onSchoolsChange: (schools: ZiweiSchoolSettings) => void
 }
 
 /** 紫微斗数 page: shared birth form plus the twelve-palace board. */
 export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) {
   const chart = useMemo(() => buildZiwei(input, schools), [input, schools])
   const term = useTerm()
+  const { ziweiColor } = useSettings()
 
   return (
     <div className="bazi-layout">
-      <BirthForm input={input} onChange={onChange} schools={schools} onSchoolsChange={onSchoolsChange} />
+      <BirthForm
+        input={input}
+        onChange={onChange}
+        schoolsPanel={<SchoolSettingsPanel registry={ZIWEI_SCHOOLS} settings={schools} onChange={onSchoolsChange} />}
+      />
       <section className="card">
         <div className="ziwei-scroll">
-          <div className="ziwei-board">
+          <div className={`ziwei-board color-${ziweiColor}`}>
             {Object.values(chart.palaces).map((p) => (
               <Palace key={p.branch} palace={p} />
             ))}
@@ -63,11 +71,28 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
                 ))}
                 <span className="muted">生年四化</span>
               </div>
+              <div className="zc-legend">
+                {ziweiColor === 'element' ? (
+                  ELEMENTS.map((e) => (
+                    <span key={e} className={`el-${e}`}>
+                      {e}
+                    </span>
+                  ))
+                ) : (
+                  <>
+                    <span className="luck-major">主星</span>
+                    <span className="luck-good">吉星</span>
+                    <span className="luck-bad">煞星</span>
+                  </>
+                )}
+                <span className="muted">星曜配色（可在设置中切换）</span>
+              </div>
             </div>
           </div>
         </div>
         <p className="muted row-note ziwei-credit">
-          命盘由 <a href="https://github.com/SylarLong/iztro">iztro</a> 排出（通行安星法）· 仅供参考
+          命盘由 <a href="https://github.com/SylarLong/iztro">iztro</a> 排出（
+          {schools.algorithm === 'zhongzhou' ? '中州派' : '通行版'}安星法）· 仅供参考
         </p>
       </section>
     </div>
@@ -114,7 +139,7 @@ function StarItem({ star: s }: { star: ZiweiStar }) {
   const term = useTerm()
   return (
     <span className="star-item">
-      <span className="star-name">{term(s.name)}</span>
+      <span className={`star-name luck-${s.luck}${s.element ? ` el-${s.element}` : ''}`}>{term(s.name)}</span>
       {s.brightness && <small className="star-bright">{term(s.brightness)}</small>}
       {s.mutagen && <span className={`mutagen m-${s.mutagen}`}>{term(s.mutagen)}</span>}
     </span>

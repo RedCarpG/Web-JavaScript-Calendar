@@ -2,8 +2,9 @@
 // iztro is only imported here, and this module is only loaded by the 紫微
 // tab, so the calendar and bazi pages don't pay for it.
 import { astro } from 'iztro'
-import { effectiveTime, formatTime, type BaziInput } from './bazi'
-import type { SchoolSettings } from './schools'
+import { effectiveTime, formatTime, type BaziInput, type ElementName } from './bazi'
+import { mutagenTable, type ZiweiSchoolSettings } from './ziweiSchools'
+import { STAR_ELEMENT, starLuck, type StarLuck } from './ziweiStars'
 
 export interface ZiweiStar {
   name: string
@@ -11,6 +12,10 @@ export interface ZiweiStar {
   brightness?: string
   /** 生年四化: 禄 权 科 忌 */
   mutagen?: string
+  /** 五行, for 主星 and 辅星 */
+  element?: ElementName
+  /** 吉凶 category */
+  luck: StarLuck
 }
 
 export interface ZiweiPalace {
@@ -55,7 +60,7 @@ export const timeIndex = (hour: number) => (hour === 23 ? 12 : Math.floor((hour 
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-export function buildZiwei(input: BaziInput, schools: SchoolSettings): ZiweiChart {
+export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): ZiweiChart {
   const { corrected, time } = effectiveTime(input)
   const chart = astro.withOptions({
     type: 'solar',
@@ -63,14 +68,23 @@ export function buildZiwei(input: BaziInput, schools: SchoolSettings): ZiweiChar
     timeIndex: timeIndex(time.hour),
     gender: input.gender === 1 ? '男' : '女',
     language: 'zh-CN',
-    // Same 晚子时 rule as the bazi chart
-    config: { dayDivide: schools.ziHour === 'sameDay' ? 'current' : 'forward' },
+    config: {
+      algorithm: schools.algorithm,
+      yearDivide: schools.yearDivide,
+      horoscopeDivide: schools.horoscopeDivide,
+      ageDivide: schools.ageDivide,
+      dayDivide: schools.dayDivide,
+      // iztro types the keys/values as its own name unions; zh-CN names are accepted
+      mutagens: mutagenTable(schools) as never,
+    },
   })
 
-  const star = (s: { name: string; brightness?: string; mutagen?: string }): ZiweiStar => ({
+  const star = (s: { name: string; type: string; brightness?: string; mutagen?: string }): ZiweiStar => ({
     name: s.name,
     brightness: s.brightness || undefined,
     mutagen: s.mutagen || undefined,
+    element: STAR_ELEMENT[s.name],
+    luck: starLuck(s.type),
   })
 
   const palaces: Record<string, ZiweiPalace> = {}

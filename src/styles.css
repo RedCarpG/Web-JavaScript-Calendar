@@ -526,7 +526,16 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .palace.soul { background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .palace-stars { display: flex; flex-direction: column; gap: 4px; }
 .stars-major, .stars-minor { display: flex; flex-wrap: wrap; gap: 2px 8px; }
-.stars-major .star-name { font-size: 15px; font-weight: 700; color: var(--accent); }
+.stars-major .star-name { font-size: 15px; font-weight: 700; }
+/* 星曜配色: 按五行 uses the .el-* colours on each star; 按吉凶 overrides them */
+.color-luck .star-name.luck-major { color: var(--text); }
+.color-luck .star-name.luck-good { color: var(--good); }
+.color-luck .star-name.luck-bad { color: var(--bad); }
+.color-luck .star-name.luck-neutral { color: var(--muted); }
+.zc-legend .luck-major { font-weight: 700; }
+.zc-legend .luck-good { color: var(--good); }
+.zc-legend .luck-bad { color: var(--bad); }
+.zc-legend [class^='el-'], .zc-legend [class^='luck-'] { font-weight: 700; }
 .stars-minor .star-name { font-size: 13px; font-weight: 600; }
 .star-item { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
 .star-bright { font-size: 10px; color: var(--muted); }

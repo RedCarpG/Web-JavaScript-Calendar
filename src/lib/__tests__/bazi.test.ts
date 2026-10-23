@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { buildBazi, flowDays, flowMonths, fortunePillars, fortuneRelations } from '../bazi'
 import { computeRelations } from '../relations'
 import { DEFAULT_SCHOOLS } from '../schools'
+import { DEFAULT_ZIWEI_SCHOOLS } from '../ziweiSchools'
+import { STAR_ELEMENT, starLuck } from '../ziweiStars'
 import { computeShenSha } from '../shensha'
 import { equationOfTime, toTrueSolarTime } from '../solarTime'
 
@@ -241,7 +243,7 @@ describe('紫微斗数', () => {
 
   it('casts the chart (checked by hand: 命宫子, 身宫戌, 火六局)', async () => {
     const { buildZiwei } = await import('../ziwei')
-    const z = buildZiwei(base, DEFAULT_SCHOOLS) // 1990-05-15 10:30 巳时 男
+    const z = buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS) // 1990-05-15 10:30 巳时 男
     expect(z.chineseDate).toBe('庚午 辛巳 庚辰 辛巳') // same 四柱 as the bazi chart
     expect(z.palaces['子'].isSoul).toBe(true)
     expect(z.palaces['戌'].isBody).toBe(true)
@@ -253,8 +255,31 @@ describe('紫微斗数', () => {
 
   it('places every palace on the board once', async () => {
     const { BOARD, buildZiwei } = await import('../ziwei')
-    const z = buildZiwei(base, DEFAULT_SCHOOLS)
+    const z = buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS)
     expect(Object.keys(z.palaces).sort()).toEqual(Object.keys(BOARD).sort())
     expect(new Set(Object.values(BOARD).map(String)).size).toBe(12)
+  })
+
+  it('has its own 流派设置: 庚年四化 and 安星法 variants', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const z = buildZiwei(base, { ...DEFAULT_ZIWEI_SCHOOLS, mutagenGeng: 'yangWuTongYin' })
+    const mutagens = Object.values(z.palaces).flatMap((p) => p.major.filter((s) => s.mutagen).map((s) => s.name + s.mutagen))
+    expect(mutagens).toContain('天同科')
+    expect(mutagens).toContain('太阴忌')
+    expect(buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS).soul).toBe('贪狼')
+    expect(buildZiwei(base, { ...DEFAULT_ZIWEI_SCHOOLS, algorithm: 'zhongzhou' }).soul).toBe('破军')
+  })
+
+  it('gives every 主星 and 辅星 an element and a 吉凶 class', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const z = buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS)
+    const stars = Object.values(z.palaces).flatMap((p) => [...p.major, ...p.minor])
+    expect(stars.length).toBeGreaterThanOrEqual(14)
+    for (const s of stars) expect(s.element, s.name).toBeDefined()
+    expect(Object.keys(STAR_ELEMENT)).toHaveLength(28)
+    expect(stars.filter((s) => s.luck === 'major')).toHaveLength(14)
+    expect(stars.find((s) => s.name === '擎羊')?.luck).toBe('bad')
+    expect(stars.find((s) => s.name === '禄存')?.luck).toBe('good')
+    expect(starLuck('adjective')).toBe('neutral')
   })
 })
