@@ -1,14 +1,16 @@
 import { SHENSHA_INFO } from '../lib/shenshaInfo'
+import { useT } from '../settingsContext'
 
 /** 神煞 name that shows its 查法 and meaning in a bubble on hover / focus / tap. */
 export function ShenShaTip({ name }: { name: string }) {
+  const t = useT()
   const info = SHENSHA_INFO[name]
-  if (!info) return <>{name}</>
+  if (!info) return <>{t(name)}</>
   return (
     <span className="tip" tabIndex={0}>
-      <span className="tip-label">{name}</span>
+      <span className="tip-label">{t(name)}</span>
       <span className="tip-pop" role="tooltip">
-        <strong>{name}</strong>
+        <strong>{t(name)}</strong>
         <span>
           <b>查法</b>
           {info.rule}

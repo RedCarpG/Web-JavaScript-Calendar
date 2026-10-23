@@ -19,8 +19,10 @@
   color-scheme: light;
 }
 
+/* Dark palette: follows the system unless the 颜色模式 setting forces light
+   (data-theme="light"), and always applies with data-theme="dark". */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #161412;
     --surface: #211e1b;
     --surface-2: #2b2723;
@@ -39,6 +41,25 @@
     --shadow: none;
     color-scheme: dark;
   }
+}
+:root[data-theme='dark'] {
+  --bg: #161412;
+  --surface: #211e1b;
+  --surface-2: #2b2723;
+  --text: #ece6de;
+  --muted: #9b918a;
+  --border: #36312c;
+  --accent: #e0695b;
+  --accent-soft: #3a2420;
+  --good: #6cc08b;
+  --bad: #e0695b;
+  --wood: #6cc08b;
+  --fire: #ef7360;
+  --earth: #d5a55a;
+  --metal: #e3c25c;
+  --water: #6aa5ea;
+  --shadow: none;
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -287,4 +308,28 @@ button.fortune:hover { background: var(--surface-2); }
 @media (max-width: 480px) {
   .tip-pop { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; transform: none; }
   .pillars td:nth-child(2) .tip-pop, .pillars td:last-child .tip-pop { left: 16px; right: 16px; }
+}
+
+/* ---------- 设置菜单 ---------- */
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.settings { position: relative; }
+.icon-btn {
+  width: 36px; height: 36px; display: grid; place-items: center; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.icon-btn:hover, .icon-btn[aria-expanded='true'] { background: var(--surface-2); }
+.settings-panel {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: 260px;
+  display: grid; gap: 12px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
+}
+.setting-row { display: grid; gap: 6px; }
+.setting-title { font-size: 13px; color: var(--muted); }
+.seg.small { height: 32px; }
+.seg.small button { flex: 1; padding: 0 8px; font-size: 13px; }
+.topbar h1, .tabs button { white-space: nowrap; }
+@media (max-width: 420px) {
+  .brand-en { display: none; }
+  .tabs button { padding: 6px 12px; }
 }
