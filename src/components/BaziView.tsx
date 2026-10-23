@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { FortuneRow } from './FortuneRow'
+import { useScrollHints } from './useScrollHints'
 import {
   ELEMENTS,
   buildBazi,
@@ -77,6 +78,9 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   ]
   const combined = fortunePillars(chart, columns, schools)
   const fortuneRels = fortuneRelations(chart, columns, schools)
+
+  const tableRef = useRef<HTMLDivElement>(null)
+  useScrollHints(tableRef, `${decadeIndex}|${fortuneYear.year}|${month.index}|${day.key}`)
 
   const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true })
   const toggle = (key: keyof typeof open) => setOpen((o) => ({ ...o, [key]: !o[key] }))
@@ -281,7 +285,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           {term('运')}，合参命主原局
         </p>
         <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
-          <div className="table-scroll">
+          <div className="table-scroll" ref={tableRef}>
             <PillarTable
               pillars={[...combined, ...chart.pillars]}
               schools={schools}

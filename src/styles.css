@@ -408,9 +408,13 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .seg.small { height: 32px; }
 .seg.small button { flex: 1; padding: 0 8px; font-size: 13px; }
 .topbar h1, .tabs button { white-space: nowrap; }
-@media (max-width: 420px) {
-  .brand-en { display: none; }
-  .tabs button { padding: 6px 12px; }
+@media (max-width: 480px) {
+  /* Brand and settings share the first line; the tabs get the full width below. */
+  .topbar { flex-wrap: wrap; row-gap: 10px; }
+  .topbar-right { display: contents; }
+  .topbar .settings { order: 1; margin-left: auto; }
+  .tabs { order: 2; flex-basis: 100%; }
+  .tabs button { flex: 1; padding: 7px 8px; }
 }
 
 /* ---------- 已保存的命盘：左侧抽屉 ---------- */
@@ -558,6 +562,11 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 /* ---------- 岁运盘 ---------- */
 .section-title + .row-note { margin-top: 4px; }
 .table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+/* Horizontal scrollers fade out on the side that has more (useScrollHints sets the classes). */
+.fortune-row { position: relative; }
+.can-right { mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+.can-left { mask-image: linear-gradient(to right, transparent, #000 32px); }
+.can-left.can-right { mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
 .table-scroll .pillars { min-width: 640px; }
 .pillars th.divider, .pillars td.divider { border-left: 2px solid var(--border); }
 
@@ -690,8 +699,6 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .sf-tag, .sf-lines { animation: none; }
 }
 @media (max-width: 360px) {
-  .topbar h1 { font-size: 18px; letter-spacing: 0; }
-  .topbar-right { gap: 4px; }
   .tabs button { padding: 6px 8px; font-size: 13px; }
   .icon-btn { width: 32px; height: 32px; }
 }
