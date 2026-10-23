@@ -3,6 +3,7 @@ import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
 import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
+import { loadLastInput, saveLastInput } from './lib/savedCharts'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
 import { applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
 import { toTrad } from './lib/trad'
@@ -13,6 +14,8 @@ type Tab = 'calendar' | 'bazi'
 export function App() {
   const [tab, setTab] = useState<Tab>('calendar')
   const [baziInput, setBaziInput] = useState<BaziInput>(() => {
+    const last = loadLastInput()
+    if (last) return last
     const now = new Date()
     return {
       year: now.getFullYear(),
@@ -23,6 +26,8 @@ export function App() {
       gender: 1,
     }
   })
+  // Remember the latest birth data so the chart is back after a reload.
+  useEffect(() => saveLastInput(baziInput), [baziInput])
   const [schools, setSchools] = useState<SchoolSettings>(loadSchools)
   const changeSchools = (next: SchoolSettings) => {
     setSchools(next)

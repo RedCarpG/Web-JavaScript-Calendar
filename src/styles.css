@@ -378,3 +378,23 @@ button.fortune:hover { background: var(--surface-2); }
   .brand-en { display: none; }
   .tabs button { padding: 6px 12px; }
 }
+
+/* ---------- 已保存的命盘 ---------- */
+.saved-charts { flex-basis: 100%; display: grid; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+.saved-form { display: flex; gap: 8px; }
+.saved-form input {
+  flex: 1; min-width: 0; max-width: 280px; height: 36px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+}
+.saved-form .ghost { margin-left: 0; border-radius: 999px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); overflow: hidden;
+}
+.chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.chip button { border: 0; background: none; color: inherit; height: 30px; }
+.chip-main { padding: 0 4px 0 12px; font-size: 14px; }
+.chip-x { padding: 0 10px 0 6px; color: var(--muted); font-size: 15px; }
+.chip-x:hover { color: var(--bad); }
+.saved-charts small { font-size: 12px; }

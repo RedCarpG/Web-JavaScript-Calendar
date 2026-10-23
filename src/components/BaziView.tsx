@@ -4,6 +4,7 @@ import type { Relation } from '../lib/relations'
 import type { SchoolSettings } from '../lib/schools'
 import { CITIES } from '../lib/solarTime'
 import { Char } from './Char'
+import { SavedCharts } from './SavedCharts'
 import { SchoolMark, SchoolSettingsPanel } from './Schools'
 import { ShenShaTip } from './ShenShaTip'
 import { useTerm } from '../settingsContext'
@@ -133,6 +134,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           流派设置
         </button>
         {showSchools && <SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
+        <SavedCharts input={input} onLoad={(next) => update(next)} />
       </section>
 
       <section className="card">
