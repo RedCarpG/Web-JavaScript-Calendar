@@ -284,6 +284,23 @@ describe('紫微斗数', () => {
     expect(starLuck('adjective')).toBe('neutral')
   })
 
+  it('places 天马 by year (年马) or by lunar month (月马)', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const where = (z: ReturnType<typeof buildZiwei>) =>
+      Object.values(z.palaces).filter((p) => p.minor.some((s) => s.name === '天马')).map((p) => p.branch)
+    // 1997-11-02 09:30: 丑年 → 马在亥; 农历十月 (亥月) → 马在巳, as 文墨天机 shows
+    const input = { ...base, year: 1997, month: 11, day: 2, hour: 9, minute: 30 }
+    expect(where(buildZiwei(input, DEFAULT_ZIWEI_SCHOOLS))).toEqual(['亥'])
+    expect(where(buildZiwei(input, { ...DEFAULT_ZIWEI_SCHOOLS, tianma: 'month' }))).toEqual(['巳'])
+    // 1990-05-15 is 农历四月 (巳月) of a 午年: 年马 申, 月马 亥
+    expect(where(buildZiwei(base, DEFAULT_ZIWEI_SCHOOLS))).toEqual(['申'])
+    expect(where(buildZiwei(base, { ...DEFAULT_ZIWEI_SCHOOLS, tianma: 'month' }))).toEqual(['亥'])
+    // 2023 闰二月: the first half counts as 二月 (卯 → 巳), the second half as 三月 (辰 → 寅)
+    const month = { ...DEFAULT_ZIWEI_SCHOOLS, tianma: 'month' as const }
+    expect(where(buildZiwei({ ...base, year: 2023, month: 3, day: 25 }, month))).toEqual(['巳'])
+    expect(where(buildZiwei({ ...base, year: 2023, month: 4, day: 10 }, month))).toEqual(['寅'])
+  })
+
   it('finds the 三方四正 of a palace', async () => {
     const { sanFangSiZheng } = await import('../ziwei')
     expect(sanFangSiZheng('子')).toEqual({ opposite: '午', trines: ['辰', '申'] })

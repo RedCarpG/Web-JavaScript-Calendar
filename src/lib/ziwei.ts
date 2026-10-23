@@ -1,7 +1,7 @@
 // 紫微斗数命盘, built on iztro (https://github.com/SylarLong/iztro, MIT).
 // iztro is only imported here, and this module is only loaded by the 紫微
 // tab, so the calendar and bazi pages don't pay for it.
-import { astro } from 'iztro'
+import { astro, util } from 'iztro'
 import { effectiveTime, formatTime, type BaziInput, type ElementName } from './bazi'
 import { mutagenTable, type ZiweiSchoolSettings } from './ziweiSchools'
 import { STAR_ELEMENT, starLuck, type StarLuck } from './ziweiStars'
@@ -62,10 +62,12 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): ZiweiChart {
   const { corrected, time } = effectiveTime(input)
+  const dateStr = `${time.year}-${pad(time.month)}-${pad(time.day)}`
+  const timeIdx = timeIndex(time.hour)
   const chart = astro.withOptions({
     type: 'solar',
-    dateStr: `${time.year}-${pad(time.month)}-${pad(time.day)}`,
-    timeIndex: timeIndex(time.hour),
+    dateStr,
+    timeIndex: timeIdx,
     gender: input.gender === 1 ? '男' : '女',
     language: 'zh-CN',
     config: {
@@ -103,6 +105,13 @@ export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): Ziwe
     }
   }
 
+  if (schools.tianma === 'month') {
+    // 月马: same table as 年马, keyed by the lunar month's branch. iztro's own
+    // month index (寅 = 0) keeps 闰月 handling in line with its other 月系 stars.
+    const month = BRANCH_ORDER[(2 + util.fixLunarMonthIndex(dateStr, timeIdx, true)) % 12]
+    moveStar(palaces, '天马', MA[month])
+  }
+
   return {
     gender: input.gender === 1 ? '男' : '女',
     solarText: formatTime(input),
@@ -132,6 +141,22 @@ export const BOARD: Record<string, [number, number]> = {
 }
 
 const BRANCH_ORDER = '子丑寅卯辰巳午未申酉戌亥'
+
+/** 驿马: 寅午戌马在申，申子辰马在寅，巳酉丑马在亥，亥卯未马在巳 */
+const MA: Record<string, string> = Object.fromEntries(
+  ['寅午戌申', '申子辰寅', '巳酉丑亥', '亥卯未巳'].flatMap((g) => [...g.slice(0, 3)].map((b) => [b, g[3]])),
+)
+
+/** Move a 辅星 to the palace on another branch. */
+function moveStar(palaces: Record<string, ZiweiPalace>, name: string, to: string) {
+  for (const p of Object.values(palaces)) {
+    const i = p.minor.findIndex((s) => s.name === name)
+    if (i < 0) continue
+    if (p.branch === to) return
+    palaces[to].minor.push(...p.minor.splice(i, 1))
+    return
+  }
+}
 
 /** 三方四正 of a palace: its 对宫 (six palaces on) and the two 三合 palaces (four on, either way). */
 export function sanFangSiZheng(branch: string): { opposite: string; trines: [string, string] } {

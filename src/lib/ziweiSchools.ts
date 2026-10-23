@@ -18,6 +18,8 @@ export interface ZiweiSchoolSettings {
   mutagenWu: 'tanYinBiJi' | 'tanYinYangJi'
   /** 壬年四化 */
   mutagenRen: 'liangZiZuoWu' | 'liangZiFuWu'
+  /** 天马: by birth-year branch (年马) or by lunar birth month (月马) */
+  tianma: 'year' | 'month'
 }
 
 export type ZiweiSchoolKey = keyof ZiweiSchoolSettings
@@ -32,6 +34,7 @@ export const DEFAULT_ZIWEI_SCHOOLS: ZiweiSchoolSettings = {
   mutagenGeng: 'yangWuYinTong',
   mutagenWu: 'tanYinBiJi',
   mutagenRen: 'liangZiZuoWu',
+  tianma: 'year',
 }
 
 export interface ZiweiSchoolInfo<K extends ZiweiSchoolKey = ZiweiSchoolKey> {
@@ -79,6 +82,14 @@ export const ZIWEI_SCHOOLS: { [K in ZiweiSchoolKey]: ZiweiSchoolInfo<K> } = {
     options: [
       { value: 'current', label: '算当天', source: '区分早晚子时，与本站八字默认一致' },
       { value: 'forward', label: '算次日', source: '子时一到即换日，iztro 默认' },
+    ],
+  },
+  tianma: {
+    title: '天马',
+    summary: '天马按生年地支还是按农历生月安。口诀相同：寅午戌马在申，申子辰马在寅，巳酉丑马在亥，亥卯未马在巳。',
+    options: [
+      { value: 'year', label: '按生年支（年马）', source: '《紫微斗数全书》「寅午戌人马居申」，中州派、天纪同，iztro 默认' },
+      { value: 'month', label: '按生月（月马）', source: '部分门派及「安月系诸星诀」：以农历月份为准，不论节气；文墨天机等软件可选' },
     ],
   },
   mutagenGeng: {
