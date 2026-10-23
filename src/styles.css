@@ -868,3 +868,45 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 @media (prefers-reduced-motion: reduce) {
   .star-wheel .house-sector, .star-wheel .planet, .star-wheel .aspect-line, .star-table tbody tr, .house-cell, .aspect-chip { transition: none; }
 }
+
+/* ---------- 八字：岁运 side panel + 岁运盘 in one card ---------- */
+.fortune-combo {
+  display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 0 24px; align-items: start;
+  transition: grid-template-columns 0.3s ease;
+}
+.fortune-combo:not(.side-open) { grid-template-columns: 40px minmax(0, 1fr); }
+.fortune-side { min-width: 0; padding-right: 24px; margin-right: -24px; border-right: 1px solid var(--border); animation: side-in 0.25s ease-out; }
+.fortune-side[hidden] { display: none; }
+.fortune-side .fortunes-head { gap: 6px; }
+.fortune-side .fortunes-head h3 { margin-right: auto; }
+.fortune-main { min-width: 0; }
+.side-handle {
+  align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 0;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); color: var(--text);
+  cursor: pointer; animation: side-in 0.25s ease-out;
+}
+.side-handle:hover { border-color: var(--accent); color: var(--accent); }
+.side-handle-title, .side-handle-sub { width: 1em; word-break: break-all; line-height: 1.2; text-align: center; }
+.side-handle-title { font-weight: 700; font-size: 15px; }
+.side-handle-sub { font-size: 12px; color: var(--muted); }
+@keyframes side-in { from { opacity: 0; } to { opacity: 1; } }
+@media (min-width: 901px) {
+  /* In the side panel the chips wrap instead of scrolling sideways. */
+  .fortune-side .fortune-row,
+  .fortune-side .fortune-row.months,
+  .fortune-side .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); overflow: visible; mask-image: none; }
+  .fortune-side .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
+}
+/* The 岁运盘 stays in view while picking further down the side panel (only where it fits the screen). */
+@media (min-width: 901px) and (min-height: 860px) {
+  .fortune-combo.side-open .fortune-main { position: sticky; top: 64px; }
+}
+@media (max-width: 900px) {
+  .fortune-combo, .fortune-combo:not(.side-open) { grid-template-columns: minmax(0, 1fr); }
+  .fortune-side { padding: 0 0 12px; margin: 0 0 16px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .side-handle { flex-direction: row; justify-content: center; padding: 8px 12px; margin-bottom: 16px; }
+  .side-handle-title, .side-handle-sub { width: auto; }
+  .side-close { font-size: 0 !important; }
+  .side-close::after { content: '收起 ▴'; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) { .fortune-combo { transition: none; } .fortune-side, .side-handle { animation: none; } }

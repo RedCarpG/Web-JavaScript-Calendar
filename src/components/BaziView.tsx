@@ -49,7 +49,10 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   const months = useMemo(() => flowMonths(fortuneYear.year, dayMaster), [fortuneYear.year, dayMaster])
   const todayMonth = useMemo(() => currentFlowMonth(fortuneYear.year), [fortuneYear.year])
   const month = months[pickedMonth ?? todayMonth ?? 0]
-  const days = useMemo(() => flowDays(fortuneYear.year, month.index, dayMaster), [fortuneYear.year, month.index, dayMaster])
+  const days = useMemo(
+    () => flowDays(fortuneYear.year, month.index, dayMaster),
+    [fortuneYear.year, month.index, dayMaster],
+  )
   const day = days.find((d) => d.key === pickedDay) ?? days.find((d) => d.isToday) ?? days[0]
 
   // Picking a coarser level resets the finer ones to their defaults.
@@ -85,6 +88,23 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   useScrollHints(tableRef, `${decadeIndex}|${fortuneYear.year}|${month.index}|${day.key}|${withNatal}`)
 
   const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true })
+  // The 岁运 picker is a side panel of the 岁运盘 card; collapsed, it leaves a slim tab.
+  const [sideOpen, setSideOpen] = useState(() => {
+    try {
+      return localStorage.getItem(SIDE_KEY) !== 'closed'
+    } catch {
+      return true
+    }
+  })
+  const toggleSide = () =>
+    setSideOpen((v) => {
+      try {
+        localStorage.setItem(SIDE_KEY, v ? 'closed' : 'open')
+      } catch {
+        // storage unavailable: lasts for this visit
+      }
+      return !v
+    })
   const toggle = (key: keyof typeof open) => setOpen((o) => ({ ...o, [key]: !o[key] }))
   const toggleAll = () => {
     const next = !Object.values(open).every(Boolean)
@@ -112,7 +132,6 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         items={[
           ['bazi-natal', term('原局')],
           ['bazi-fortune', term('岁运')],
-          ['bazi-combined', term('岁运盘')],
         ]}
       />
 
@@ -144,17 +163,17 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
             }
           />
 
-        <div className="elements">
-          {ELEMENTS.map((e) => (
-            <div key={e} className="el-bar">
-              <span className={`el-${e}`}>{e}</span>
-              <div className="track">
-                <div className={`fill bg-${e}`} style={{ width: `${(chart.elementCount[e] / total) * 100}%` }} />
+          <div className="elements">
+            {ELEMENTS.map((e) => (
+              <div key={e} className="el-bar">
+                <span className={`el-${e}`}>{e}</span>
+                <div className="track">
+                  <div className={`fill bg-${e}`} style={{ width: `${(chart.elementCount[e] / total) * 100}%` }} />
+                </div>
+                <span className="muted">{chart.elementCount[e]}</span>
               </div>
-              <span className="muted">{chart.elementCount[e]}</span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
           <Relations title={term('原局刑冲合会')} items={chart.relations} schools={schools} />
         </HighlightScope>
@@ -179,142 +198,166 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         </dl>
       </section>
 
-      <section className="card fortunes" id="bazi-fortune">
-        <div className="fortunes-head">
-          <h3>{term('岁运')}</h3>
-          <button type="button" className="ghost" onClick={toggleAll}>
-            {Object.values(open).every(Boolean) ? '全部收起' : '全部展开'}
+      <section className={`card fortunes fortune-combo${sideOpen ? ' side-open' : ''}`} id="bazi-fortune">
+        {!sideOpen && (
+          <button type="button" className="side-handle" aria-expanded={false} onClick={toggleSide} title="展开岁运">
+            <span className="side-handle-title">{term('岁运')}</span>
+            <span className="side-handle-sub">
+              {decade.ganzhi}
+              {term('运')} · {fortuneYear.year}
+            </span>
+            <span aria-hidden="true">›</span>
           </button>
-        </div>
-        <FortuneRow
-          title={term('大运')}
-          summary={`${decade.ganzhi} · ${decade.startAge}–${decade.endAge}岁 · ${decade.startYear}–${decade.endYear}`}
-          open={open.decade}
-          onToggle={() => toggle('decade')}
-        >
-          <p className="muted row-note">
-            {chart.startText}
-            <SchoolMark school="childLimit" settings={schools} />
-          </p>
-          <div className="fortune-row">
-            {chart.decades.map((d, i) => (
-              <button
-                key={d.startYear}
-                className={['fortune', i === decadeIndex && 'selected', i === currentDecade && 'current'].filter(Boolean).join(' ')}
-                onClick={() => pickDecade(i)}
-              >
-                <small>{d.startAge}岁</small>
-                <small className="muted">{d.startYear}</small>
-                <Char g={d.stem} small />
-                <Char g={d.branch} small />
-                <small>{term(d.stem.tenStar ?? '')}</small>
-              </button>
-            ))}
+        )}
+        <aside className="fortune-side" aria-label={term('岁运')} hidden={!sideOpen}>
+          <div className="fortunes-head">
+            <h3>{term('岁运')}</h3>
+            <button type="button" className="ghost" onClick={toggleAll}>
+              {Object.values(open).every(Boolean) ? '全部收起' : '全部展开'}
+            </button>
+            <button type="button" className="ghost side-close" aria-expanded onClick={toggleSide} title="收起岁运">
+              ‹ 收起
+            </button>
           </div>
-        </FortuneRow>
-        <FortuneRow
-          title={term('流年')}
-          summary={`${fortuneYear.year} ${fortuneYear.ganzhi} · ${fortuneYear.age}岁`}
-          open={open.year}
-          onToggle={() => toggle('year')}
-        >
-          <div className="fortune-row">
-            {decade.years.map((y) => (
-              <button
-                key={y.year}
-                className={['fortune', y.year === thisYear && 'current', y.year === fortuneYear.year && 'selected']
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => pickYear(y.year)}
-              >
-                <small>{y.year}</small>
-                <small className="muted">{y.age}岁</small>
-                <Char g={y.stem} small />
-                <Char g={y.branch} small />
-                <small>{term(y.stem.tenStar ?? '')}</small>
-                <small className="muted" title={term('小运')}>
-                  {y.smallFortune}
-                </small>
-              </button>
-            ))}
-          </div>
-        </FortuneRow>
-        <FortuneRow
-          title={term('流月')}
-          summary={`${month.ganzhi} · ${month.start}起`}
-          open={open.month}
-          onToggle={() => toggle('month')}
-        >
-          <div className="fortune-row months">
-            {months.map((m) => (
-              <button
-                key={m.index}
-                className={['fortune', m.index === todayMonth && 'current', m.index === month.index && 'selected']
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => pickMonth(m.index)}
-              >
-                <small>{m.start}</small>
-                <Char g={m.stem} small />
-                <Char g={m.branch} small />
-                <small>{term(m.stem.tenStar ?? '')}</small>
-              </button>
-            ))}
-          </div>
-        </FortuneRow>
-        <FortuneRow
-          title={term('流日')}
-          summary={`${day.month}/${day.day} ${day.ganzhi}`}
-          open={open.day}
-          onToggle={() => toggle('day')}
-        >
-          <div className="fortune-row days">
-            {days.map((d) => (
-              <button
-                key={d.key}
-                className={['fortune', d.isToday && 'current', d.key === day.key && 'selected'].filter(Boolean).join(' ')}
-                onClick={() => setPickedDay(d.key)}
-              >
-                <small>
-                  {d.month}/{d.day}
-                </small>
-                <Char g={d.stem} small />
-                <Char g={d.branch} small />
-                <small>{term(d.stem.tenStar ?? '')}</small>
-              </button>
-            ))}
-          </div>
-        </FortuneRow>
-      </section>
-
-      <section className="card" id="bazi-combined">
-        <div className="fortunes-head">
-          <h3 className="section-title">{term('岁运盘')}</h3>
-          <button
-            type="button"
-            className={`ghost toggle${withNatal ? ' on' : ''}`}
-            aria-pressed={withNatal}
-            onClick={() => setWithNatal((v) => !v)}
+          <FortuneRow
+            title={term('大运')}
+            summary={`${decade.ganzhi} · ${decade.startAge}–${decade.endAge}岁 · ${decade.startYear}–${decade.endYear}`}
+            open={open.decade}
+            onToggle={() => toggle('decade')}
           >
-            合参{term('原局')}
-          </button>
-        </div>
-        <p className="muted row-note">
-          {day.month}月{day.day}日 · {month.ganzhi}月 · {fortuneYear.year}
-          {fortuneYear.ganzhi}年 · {decade.ganzhi}
-          {term('运')}，合参命主原局
-        </p>
-        <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
-          <div className={`table-scroll${withNatal ? '' : ' fortune-only'}`} ref={tableRef}>
-            <PillarTable
-              pillars={withNatal ? [...combined, ...chart.pillars] : combined}
-              schools={schools}
-              dividerAt={withNatal ? combined.length : undefined}
-              dayMaster={chart.dayMaster.char}
-            />
+            <p className="muted row-note">
+              {chart.startText}
+              <SchoolMark school="childLimit" settings={schools} />
+            </p>
+            <div className="fortune-row">
+              {chart.decades.map((d, i) => (
+                <button
+                  key={d.startYear}
+                  className={['fortune', i === decadeIndex && 'selected', i === currentDecade && 'current']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => pickDecade(i)}
+                >
+                  <small>{d.startAge}岁</small>
+                  <small className="muted">{d.startYear}</small>
+                  <Char g={d.stem} small />
+                  <Char g={d.branch} small />
+                  <small>{term(d.stem.tenStar ?? '')}</small>
+                </button>
+              ))}
+            </div>
+          </FortuneRow>
+          <FortuneRow
+            title={term('流年')}
+            summary={`${fortuneYear.year} ${fortuneYear.ganzhi} · ${fortuneYear.age}岁`}
+            open={open.year}
+            onToggle={() => toggle('year')}
+          >
+            <div className="fortune-row">
+              {decade.years.map((y) => (
+                <button
+                  key={y.year}
+                  className={['fortune', y.year === thisYear && 'current', y.year === fortuneYear.year && 'selected']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => pickYear(y.year)}
+                >
+                  <small>{y.year}</small>
+                  <small className="muted">{y.age}岁</small>
+                  <Char g={y.stem} small />
+                  <Char g={y.branch} small />
+                  <small>{term(y.stem.tenStar ?? '')}</small>
+                  <small className="muted" title={term('小运')}>
+                    {y.smallFortune}
+                  </small>
+                </button>
+              ))}
+            </div>
+          </FortuneRow>
+          <FortuneRow
+            title={term('流月')}
+            summary={`${month.ganzhi} · ${month.start}起`}
+            open={open.month}
+            onToggle={() => toggle('month')}
+          >
+            <div className="fortune-row months">
+              {months.map((m) => (
+                <button
+                  key={m.index}
+                  className={['fortune', m.index === todayMonth && 'current', m.index === month.index && 'selected']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => pickMonth(m.index)}
+                >
+                  <small>{m.start}</small>
+                  <Char g={m.stem} small />
+                  <Char g={m.branch} small />
+                  <small>{term(m.stem.tenStar ?? '')}</small>
+                </button>
+              ))}
+            </div>
+          </FortuneRow>
+          <FortuneRow
+            title={term('流日')}
+            summary={`${day.month}/${day.day} ${day.ganzhi}`}
+            open={open.day}
+            onToggle={() => toggle('day')}
+          >
+            <div className="fortune-row days">
+              {days.map((d) => (
+                <button
+                  key={d.key}
+                  className={['fortune', d.isToday && 'current', d.key === day.key && 'selected']
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => setPickedDay(d.key)}
+                >
+                  <small>
+                    {d.month}/{d.day}
+                  </small>
+                  <Char g={d.stem} small />
+                  <Char g={d.branch} small />
+                  <small>{term(d.stem.tenStar ?? '')}</small>
+                </button>
+              ))}
+            </div>
+          </FortuneRow>
+        </aside>
+
+        <div className="fortune-main" id="bazi-combined">
+          <div className="fortunes-head">
+            <h3 className="section-title">{term('岁运盘')}</h3>
+            <button
+              type="button"
+              className={`ghost toggle${withNatal ? ' on' : ''}`}
+              aria-pressed={withNatal}
+              onClick={() => setWithNatal((v) => !v)}
+            >
+              合参{term('原局')}
+            </button>
           </div>
-          <Relations title={term('岁运刑冲合会')} items={fortuneRels} schools={schools} empty="与原局无明显刑冲合会" />
-        </HighlightScope>
+          <p className="muted row-note">
+            {day.month}月{day.day}日 · {month.ganzhi}月 · {fortuneYear.year}
+            {fortuneYear.ganzhi}年 · {decade.ganzhi}
+            {term('运')}，合参命主原局
+          </p>
+          <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
+            <div className={`table-scroll${withNatal ? '' : ' fortune-only'}`} ref={tableRef}>
+              <PillarTable
+                pillars={withNatal ? [...combined, ...chart.pillars] : combined}
+                schools={schools}
+                dividerAt={withNatal ? combined.length : undefined}
+                dayMaster={chart.dayMaster.char}
+              />
+            </div>
+            <Relations
+              title={term('岁运刑冲合会')}
+              items={fortuneRels}
+              schools={schools}
+              empty="与原局无明显刑冲合会"
+            />
+          </HighlightScope>
+        </div>
       </section>
     </div>
   )
@@ -359,6 +402,8 @@ function RelationChip({ relation: r, index, schools }: { relation: Relation; ind
     </span>
   )
 }
+
+const SIDE_KEY = 'chroniq-fortune-side'
 
 /** Sticky row of jump links to the page's sections. */
 function SectionNav({ items }: { items: [id: string, label: string][] }) {
