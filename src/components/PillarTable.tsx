@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
-import type { Pillar } from '../lib/bazi'
+import type { Glyph, Pillar } from '../lib/bazi'
 import type { SchoolSettings } from '../lib/schools'
 import { useTerm } from '../settingsContext'
 import { Char } from './Char'
+import { useHighlight, useTrigger } from './highlight'
 import { SchoolMark } from './Schools'
 import { ShenShaTip } from './ShenShaTip'
 
@@ -18,6 +19,7 @@ interface Props {
 /** 主星 / 天干 / 地支 / 藏干 / 纳音 / 星运 / 自坐 / 空亡 / 神煞 table for any set of pillars. */
 export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props) {
   const term = useTerm()
+  const { hover } = useHighlight()
   const cls = (i: number) => (i === dividerAt ? 'divider' : undefined)
   const rows = [
     [term('纳音'), 'sound'],
@@ -26,7 +28,7 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
     [term('空亡'), 'empty'],
   ] as const
   return (
-    <table className="pillars">
+    <table className={`pillars${hover ? ' hl-active' : ''}`}>
       <thead>
         <tr>
           <th />
@@ -43,7 +45,7 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           <th>{term('主星')}</th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
-              {term(p.stem.tenStar ?? '')}
+              <Star name={p.stem.tenStar} />
             </td>
           ))}
         </tr>
@@ -51,7 +53,7 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           <th>{term('天干')}</th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
-              <Char g={p.stem} />
+              <GanzhiCell pillar={p.label} part="stem" g={p.stem} />
             </td>
           ))}
         </tr>
@@ -59,7 +61,7 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           <th>{term('地支')}</th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
-              <Char g={p.branch} />
+              <GanzhiCell pillar={p.label} part="branch" g={p.branch} />
             </td>
           ))}
         </tr>
@@ -70,7 +72,9 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
               {p.hidden.map((h) => (
                 <div key={h.char}>
                   <span className={`el-${h.element}`}>{h.char}</span>
-                  <small>{term(h.tenStar ?? '')}</small>
+                  <small>
+                    <Star name={h.tenStar} />
+                  </small>
                 </div>
               ))}
             </td>
@@ -101,5 +105,30 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
         </tr>
       </tbody>
     </table>
+  )
+}
+
+/** A 天干 or 地支 that highlights what it 刑冲合会 with. */
+function GanzhiCell({ pillar, part, g }: { pillar: string; part: 'stem' | 'branch'; g: Glyph }) {
+  const { cells } = useHighlight()
+  const trigger = useTrigger({ kind: 'cell', pillar, part })
+  return (
+    <span className={`hl-target${cells.has(`${pillar}|${part}`) ? ' hl-on' : ''}`} {...trigger}>
+      <Char g={g} />
+    </span>
+  )
+}
+
+/** A 十神 that highlights every 十神 of the same name. */
+function Star({ name }: { name?: string }) {
+  const term = useTerm()
+  const { star } = useHighlight()
+  const trigger = useTrigger({ kind: 'star', name: name ?? '' })
+  // 日主 is a label, not a 十神
+  if (!name || name === '日主') return <>{name ? term(name) : null}</>
+  return (
+    <span className={`hl-target star${star === name ? ' hl-on' : ''}`} {...trigger}>
+      {term(name)}
+    </span>
   )
 }

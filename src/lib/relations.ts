@@ -12,6 +12,8 @@ export interface Relation {
   text: string
   /** Labels of the pillars involved, e.g. ['年', '日'] */
   members: string[]
+  /** Whether the relation is between 天干 or 地支 */
+  on: 'stem' | 'branch'
   /** The 流派 setting this result depends on, if any */
   school?: SchoolKey
 }
@@ -51,22 +53,22 @@ export function computeRelations(
       const stems = `${a.stem}${b.stem}`
       const branches = `${a.branch}${b.branch}`
 
-      for (const [pair, el] of STEM_COMBINE) if (isPair(pair, a.stem, b.stem)) push({ kind: '合', text: `${stems}合${el}`, members: labels })
-      for (const pair of STEM_CLASH) if (isPair(pair, a.stem, b.stem)) push({ kind: '冲', text: `${stems}相冲`, members: labels })
+      for (const [pair, el] of STEM_COMBINE) if (isPair(pair, a.stem, b.stem)) push({ on: 'stem', kind: '合', text: `${stems}合${el}`, members: labels })
+      for (const pair of STEM_CLASH) if (isPair(pair, a.stem, b.stem)) push({ on: 'stem', kind: '冲', text: `${stems}相冲`, members: labels })
 
-      for (const [pair, el] of SIX_COMBINE) if (isPair(pair, a.branch, b.branch)) push({ kind: '合', text: `${branches}六合${el}`, members: labels })
-      if (isPair('午未', a.branch, b.branch)) push({ kind: '合', text: `${branches}六合${schools.wuWei}`, members: labels, school: 'wuWei' })
-      for (const pair of SIX_CLASH) if (isPair(pair, a.branch, b.branch)) push({ kind: '冲', text: `${branches}相冲`, members: labels })
-      for (const pair of SIX_HARM) if (isPair(pair, a.branch, b.branch)) push({ kind: '害', text: `${branches}相害`, members: labels })
-      for (const pair of BREAK) if (isPair(pair, a.branch, b.branch)) push({ kind: '破', text: `${branches}相破`, members: labels })
-      for (const [pair, name] of PUNISH) if (isPair(pair, a.branch, b.branch)) push({ kind: '刑', text: `${branches}${name}`, members: labels })
-      if (a.branch === b.branch && SELF_PUNISH.includes(a.branch)) push({ kind: '刑', text: `${branches}自刑`, members: labels })
+      for (const [pair, el] of SIX_COMBINE) if (isPair(pair, a.branch, b.branch)) push({ on: 'branch', kind: '合', text: `${branches}六合${el}`, members: labels })
+      if (isPair('午未', a.branch, b.branch)) push({ on: 'branch', kind: '合', text: `${branches}六合${schools.wuWei}`, members: labels, school: 'wuWei' })
+      for (const pair of SIX_CLASH) if (isPair(pair, a.branch, b.branch)) push({ on: 'branch', kind: '冲', text: `${branches}相冲`, members: labels })
+      for (const pair of SIX_HARM) if (isPair(pair, a.branch, b.branch)) push({ on: 'branch', kind: '害', text: `${branches}相害`, members: labels })
+      for (const pair of BREAK) if (isPair(pair, a.branch, b.branch)) push({ on: 'branch', kind: '破', text: `${branches}相破`, members: labels })
+      for (const [pair, name] of PUNISH) if (isPair(pair, a.branch, b.branch)) push({ on: 'branch', kind: '刑', text: `${branches}${name}`, members: labels })
+      if (a.branch === b.branch && SELF_PUNISH.includes(a.branch)) push({ on: 'branch', kind: '刑', text: `${branches}自刑`, members: labels })
 
       // 半合: 两支且其一为中神（子午卯酉）
       for (const [trio, el] of THREE_COMBINE) {
         const mid = trio[1]
         if (a.branch !== b.branch && trio.includes(a.branch) && trio.includes(b.branch) && (a.branch === mid || b.branch === mid)) {
-          push({ kind: '合', text: `${branches}半合${el}局`, members: labels })
+          push({ on: 'branch', kind: '合', text: `${branches}半合${el}局`, members: labels })
         }
       }
     }
@@ -77,7 +79,7 @@ export function computeRelations(
     for (const [trio, el] of list) {
       const picked = [...trio].map((br) => members.find((m) => m.branch === br))
       if (picked.every(Boolean)) {
-        push({ kind, text: `${trio}${suffix}${el}${kind === '会' ? '方' : '局'}`, members: picked.map((m) => m!.label) })
+        push({ on: 'branch', kind, text: `${trio}${suffix}${el}${kind === '会' ? '方' : '局'}`, members: picked.map((m) => m!.label) })
       }
     }
   }

@@ -490,3 +490,30 @@ button.fortune:hover { background: var(--surface-2); }
 .table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
 .table-scroll .pillars { min-width: 640px; }
 .pillars th.divider, .pillars td.divider { border-left: 2px solid var(--border); }
+
+/* ---------- 悬停高亮 ---------- */
+.hl-target { display: inline-block; border-radius: 8px; cursor: pointer; outline: none; transition: opacity 0.2s, background-color 0.2s, box-shadow 0.2s; }
+.pillars .row-char .hl-target { padding: 2px 6px; }
+.hl-target.star { padding: 0 3px; border-radius: 5px; }
+/* Spotlight: while something is hovered, everything else in the table fades */
+.pillars.hl-active td > *, .pillars.hl-active td .hl-target { transition: opacity 0.2s; }
+.pillars.hl-active .row-char .hl-target:not(.hl-on),
+.pillars.hl-active .star:not(.hl-on) { opacity: 0.35; }
+.hl-target.hl-on {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+  animation: hl-pop 0.35s ease-out;
+}
+.rel.hl-target { cursor: pointer; transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s; }
+.rel.hl-on { box-shadow: 0 0 0 2px currentColor; transform: translateY(-1px); animation: hl-pop 0.35s ease-out; }
+.rel.hl-dim { opacity: 0.35; }
+@keyframes hl-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hl-target, .rel.hl-target { transition: none; }
+  .hl-target.hl-on, .rel.hl-on { animation: none; }
+}
+.rel.hl-target { border-radius: 999px; }
