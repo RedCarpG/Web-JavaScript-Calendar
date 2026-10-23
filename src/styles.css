@@ -59,7 +59,8 @@ a { color: var(--accent); }
 .app { max-width: 1120px; margin: 0 auto; padding: 16px; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.topbar h1 { margin: 0; font-size: 22px; letter-spacing: 2px; }
+.topbar h1 { margin: 0; font-size: 22px; letter-spacing: 2px; display: flex; align-items: baseline; gap: 8px; }
+.brand-en { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--muted); }
 .tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 999px; }
 .tabs button { border: 0; background: none; padding: 6px 16px; border-radius: 999px; }
 .tabs button.on { background: var(--surface); box-shadow: var(--shadow); font-weight: 600; }
