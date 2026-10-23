@@ -1,4 +1,5 @@
-import { SolarDay } from 'tyme4ts'
+import { SolarDay, type SixtyCycle } from 'tyme4ts'
+import { glyph, type Glyph } from './bazi'
 
 export interface DayCell {
   key: string
@@ -66,6 +67,8 @@ export interface DayDetail {
   constellation: string
   lunarText: string
   ganzhi: string
+  /** 年、月、日三柱，供竖排显示 */
+  pillars: { label: string; stem: Glyph; branch: Glyph }[]
   zodiac: string
   term: string
   festivals: string[]
@@ -77,6 +80,12 @@ export interface DayDetail {
   goodGods: string[]
   badGods: string[]
 }
+
+const pillar = (label: string, sc: SixtyCycle) => ({
+  label,
+  stem: glyph(sc.getHeavenStem()),
+  branch: glyph(sc.getEarthBranch()),
+})
 
 export function buildDayDetail(solar: SolarDay): DayDetail {
   const lunar = solar.getLunarDay()
@@ -91,6 +100,11 @@ export function buildDayDetail(solar: SolarDay): DayDetail {
     constellation: `${solar.getConstellation().getName()}座`,
     lunarText: `${lunar.getLunarMonth().getName()}${lunar.getName()}`,
     ganzhi: solar.getSixtyCycleDay().toString(),
+    pillars: [
+      pillar('年', solar.getSixtyCycleDay().getYear()),
+      pillar('月', solar.getSixtyCycleDay().getMonth()),
+      pillar('日', solar.getSixtyCycleDay().getSixtyCycle()),
+    ],
     zodiac: lunar.getYearSixtyCycle().getEarthBranch().getZodiac().getName(),
     term: `${term.getSolarTerm().getName()}第${term.getDayIndex() + 1}天`,
     festivals: [...new Set(festivals)],

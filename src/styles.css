@@ -122,7 +122,13 @@ footer { text-align: center; font-size: 13px; margin-top: 24px; }
 .detail-hero { display: flex; align-items: center; gap: 12px; }
 .detail-hero .big { font-size: 48px; font-weight: 700; color: var(--accent); line-height: 1; }
 .lunar-line { font-size: 18px; font-weight: 600; }
-.ganzhi { letter-spacing: 1px; }
+.day-pillars { display: flex; gap: 8px; }
+.day-pillar {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 8px;
+  border-radius: 10px; background: var(--surface-2);
+}
+.day-pillar .muted { font-size: 12px; }
+.day-pillar .char { font-size: 30px; font-weight: 800; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
 

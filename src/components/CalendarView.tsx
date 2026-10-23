@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { SolarDay } from 'tyme4ts'
+import { Char } from './Char'
 import { WEEK_TITLES, buildDayDetail, buildMonthGrid, sameDay, todaySolar } from '../lib/calendar'
 
 // tyme4ts handles far wider ranges; this keeps the dropdown a manageable length.
@@ -119,7 +120,15 @@ export function CalendarView({ onPickBazi }: Props) {
           农历{detail.lunarText}
           <span className="muted"> · 属{detail.zodiac}</span>
         </div>
-        <div className="ganzhi">{detail.ganzhi}</div>
+        <div className="day-pillars" aria-label={detail.ganzhi}>
+          {detail.pillars.map((p) => (
+            <div key={p.label} className="day-pillar">
+              <span className="muted">{p.label}</span>
+              <Char g={p.stem} />
+              <Char g={p.branch} />
+            </div>
+          ))}
+        </div>
         {detail.festivals.length > 0 && (
           <div className="tags">
             {detail.festivals.map((f) => (
