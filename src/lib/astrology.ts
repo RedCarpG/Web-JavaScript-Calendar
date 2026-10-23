@@ -135,6 +135,10 @@ export interface Aspect {
 export interface StarChart {
   utc: Date
   offsetMinutes: number
+  /** The zone was on daylight saving time at birth */
+  dst: boolean
+  /** Placidus can't be drawn this close to the poles; equal houses were used */
+  housesFallback: boolean
   place: StarPlace
   points: ChartPoint[]
   asc: number
@@ -145,6 +149,17 @@ export interface StarChart {
 }
 
 /** "白羊 12°34′" */
+/** "UTC+8", "UTC+5:30", "UTC−4" */
+export function formatOffset(minutes: number): string {
+  const h = Math.floor(Math.abs(minutes) / 60)
+  const m = Math.abs(minutes) % 60
+  return `UTC${minutes >= 0 ? '+' : '−'}${h}${m ? `:${String(m).padStart(2, '0')}` : ''}`
+}
+
+/** "39.90°N 116.41°E" */
+export const formatCoords = (lat: number, lon: number) =>
+  `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'} ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`
+
 export function formatLon(lon: number): string {
   const inSign = norm(lon) % 30
   let deg = Math.floor(inSign)
@@ -223,7 +238,12 @@ export function houseOf(lon: number, cusps: number[]): number {
 }
 
 /** Chart for a UTC instant at a latitude / east longitude. */
-export function computeChart(utc: Date, lat: number, lon: number, settings: StarSettings): Omit<StarChart, 'offsetMinutes' | 'place'> {
+export function computeChart(
+  utc: Date,
+  lat: number,
+  lon: number,
+  settings: StarSettings,
+): Omit<StarChart, 'offsetMinutes' | 'dst' | 'place'> {
   const t = A.MakeTime(utc)
   const eps = A.e_tilt(t).tobl
   const ramc = norm(A.SiderealTime(t) * 15 + lon)
@@ -275,7 +295,9 @@ export function computeChart(utc: Date, lat: number, lon: number, settings: Star
     }
   }
   aspects.sort((x, y) => x.orb - y.orb)
-  return { utc, points, asc, mc, cusps, aspects }
+  // Placidus needs every cusp's semi-arc, which fails inside the polar circles.
+  const housesFallback = settings.houses === 'placidus' && Math.abs(lat) >= 90 - eps
+  return { utc, points, asc, mc, cusps, aspects, housesFallback }
 }
 
 /** Chart from wall-clock birth time at a place. */
@@ -285,5 +307,15 @@ export function buildStarChart(
   settings: StarSettings,
 ): StarChart {
   const { date, offsetMinutes } = toUtc(wall, place.timeZone)
-  return { ...computeChart(date, place.latitude, place.longitude, settings), offsetMinutes, place }
+  // Standard time is the smaller of the January and July offsets that year.
+  const standard = Math.min(
+    zoneOffset(Date.UTC(wall.year, 0, 1), place.timeZone),
+    zoneOffset(Date.UTC(wall.year, 6, 1), place.timeZone),
+  )
+  return {
+    ...computeChart(date, place.latitude, place.longitude, settings),
+    offsetMinutes,
+    dst: offsetMinutes > standard,
+    place,
+  }
 }

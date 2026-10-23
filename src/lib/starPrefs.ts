@@ -85,7 +85,7 @@ export function loadStarPlace(longitude?: number): StarPlace {
       typeof saved.name === 'string' &&
       Number.isFinite(saved.latitude) &&
       Number.isFinite(saved.longitude) &&
-      Math.abs(saved.latitude) <= 66 &&
+      Math.abs(saved.latitude) <= 90 &&
       typeof saved.timeZone === 'string'
     )
       return saved

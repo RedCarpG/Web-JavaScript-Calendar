@@ -89,3 +89,47 @@ describe('星盘 time zones', () => {
     expect(Math.floor(chart.asc / 30)).toBe(8)
   })
 })
+
+describe('星盘 overseas places', () => {
+  const wall = (year: number, month: number, day: number, hour = 12) => ({ year, month, day, hour, minute: 0 })
+  const place = (timeZone: string, latitude = 40, longitude = 0) => ({ name: 'x', latitude, longitude, timeZone })
+
+  it('follows each zone’s daylight saving, both hemispheres', () => {
+    const ny = buildStarChart(wall(1990, 7, 1), place('America/New_York', 40.71, -74.01), DEFAULT_STAR_SETTINGS)
+    expect(ny.offsetMinutes).toBe(-240)
+    expect(ny.dst).toBe(true)
+    expect(buildStarChart(wall(1990, 1, 15), place('America/New_York'), DEFAULT_STAR_SETTINGS).dst).toBe(false)
+    // Southern summer: Sydney is on daylight time in January
+    const syd = buildStarChart(wall(2000, 1, 15), place('Australia/Sydney', -33.87, 151.21), DEFAULT_STAR_SETTINGS)
+    expect(syd.offsetMinutes).toBe(660)
+    expect(syd.dst).toBe(true)
+    expect(buildStarChart(wall(2000, 7, 15), place('Australia/Sydney'), DEFAULT_STAR_SETTINGS).dst).toBe(false)
+  })
+
+  it('handles half-hour zones and labels them', async () => {
+    const { formatOffset, formatCoords } = await import('../astrology')
+    const india = buildStarChart(wall(2000, 1, 1), place('Asia/Kolkata', 28.61, 77.21), DEFAULT_STAR_SETTINGS)
+    expect(india.offsetMinutes).toBe(330)
+    expect(formatOffset(india.offsetMinutes)).toBe('UTC+5:30')
+    expect(formatOffset(-240)).toBe('UTC−4')
+    expect(formatCoords(-33.87, -70.67)).toBe('33.87°S 70.67°W')
+  })
+
+  it('falls back to equal houses inside the polar circles', () => {
+    const north = buildStarChart(wall(2000, 6, 21), place('Europe/Oslo', 70, 25), DEFAULT_STAR_SETTINGS)
+    expect(north.housesFallback).toBe(true)
+    for (let i = 0; i < 12; i++) expect(north.cusps[i]).toBeCloseTo((north.asc + i * 30) % 360, 9)
+    expect(buildStarChart(wall(2000, 6, 21), place('Europe/Oslo', 59.91, 10.75), DEFAULT_STAR_SETTINGS).housesFallback).toBe(false)
+  })
+
+  it('lists every city once, with a zone the runtime knows', async () => {
+    const { WORLD_CITIES } = await import('../worldCities')
+    const { CITIES } = await import('../solarTime')
+    const all = [...CITIES, ...WORLD_CITIES.flatMap((r) => r.cities)]
+    expect(new Set(all.map((c) => c.name)).size).toBe(all.length)
+    for (const c of all) {
+      expect(() => new Intl.DateTimeFormat('en', { timeZone: c.timeZone ?? 'Asia/Shanghai' }), c.name).not.toThrow()
+      expect(Math.abs(c.latitude)).toBeLessThan(70)
+    }
+  })
+})

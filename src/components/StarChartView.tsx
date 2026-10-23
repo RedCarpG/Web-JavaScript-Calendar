@@ -7,7 +7,9 @@ import {
   SIGN_GLYPHS,
   SIGNS,
   buildStarChart,
+  formatCoords,
   formatLon,
+  formatOffset,
   type ChartPoint,
   type Element,
   type StarChart,
@@ -16,6 +18,7 @@ import {
 } from '../lib/astrology'
 import type { BaziInput } from '../lib/bazi'
 import { CITIES } from '../lib/solarTime'
+import { WORLD_CITIES, allTimeZones } from '../lib/worldCities'
 import { STAR_SCHOOLS, cityPlace } from '../lib/starPrefs'
 import { BirthForm } from './BirthForm'
 import { InfoTip, TipLine } from './InfoTip'
@@ -30,8 +33,6 @@ interface Props {
   onSettingsChange: (settings: StarSettings) => void
 }
 
-const SHANGHAI = 'Asia/Shanghai'
-
 /** 西洋占星 natal chart: the shared birth form, a birthplace, the wheel and the tables. */
 export function StarChartView({ input, onChange, place, onPlaceChange, settings, onSettingsChange }: Props) {
   const chart = useMemo(() => buildStarChart(input, place, settings), [input, place, settings])
@@ -45,8 +46,6 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
     e,
     n: bodies.filter((p) => p.key !== 'node' && p.key !== 'southNode' && SIGN_ELEMENT[p.sign] === e).length,
   }))
-  const standard = place.timeZone === SHANGHAI ? 480 : null
-  const offsetText = `UTC${chart.offsetMinutes >= 0 ? '+' : '−'}${Math.abs(chart.offsetMinutes / 60)}`
 
   return (
     <div className="bazi-layout">
@@ -76,9 +75,10 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
           })}
         </div>
         <p className="muted row-note star-meta">
-          {place.name}（{place.latitude.toFixed(2)}°N {place.longitude.toFixed(2)}°E）· 按出生地时间 {offsetText}
-          {standard != null && chart.offsetMinutes !== standard && '（已按当年夏令时换算）'} · 回归黄道 ·{' '}
+          {place.name}（{formatCoords(place.latitude, place.longitude)}）· 按出生地时间 {formatOffset(chart.offsetMinutes)}
+          {chart.dst && '（当时实行夏令时，已换算）'} · 回归黄道 ·{' '}
           {STAR_SCHOOLS.houses.options.find((o) => o.value === settings.houses)?.label}
+          {chart.housesFallback && '（极圈内无法使用普拉西度，已改用等宫制）'}
         </p>
         <div className="star-layout">
           <StarWheel chart={chart} />
@@ -170,9 +170,11 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
   )
 }
 
-/** Birthplace for houses and the time zone: a city from the list, or custom coordinates. */
+/** Birthplace for houses and the time zone: a city (China or overseas), or custom coordinates and zone. */
 function PlacePicker({ place, onChange }: { place: StarPlace; onChange: (p: StarPlace) => void }) {
-  const custom = !CITIES.some((c) => c.name === place.name)
+  const known = findCity(place.name)
+  const custom = !known
+  const zones = useMemo(allTimeZones, [])
   return (
     <>
       <label>
@@ -180,35 +182,49 @@ function PlacePicker({ place, onChange }: { place: StarPlace; onChange: (p: Star
         <select
           value={custom ? '' : place.name}
           onChange={(e) => {
-            const c = CITIES.find((x) => x.name === e.target.value)
+            const c = findCity(e.target.value)
             if (c) onChange(cityPlace(c))
             else onChange({ ...place, name: '自定义' })
           }}
         >
-          {CITIES.map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.name}
-            </option>
+          <optgroup label="中国">
+            {CITIES.map((c) => (
+              <option key={c.name} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </optgroup>
+          {WORLD_CITIES.map((r) => (
+            <optgroup key={r.region} label={r.region}>
+              {r.cities.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
-          <option value="">自定义经纬度</option>
+          <option value="">自定义经纬度…</option>
         </select>
       </label>
       {custom && (
         <>
           <label>
-            北纬
+            纬度（南为负）
             <input
               type="number"
               className="narrow"
-              min={-66}
-              max={66}
+              min={-90}
+              max={90}
               step={0.01}
               value={place.latitude}
-              onChange={(e) => e.target.value !== '' && onChange({ ...place, latitude: Number(e.target.value) })}
+              onChange={(e) => {
+                const v = Number(e.target.value)
+                if (e.target.value !== '' && Math.abs(v) <= 90) onChange({ ...place, latitude: v })
+              }}
             />
           </label>
           <label>
-            东经
+            经度（西为负）
             <input
               type="number"
               className="narrow"
@@ -216,14 +232,30 @@ function PlacePicker({ place, onChange }: { place: StarPlace; onChange: (p: Star
               max={180}
               step={0.01}
               value={place.longitude}
-              onChange={(e) => e.target.value !== '' && onChange({ ...place, longitude: Number(e.target.value) })}
+              onChange={(e) => {
+                const v = Number(e.target.value)
+                if (e.target.value !== '' && Math.abs(v) <= 180) onChange({ ...place, longitude: v })
+              }}
             />
+          </label>
+          <label>
+            时区
+            <select value={place.timeZone} onChange={(e) => onChange({ ...place, timeZone: e.target.value })}>
+              {zones.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
           </label>
         </>
       )}
     </>
   )
 }
+
+const findCity = (name: string) =>
+  CITIES.find((c) => c.name === name) ?? WORLD_CITIES.flatMap((r) => r.cities).find((c) => c.name === name)
 
 /* ---------- The wheel ---------- */
 
