@@ -8,14 +8,24 @@ import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
 import { loadZiweiSchools, saveZiweiSchools, type ZiweiSchoolSettings } from './lib/ziweiSchools'
+import {
+  loadStarPlace,
+  loadStarSettings,
+  saveStarPlace,
+  saveStarSettings,
+  type StarPlace,
+  type StarSettings,
+} from './lib/starPrefs'
 import { applyScale, applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
 import { toTrad } from './lib/trad'
 import { SettingsContext } from './settingsContext'
 
-type Tab = 'calendar' | 'bazi' | 'ziwei'
+type Tab = 'calendar' | 'bazi' | 'ziwei' | 'star'
 
 // 紫微斗数 pulls in iztro (~150 KB gzip); load it only when the tab is opened.
 const ZiweiView = lazy(() => import('./components/ZiweiView').then((m) => ({ default: m.ZiweiView })))
+// 星盘 pulls in astronomy-engine; likewise only loaded when its tab opens.
+const StarChartView = lazy(() => import('./components/StarChartView').then((m) => ({ default: m.StarChartView })))
 
 export function App() {
   const [tab, setTab] = useState<Tab>('calendar')
@@ -44,6 +54,16 @@ export function App() {
   const loadChart = (next: BaziInput) => {
     setBaziInput(next)
     setLoads((n) => n + 1)
+  }
+  const [starSettings, setStarSettings] = useState<StarSettings>(loadStarSettings)
+  const changeStarSettings = (next: StarSettings) => {
+    setStarSettings(next)
+    saveStarSettings(next)
+  }
+  const [starPlace, setStarPlace] = useState<StarPlace>(() => loadStarPlace(baziInput.longitude))
+  const changeStarPlace = (next: StarPlace) => {
+    setStarPlace(next)
+    saveStarPlace(next)
   }
   const [ziweiSchools, setZiweiSchools] = useState<ZiweiSchoolSettings>(loadZiweiSchools)
   const changeZiweiSchools = (next: ZiweiSchoolSettings) => {
@@ -78,6 +98,9 @@ export function App() {
               <button className={tab === 'ziwei' ? 'on' : undefined} onClick={() => setTab('ziwei')}>
                 {term('紫微斗数')}
               </button>
+              <button className={tab === 'star' ? 'on' : undefined} onClick={() => setTab('star')}>
+                {term('星盘')}
+              </button>
             </nav>
             <SettingsMenu settings={settings} onChange={changeSettings} />
           </div>
@@ -98,6 +121,18 @@ export function App() {
               schools={schools}
               onSchoolsChange={changeSchools}
             />
+          ) : tab === 'star' ? (
+            <Suspense fallback={<div className="card muted">正在加载星盘…</div>}>
+              <StarChartView
+                key={loads}
+                input={baziInput}
+                onChange={setBaziInput}
+                place={starPlace}
+                onPlaceChange={changeStarPlace}
+                settings={starSettings}
+                onSettingsChange={changeStarSettings}
+              />
+            </Suspense>
           ) : (
             <Suspense fallback={<div className="card muted">正在加载紫微斗数…</div>}>
               <ZiweiView

@@ -1,0 +1,289 @@
+// 西洋占星 natal chart (星盘). Planet positions come from astronomy-engine
+// (MIT, about 1′ accuracy for these dates); houses, nodes and aspects are
+// computed here. Tropical zodiac, geocentric, true ecliptic of date.
+// Only the 星盘 tab imports this module.
+import * as A from 'astronomy-engine'
+
+const RAD = Math.PI / 180
+const norm = (d: number) => ((d % 360) + 360) % 360
+const sind = (d: number) => Math.sin(d * RAD)
+const cosd = (d: number) => Math.cos(d * RAD)
+const tand = (d: number) => Math.tan(d * RAD)
+const atan2d = (y: number, x: number) => Math.atan2(y, x) / RAD
+
+import type { StarPlace, StarSettings } from './starPrefs'
+
+export type { StarPlace, StarSettings } from './starPrefs'
+
+/* ---------- Time zone ---------- */
+
+/** Offset of timeZone from UTC at a UTC instant, in minutes (Intl carries the historical rules, e.g. 1986–91 China DST). */
+function zoneOffset(utcMs: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+  }).formatToParts(new Date(utcMs))
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value)
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'))
+  return Math.round((asUtc - utcMs) / 60000)
+}
+
+/** Wall-clock time in a zone → UTC instant and the offset that applied. */
+export function toUtc(
+  wall: { year: number; month: number; day: number; hour: number; minute: number },
+  timeZone: string,
+): { date: Date; offsetMinutes: number } {
+  const asUtc = Date.UTC(wall.year, wall.month - 1, wall.day, wall.hour, wall.minute)
+  let offset = zoneOffset(asUtc, timeZone)
+  // Re-check at the corrected instant, which matters right at a DST change.
+  offset = zoneOffset(asUtc - offset * 60000, timeZone)
+  return { date: new Date(asUtc - offset * 60000), offsetMinutes: offset }
+}
+
+/* ---------- Bodies, signs, aspects ---------- */
+
+export const SIGNS = ['白羊', '金牛', '双子', '巨蟹', '狮子', '处女', '天秤', '天蝎', '射手', '摩羯', '水瓶', '双鱼'] as const
+/** Text-presentation zodiac glyphs (U+FE0E keeps them from turning into emoji). */
+export const SIGN_GLYPHS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map((g) => g + '︎')
+export type Element = 'fire' | 'earth' | 'air' | 'water'
+export const SIGN_ELEMENT: Element[] = ['fire', 'earth', 'air', 'water', 'fire', 'earth', 'air', 'water', 'fire', 'earth', 'air', 'water']
+export const ELEMENT_NAME: Record<Element, string> = { fire: '火象', earth: '土象', air: '风象', water: '水象' }
+
+export type BodyKey =
+  | 'sun'
+  | 'moon'
+  | 'mercury'
+  | 'venus'
+  | 'mars'
+  | 'jupiter'
+  | 'saturn'
+  | 'uranus'
+  | 'neptune'
+  | 'pluto'
+  | 'node'
+  | 'southNode'
+
+export const BODY_INFO: Record<BodyKey, { name: string; glyph: string }> = {
+  sun: { name: '太阳', glyph: '☉' },
+  moon: { name: '月亮', glyph: '☽' },
+  mercury: { name: '水星', glyph: '☿' },
+  venus: { name: '金星', glyph: '♀' },
+  mars: { name: '火星', glyph: '♂' },
+  jupiter: { name: '木星', glyph: '♃' },
+  saturn: { name: '土星', glyph: '♄' },
+  uranus: { name: '天王星', glyph: '♅' },
+  neptune: { name: '海王星', glyph: '♆' },
+  pluto: { name: '冥王星', glyph: '♇' },
+  node: { name: '北交点', glyph: '☊' },
+  southNode: { name: '南交点', glyph: '☋' },
+}
+// Text presentation, so the symbols don't turn into colour emoji on some systems.
+for (const info of Object.values(BODY_INFO)) info.glyph += '\uFE0E'
+
+const PLANETS: [BodyKey, A.Body][] = [
+  ['sun', A.Body.Sun],
+  ['moon', A.Body.Moon],
+  ['mercury', A.Body.Mercury],
+  ['venus', A.Body.Venus],
+  ['mars', A.Body.Mars],
+  ['jupiter', A.Body.Jupiter],
+  ['saturn', A.Body.Saturn],
+  ['uranus', A.Body.Uranus],
+  ['neptune', A.Body.Neptune],
+  ['pluto', A.Body.Pluto],
+]
+
+export type AspectKey = 'conjunction' | 'sextile' | 'square' | 'trine' | 'opposition'
+export const ASPECTS: { key: AspectKey; name: string; glyph: string; angle: number; orb: number; tone: 'major' | 'soft' | 'hard' }[] = [
+  { key: 'conjunction', name: '合', glyph: '☌\uFE0E', angle: 0, orb: 8, tone: 'major' },
+  { key: 'sextile', name: '六合', glyph: '⚹\uFE0E', angle: 60, orb: 5, tone: 'soft' },
+  { key: 'square', name: '刑', glyph: '□', angle: 90, orb: 7, tone: 'hard' },
+  { key: 'trine', name: '拱', glyph: '△', angle: 120, orb: 7, tone: 'soft' },
+  { key: 'opposition', name: '冲', glyph: '☍\uFE0E', angle: 180, orb: 8, tone: 'hard' },
+]
+/** Wider orbs when the Sun or Moon is involved */
+const LUMINARY_BONUS = 2
+
+export interface ChartPoint {
+  key: BodyKey | 'asc' | 'mc'
+  name: string
+  glyph: string
+  /** Ecliptic longitude, 0–360 */
+  lon: number
+  /** Degrees per day (bodies only) */
+  speed?: number
+  retrograde: boolean
+  sign: number
+  /** 1–12 */
+  house: number
+}
+
+export interface Aspect {
+  a: ChartPoint
+  b: ChartPoint
+  type: (typeof ASPECTS)[number]
+  /** Distance from exact, in degrees */
+  orb: number
+}
+
+export interface StarChart {
+  utc: Date
+  offsetMinutes: number
+  place: StarPlace
+  points: ChartPoint[]
+  asc: number
+  mc: number
+  /** Ecliptic longitudes of house cusps 1–12 */
+  cusps: number[]
+  aspects: Aspect[]
+}
+
+/** "白羊 12°34′" */
+export function formatLon(lon: number): string {
+  const inSign = norm(lon) % 30
+  let deg = Math.floor(inSign)
+  let min = Math.round((inSign - deg) * 60)
+  if (min === 60) {
+    deg += 1
+    min = 0
+  }
+  return `${SIGNS[Math.floor(norm(lon) / 30)]} ${deg}°${String(min).padStart(2, '0')}′`
+}
+
+/* ---------- Computation ---------- */
+
+/** Geocentric apparent longitude on the true ecliptic of date. */
+function bodyLon(body: A.Body, t: A.AstroTime): number {
+  return A.Ecliptic(A.GeoVector(body, t, true)).elon
+}
+
+/** Longitude of the Moon's ascending node: mean (Meeus 47.7) or true (instantaneous orbital plane). */
+function nodeLon(t: A.AstroTime, kind: StarSettings['node']): number {
+  if (kind === 'mean') {
+    const T = t.tt / 36525
+    return norm(125.04452 - 1934.136261 * T + 0.0020708 * T * T + (T * T * T) / 450000)
+  }
+  const s = A.GeoMoonState(t)
+  const dt = 1 / 1440 // one minute, in days
+  const r = A.Ecliptic(new A.Vector(s.x, s.y, s.z, t)).vec
+  const r2 = A.Ecliptic(new A.Vector(s.x + s.vx * dt, s.y + s.vy * dt, s.z + s.vz * dt, t)).vec
+  const v = { x: r2.x - r.x, y: r2.y - r.y, z: r2.z - r.z }
+  // Orbit normal h = r × v; the ascending node points along z × h.
+  const hx = r.y * v.z - r.z * v.y
+  const hy = r.z * v.x - r.x * v.z
+  return norm(atan2d(hx, -hy))
+}
+
+/** Ecliptic longitude of the point on the ecliptic with right ascension ra. */
+const raToLon = (ra: number, eps: number) => norm(atan2d(sind(ra), cosd(ra) * cosd(eps)))
+
+/** Placidus cusps 11, 12, 2, 3: trisect each point's own diurnal / nocturnal semi-arc in time. */
+function placidusCusp(ramc: number, eps: number, lat: number, fraction: number, above: boolean): number {
+  let lon = raToLon(ramc + (above ? 90 : 270) * fraction, eps)
+  for (let i = 0; i < 30; i++) {
+    const decl = Math.asin(sind(eps) * sind(lon)) / RAD
+    const x = tand(lat) * tand(decl)
+    if (Math.abs(x) >= 1) return NaN // circumpolar: Placidus is undefined
+    const ad = Math.asin(x) / RAD
+    const ra = above ? ramc + fraction * (90 + ad) : ramc + 180 - fraction * (90 - ad)
+    const next = raToLon(ra, eps)
+    if (Math.abs(next - lon) < 1e-7) return next
+    lon = next
+  }
+  return lon
+}
+
+function houseCusps(system: StarSettings['houses'], asc: number, mc: number, ramc: number, eps: number, lat: number): number[] {
+  if (system === 'whole') return Array.from({ length: 12 }, (_, i) => norm(Math.floor(asc / 30) * 30 + i * 30))
+  if (system === 'equal') return Array.from({ length: 12 }, (_, i) => norm(asc + i * 30))
+  const c11 = placidusCusp(ramc, eps, lat, 1 / 3, true)
+  const c12 = placidusCusp(ramc, eps, lat, 2 / 3, true)
+  const c2 = placidusCusp(ramc, eps, lat, 2 / 3, false)
+  const c3 = placidusCusp(ramc, eps, lat, 1 / 3, false)
+  // Above the polar circles Placidus breaks down; fall back to equal houses there.
+  if ([c11, c12, c2, c3].some(Number.isNaN)) return houseCusps('equal', asc, mc, ramc, eps, lat)
+  const top = [asc, c2, c3, norm(mc + 180), norm(c11 + 180), norm(c12 + 180)]
+  return [...top, ...top.map((c) => norm(c + 180))]
+}
+
+/** Which house (1–12) a longitude falls in. */
+export function houseOf(lon: number, cusps: number[]): number {
+  for (let i = 0; i < 12; i++) {
+    const start = cusps[i]
+    const span = norm(cusps[(i + 1) % 12] - start)
+    if (norm(lon - start) < span) return i + 1
+  }
+  return 1
+}
+
+/** Chart for a UTC instant at a latitude / east longitude. */
+export function computeChart(utc: Date, lat: number, lon: number, settings: StarSettings): Omit<StarChart, 'offsetMinutes' | 'place'> {
+  const t = A.MakeTime(utc)
+  const eps = A.e_tilt(t).tobl
+  const ramc = norm(A.SiderealTime(t) * 15 + lon)
+  const mc = raToLon(ramc, eps)
+  const asc = norm(atan2d(cosd(ramc), -(sind(ramc) * cosd(eps) + tand(lat) * sind(eps))))
+  const cusps = houseCusps(settings.houses, asc, mc, ramc, eps, lat)
+
+  const point = (key: ChartPoint['key'], name: string, glyph: string, l: number, speed?: number): ChartPoint => ({
+    key,
+    name,
+    glyph,
+    lon: norm(l),
+    speed,
+    retrograde: speed != null && speed < 0,
+    sign: Math.floor(norm(l) / 30),
+    house: houseOf(norm(l), cusps),
+  })
+  const before = A.MakeTime(new Date(utc.getTime() - 43200000))
+  const after = A.MakeTime(new Date(utc.getTime() + 43200000))
+  const points: ChartPoint[] = PLANETS.map(([key, body]) => {
+    const l = bodyLon(body, t)
+    // Degrees moved over the surrounding day; negative means retrograde.
+    const speed = norm(bodyLon(body, after) - bodyLon(body, before) + 180) - 180
+    return point(key, BODY_INFO[key].name, BODY_INFO[key].glyph, l, speed)
+  })
+  const node = nodeLon(t, settings.node)
+  points.push(point('node', BODY_INFO.node.name, BODY_INFO.node.glyph, node))
+  points.push(point('southNode', BODY_INFO.southNode.name, BODY_INFO.southNode.glyph, node + 180))
+  points.push(point('asc', '上升', 'ASC', asc))
+  points.push(point('mc', '天顶', 'MC', mc))
+
+  // Aspects between planets and the angles; the nodes are left out.
+  const aspectable = points.filter((p) => p.key !== 'node' && p.key !== 'southNode')
+  const aspects: Aspect[] = []
+  for (let i = 0; i < aspectable.length; i++) {
+    for (let j = i + 1; j < aspectable.length; j++) {
+      const a = aspectable[i]
+      const b = aspectable[j]
+      if ((a.key === 'asc' || a.key === 'mc') && (b.key === 'asc' || b.key === 'mc')) continue
+      const sep = Math.abs(norm(a.lon - b.lon + 180) - 180)
+      const bonus = [a.key, b.key].some((k) => k === 'sun' || k === 'moon') ? LUMINARY_BONUS : 0
+      for (const type of ASPECTS) {
+        const orb = Math.abs(sep - type.angle)
+        if (orb <= type.orb + bonus) {
+          aspects.push({ a, b, type, orb })
+          break
+        }
+      }
+    }
+  }
+  aspects.sort((x, y) => x.orb - y.orb)
+  return { utc, points, asc, mc, cusps, aspects }
+}
+
+/** Chart from wall-clock birth time at a place. */
+export function buildStarChart(
+  wall: { year: number; month: number; day: number; hour: number; minute: number },
+  place: StarPlace,
+  settings: StarSettings,
+): StarChart {
+  const { date, offsetMinutes } = toUtc(wall, place.timeZone)
+  return { ...computeChart(date, place.latitude, place.longitude, settings), offsetMinutes, place }
+}

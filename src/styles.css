@@ -762,3 +762,61 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .stars-minor .star-name { font-size: 11px; }
   .ziwei-center .kv { font-size: 10px; }
 }
+
+/* ---------- 星盘 ---------- */
+/* Western elements: fire red, earth green, air gold, water blue */
+.el-fire { color: var(--fire); }
+.el-earth { color: var(--wood); }
+.el-air { color: var(--metal); }
+.el-water { color: var(--water); }
+.big-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.b3 {
+  display: grid; justify-items: center; gap: 2px; padding: 10px 6px; border-radius: 12px;
+  background: color-mix(in srgb, currentColor 8%, var(--surface));
+}
+.b3 small { color: var(--muted); }
+.b3-glyph { font-size: 28px; line-height: 1.1; }
+.b3 strong { font-size: 16px; color: var(--text); }
+.star-meta { margin: 10px 0 4px; }
+.star-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .star-layout { grid-template-columns: minmax(0, 1fr); } }
+.star-wheel { width: 100%; max-width: 520px; justify-self: center; height: auto; overflow: visible; }
+.star-wheel .sign-band { stroke: var(--border); stroke-width: 0.6; }
+.star-wheel .band-fire { fill: color-mix(in srgb, var(--fire) 10%, var(--surface)); }
+.star-wheel .band-earth { fill: color-mix(in srgb, var(--wood) 10%, var(--surface)); }
+.star-wheel .band-air { fill: color-mix(in srgb, var(--metal) 12%, var(--surface)); }
+.star-wheel .band-water { fill: color-mix(in srgb, var(--water) 10%, var(--surface)); }
+.star-wheel .sign-glyph { font-size: 15px; fill: currentColor; }
+.star-wheel .tick { stroke: var(--muted); stroke-width: 0.5; opacity: 0.6; }
+.star-wheel .ring { fill: none; stroke: var(--border); stroke-width: 1; }
+.star-wheel .ring.faint { stroke-dasharray: 2 3; }
+.star-wheel .cusp { stroke: var(--muted); stroke-width: 0.6; opacity: 0.6; }
+.star-wheel .cusp.angle { stroke: var(--text); stroke-width: 1.4; opacity: 0.9; }
+.star-wheel .house-num { font-size: 9px; fill: var(--muted); }
+.star-wheel .angle-label { font-size: 9px; font-weight: 700; fill: var(--accent); }
+.star-wheel .planet-glyph-svg { font-size: 17px; fill: currentColor; font-weight: 600; }
+.star-wheel .planet-deg { font-size: 8.5px; fill: var(--muted); }
+.star-wheel .planet-tick { stroke: currentColor; stroke-width: 1.4; }
+.star-wheel .planet { cursor: default; }
+.star-wheel .aspect-line { stroke-width: 1.1; }
+.star-wheel .aspect-line.tone-soft { stroke: var(--water); }
+.star-wheel .aspect-line.tone-hard { stroke: var(--bad); }
+.star-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.star-table th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.star-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.planet-glyph { display: inline-block; width: 1.3em; color: var(--muted); }
+.retro { margin-left: 4px; color: var(--bad); font-weight: 700; }
+.element-bars { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 13px; }
+.element-bars b { color: var(--text); }
+.house-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+.house-cell { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }
+.aspects-title { margin-top: 18px !important; }
+.aspect-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.aspect-chip {
+  display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 13px;
+  background: var(--surface-2);
+}
+.aspect-chip small { color: var(--muted); font-size: 11px; }
+.aspect-chip.tone-soft .tip-label { color: var(--water); font-weight: 600; }
+.aspect-chip.tone-hard .tip-label { color: var(--bad); font-weight: 600; }
+.aspect-chip.tone-major .tip-label { color: var(--accent); font-weight: 600; }
