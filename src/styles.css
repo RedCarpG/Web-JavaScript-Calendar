@@ -353,23 +353,13 @@ button.fortune:hover { background: var(--surface-2); }
 .school-item small { font-size: 12px; line-height: 1.5; }
 .school-source { color: var(--earth); }
 
-.school-mark { position: relative; display: inline-block; vertical-align: 1px; margin-left: 3px; }
-.school-mark > button {
-  width: 14px; height: 14px; padding: 0; border: 0; border-radius: 50%;
+.school-mark { vertical-align: 1px; margin-left: 3px; }
+.school-dot {
+  display: inline-block; width: 14px; height: 14px; border-radius: 50%; text-align: center; cursor: help;
   background: var(--earth); color: #fff; font-size: 10px; font-weight: 700; line-height: 14px;
 }
-.school-pop {
-  display: none; position: absolute; z-index: 10; left: 50%; top: calc(100% + 6px); transform: translateX(-50%);
-  width: 240px; padding: 10px 12px; border-radius: 10px; text-align: left;
-  background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgb(0 0 0 / 0.15);
-  font-size: 12px; line-height: 1.6; color: var(--text); font-weight: 400;
-}
-.school-pop > * { display: block; }
-.school-pop strong { font-size: 13px; margin-bottom: 2px; }
-.school-mark:hover .school-pop, .school-mark:focus-within .school-pop { display: block; }
 .pillars .row-shensha td div { white-space: nowrap; }
 @media (max-width: 480px) {
-  .school-pop { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; transform: none; }
   .pillars .row-shensha td { font-size: 11px; }
 }
 
