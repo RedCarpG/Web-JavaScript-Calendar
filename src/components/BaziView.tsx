@@ -1,17 +1,22 @@
 import { useMemo, useState } from 'react'
 import { ELEMENTS, buildBazi, fortuneRelations, type BaziInput, type Glyph } from '../lib/bazi'
 import type { Relation } from '../lib/relations'
+import type { SchoolSettings } from '../lib/schools'
 import { CITIES } from '../lib/solarTime'
+import { SchoolMark, SchoolSettingsPanel } from './Schools'
 
 interface Props {
   input: BaziInput
   onChange: (input: BaziInput) => void
+  schools: SchoolSettings
+  onSchoolsChange: (schools: SchoolSettings) => void
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-export function BaziView({ input, onChange }: Props) {
-  const chart = useMemo(() => buildBazi(input), [input])
+export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
+  const chart = useMemo(() => buildBazi(input, schools), [input, schools])
+  const [showSchools, setShowSchools] = useState(false)
   const thisYear = new Date().getFullYear()
   const currentDecade = Math.max(
     0,
@@ -23,7 +28,7 @@ export function BaziView({ input, onChange }: Props) {
   const [pickedYear, setPickedYear] = useState<number | null>(null)
   const fortuneYear =
     decade.years.find((y) => y.year === pickedYear) ?? decade.years.find((y) => y.year === thisYear) ?? decade.years[0]
-  const fortuneRels = fortuneRelations(chart, decade, fortuneYear)
+  const fortuneRels = fortuneRelations(chart, decade, fortuneYear, schools)
   const city = CITIES.find((c) => c.longitude === input.longitude)
   const total = ELEMENTS.reduce((s, e) => s + chart.elementCount[e], 0)
 
@@ -73,13 +78,6 @@ export function BaziView({ input, onChange }: Props) {
             </button>
           ))}
         </div>
-        <label>
-          晚子时
-          <select value={input.sect} onChange={(e) => update({ sect: Number(e.target.value) as 1 | 2 })}>
-            <option value={2}>日柱算当天</option>
-            <option value={1}>日柱算明天</option>
-          </select>
-        </label>
         <label className="check">
           <input
             type="checkbox"
@@ -122,6 +120,15 @@ export function BaziView({ input, onChange }: Props) {
             </label>
           </>
         )}
+        <button
+          type="button"
+          className={`ghost${showSchools ? ' on' : ''}`}
+          aria-expanded={showSchools}
+          onClick={() => setShowSchools((v) => !v)}
+        >
+          流派设置
+        </button>
+        {showSchools && <SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
       </section>
 
       <section className="card">
@@ -144,7 +151,12 @@ export function BaziView({ input, onChange }: Props) {
             <tr>
               <th />
               {chart.pillars.map((p) => (
-                <th key={p.label}>{p.label}</th>
+                <th key={p.label}>
+                  {p.label}
+                  {chart.lateZiHour && (p.label === '日柱' || p.label === '时柱') && (
+                    <SchoolMark school="ziHour" settings={schools} />
+                  )}
+                </th>
               ))}
             </tr>
           </thead>
@@ -199,8 +211,11 @@ export function BaziView({ input, onChange }: Props) {
               <th>神煞</th>
               {chart.pillars.map((p) => (
                 <td key={p.label}>
-                  {p.shenSha.map((n) => (
-                    <div key={n}>{n}</div>
+                  {p.shenSha.map((s) => (
+                    <div key={s.name}>
+                      {s.name}
+                      {s.school && <SchoolMark school={s.school} settings={schools} />}
+                    </div>
                   ))}
                 </td>
               ))}
@@ -220,7 +235,7 @@ export function BaziView({ input, onChange }: Props) {
           ))}
         </div>
 
-        <Relations title="原局刑冲合会" items={chart.relations} />
+        <Relations title="原局刑冲合会" items={chart.relations} schools={schools} />
 
         <dl className="kv inline">
           <dt>胎元</dt>
@@ -236,7 +251,10 @@ export function BaziView({ input, onChange }: Props) {
 
       <section className="card fortunes">
         <h3>大运</h3>
-        <p className="muted">{chart.startText}</p>
+        <p className="muted">
+          {chart.startText}
+          <SchoolMark school="childLimit" settings={schools} />
+        </p>
         <div className="fortune-row">
           {chart.decades.map((d, i) => (
             <button
@@ -274,6 +292,7 @@ export function BaziView({ input, onChange }: Props) {
         <Relations
           title={`岁运作用 · ${decade.ganzhi}运 ${fortuneYear.year}${fortuneYear.ganzhi}年`}
           items={fortuneRels}
+          schools={schools}
           empty="与原局无明显刑冲合会"
         />
       </section>
@@ -281,7 +300,17 @@ export function BaziView({ input, onChange }: Props) {
   )
 }
 
-function Relations({ title, items, empty = '无' }: { title: string; items: Relation[]; empty?: string }) {
+function Relations({
+  title,
+  items,
+  schools,
+  empty = '无',
+}: {
+  title: string
+  items: Relation[]
+  schools: SchoolSettings
+  empty?: string
+}) {
   return (
     <div className="relations">
       <h4>{title}</h4>
@@ -292,6 +321,7 @@ function Relations({ title, items, empty = '无' }: { title: string; items: Rela
           {items.map((r) => (
             <span key={r.text + r.members.join('')} className={`rel rel-${r.kind}`}>
               <b>{r.members.join('')}</b> {r.text}
+              {r.school && <SchoolMark school={r.school} settings={schools} />}
             </span>
           ))}
         </div>

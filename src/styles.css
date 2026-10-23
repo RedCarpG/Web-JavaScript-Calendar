@@ -218,3 +218,36 @@ button.fortune:hover { background: var(--surface-2); }
   .char { font-size: 26px; }
   .card { padding: 12px; }
 }
+
+/* ---------- 流派 ---------- */
+.ghost { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; height: 36px; padding: 0 14px; margin-left: auto; }
+.ghost:hover, .ghost.on { background: var(--surface-2); }
+
+.school-panel {
+  flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;
+  border-top: 1px solid var(--border); padding-top: 12px;
+}
+.bazi-form .school-item { gap: 4px; color: var(--text); }
+.school-title { font-weight: 600; font-size: 14px; }
+.school-item small { font-size: 12px; line-height: 1.5; }
+.school-source { color: var(--earth); }
+
+.school-mark { position: relative; display: inline-block; vertical-align: 1px; margin-left: 3px; }
+.school-mark > button {
+  width: 14px; height: 14px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--earth); color: #fff; font-size: 10px; font-weight: 700; line-height: 14px;
+}
+.school-pop {
+  display: none; position: absolute; z-index: 10; left: 50%; top: calc(100% + 6px); transform: translateX(-50%);
+  width: 240px; padding: 10px 12px; border-radius: 10px; text-align: left;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgb(0 0 0 / 0.15);
+  font-size: 12px; line-height: 1.6; color: var(--text); font-weight: 400;
+}
+.school-pop > * { display: block; }
+.school-pop strong { font-size: 13px; margin-bottom: 2px; }
+.school-mark:hover .school-pop, .school-mark:focus-within .school-pop { display: block; }
+.pillars .row-shensha td div { white-space: nowrap; }
+@media (max-width: 480px) {
+  .school-pop { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; transform: none; }
+  .pillars .row-shensha td { font-size: 11px; }
+}

@@ -1,10 +1,17 @@
 // 四柱神煞. Rules follow the common 《三命通会》/《渊海子平》 tables used by most
-// 排盘 software. Where schools differ, the more widely used variant is chosen
-// (noted inline).
+// 排盘 software. Where schools differ the choice comes from SchoolSettings and
+// the resulting star carries that setting's key, so the UI can flag it.
+import { DEFAULT_SCHOOLS, type SchoolKey, type SchoolSettings } from './schools'
 
 export interface PillarGanzhi {
   stem: string
   branch: string
+}
+
+export interface ShenSha {
+  name: string
+  /** The 流派 setting this result depends on, if any */
+  school?: SchoolKey
 }
 
 const STEMS = '甲乙丙丁戊己庚辛壬癸'
@@ -19,12 +26,18 @@ const byStem = (table: StemTable, stem: string) => table[STEMS.indexOf(stem)] ??
 
 // 甲戊庚牛羊，乙己鼠猴乡，丙丁猪鸡位，壬癸兔蛇藏，六辛逢马虎
 const TIAN_YI: StemTable = ['丑未', '子申', '亥酉', '亥酉', '丑未', '子申', '丑未', '寅午', '卯巳', '卯巳']
+// 甲戊兼牛羊 … 庚辛逢马虎
+const TIAN_YI_GENG_TIGER_HORSE: StemTable = TIAN_YI.map((t, i) => (i === 6 ? '寅午' : t))
 const TAI_JI: StemTable = ['子午', '子午', '卯酉', '卯酉', '辰戌丑未', '辰戌丑未', '寅亥', '寅亥', '巳申', '巳申']
 const WEN_CHANG: StemTable = ['巳', '午', '申', '酉', '申', '酉', '亥', '子', '寅', '卯']
 const GUO_YIN: StemTable = ['戌', '亥', '丑', '寅', '丑', '寅', '辰', '巳', '未', '申']
 const LU: StemTable = ['寅', '卯', '巳', '午', '巳', '午', '申', '酉', '亥', '子']
-// 阴干羊刃取禄后一位（辰未未戌丑），为多数排盘软件所用
-const YANG_REN: StemTable = ['卯', '辰', '午', '未', '午', '未', '酉', '戌', '子', '丑']
+// 阳干羊刃取禄前一位；阴干三说: 顺排(禄后一位)、逆排(禄前一位)、无刃
+const YANG_REN: Record<SchoolSettings['yangRen'], StemTable> = {
+  forward: ['卯', '辰', '午', '未', '午', '未', '酉', '戌', '子', '丑'],
+  backward: ['卯', '寅', '午', '巳', '午', '巳', '酉', '申', '子', '亥'],
+  yangOnly: ['卯', '', '午', '', '午', '', '酉', '', '子', ''],
+}
 const HONG_YAN: StemTable = ['午', '午', '寅', '未', '辰', '辰', '戌', '酉', '子', '申']
 const JIN_YU: StemTable = ['辰', '巳', '未', '申', '未', '申', '戌', '亥', '丑', '寅']
 
@@ -78,27 +91,41 @@ const TIAN_SHE: Record<string, string> = {
 
 /**
  * 神煞 for each of the four pillars (年月日时 order).
- * Branch-referenced stars (驿马, 桃花 …) use both 年支 and 日支 as reference and
- * skip the reference pillar itself, so e.g. a 子 year never marks itself 将星.
+ * Branch-referenced stars (驿马, 桃花 …) skip the reference pillar itself, so
+ * e.g. a 子 year never marks itself 将星.
  */
-export function computeShenSha(pillars: PillarGanzhi[]): string[][] {
+export function computeShenSha(pillars: PillarGanzhi[], schools: SchoolSettings = DEFAULT_SCHOOLS): ShenSha[][] {
   const [year, month, day] = pillars
-  const result = pillars.map(() => new Set<string>())
+  const result = pillars.map(() => new Map<string, ShenSha>())
+  const tianYi = schools.tianYi === 'gengTigerHorse' ? TIAN_YI_GENG_TIGER_HORSE : TIAN_YI
+  const stemRefs = schools.stemRef === 'dayOnly' ? [day.stem] : [day.stem, year.stem]
+  const branchRefs = (
+    [
+      [0, year.branch],
+      [2, day.branch],
+    ] as const
+  ).filter(([i]) => schools.branchRef === 'yearAndDay' || (schools.branchRef === 'yearOnly' ? i === 0 : i === 2))
 
   pillars.forEach((p, i) => {
-    const add = (name: string) => result[i].add(name)
+    const add = (name: string, school?: SchoolKey) => {
+      // Keep the most specific school note when two rules yield the same star.
+      if (!result[i].get(name)?.school) result[i].set(name, { name, school })
+    }
     const has = (targets: string, x = p.branch) => targets.includes(x)
 
-    // 以日干、年干查地支
-    for (const ref of [day.stem, year.stem]) {
-      if (has(byStem(TIAN_YI, ref))) add('天乙贵人')
-      if (has(byStem(TAI_JI, ref))) add('太极贵人')
-      if (has(byStem(WEN_CHANG, ref))) add('文昌贵人')
-      if (has(byStem(GUO_YIN, ref))) add('国印贵人')
-    }
+    // 以日干（及年干）查地支
+    stemRefs.forEach((ref, refIndex) => {
+      // Stars found via 年干 depend on the 查法 setting; via 日干 they always apply.
+      const via: SchoolKey | undefined = refIndex === 1 ? 'stemRef' : undefined
+      if (has(byStem(tianYi, ref))) add('天乙贵人', ref === '庚' ? 'tianYi' : via)
+      if (has(byStem(TAI_JI, ref))) add('太极贵人', via)
+      if (has(byStem(WEN_CHANG, ref))) add('文昌贵人', via)
+      if (has(byStem(GUO_YIN, ref))) add('国印贵人', via)
+    })
     // 以日干查地支
     if (has(byStem(LU, day.stem))) add('禄神')
-    if (has(byStem(YANG_REN, day.stem))) add('羊刃')
+    const yinStem = STEMS.indexOf(day.stem) % 2 === 1
+    if (has(byStem(YANG_REN[schools.yangRen], day.stem))) add('羊刃', yinStem ? 'yangRen' : undefined)
     if (has(byStem(HONG_YAN, day.stem))) add('红艳煞')
     if (has(byStem(JIN_YU, day.stem))) add('金舆')
 
@@ -113,10 +140,10 @@ export function computeShenSha(pillars: PillarGanzhi[]): string[][] {
     if (i !== 1 && p.branch === branchAt(bi(month.branch) - 1)) add('天医')
 
     // 以年支、日支查三合系神煞
-    for (const [refIndex, ref] of [[0, year.branch], [2, day.branch]] as const) {
+    for (const [refIndex, ref] of branchRefs) {
       if (refIndex === i) continue
       const stars = SAN_HE_STARS[SAN_HE[ref]]
-      for (const [name, target] of Object.entries(stars)) if (p.branch === target) add(name)
+      for (const [name, target] of Object.entries(stars)) if (p.branch === target) add(name, 'branchRef')
     }
 
     // 以年支查
@@ -139,5 +166,5 @@ export function computeShenSha(pillars: PillarGanzhi[]): string[][] {
     if ((i === 2 || i === 3) && JIN_SHEN.includes(gz)) add('金神')
   })
 
-  return result.map((s) => [...s])
+  return result.map((m) => [...m.values()])
 }

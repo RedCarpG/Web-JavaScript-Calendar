@@ -1,4 +1,5 @@
 // 干支刑冲合会: 天干五合/相冲，地支六合、三合（含半合）、三会、六冲、相刑、六害、相破.
+import { DEFAULT_SCHOOLS, type SchoolKey, type SchoolSettings } from './schools'
 
 export interface RelationMember {
   label: string
@@ -11,11 +12,13 @@ export interface Relation {
   text: string
   /** Labels of the pillars involved, e.g. ['年', '日'] */
   members: string[]
+  /** The 流派 setting this result depends on, if any */
+  school?: SchoolKey
 }
 
 const STEM_COMBINE: [string, string][] = [['甲己', '土'], ['乙庚', '金'], ['丙辛', '水'], ['丁壬', '木'], ['戊癸', '火']]
 const STEM_CLASH = ['甲庚', '乙辛', '丙壬', '丁癸']
-const SIX_COMBINE: [string, string][] = [['子丑', '土'], ['寅亥', '木'], ['卯戌', '火'], ['辰酉', '金'], ['巳申', '水'], ['午未', '土']]
+const SIX_COMBINE: [string, string][] = [['子丑', '土'], ['寅亥', '木'], ['卯戌', '火'], ['辰酉', '金'], ['巳申', '水']]
 const THREE_COMBINE: [string, string][] = [['申子辰', '水'], ['亥卯未', '木'], ['寅午戌', '火'], ['巳酉丑', '金']]
 const THREE_MEET: [string, string][] = [['寅卯辰', '木'], ['巳午未', '火'], ['申酉戌', '金'], ['亥子丑', '水']]
 const SIX_CLASH = ['子午', '丑未', '寅申', '卯酉', '辰戌', '巳亥']
@@ -30,7 +33,11 @@ const isPair = (pair: string, a: string, b: string) => (pair[0] === a && pair[1]
  * All relations among the given pillars. When `focus` is given, only relations
  * that involve at least one of those labels are returned (用于岁运与原局的作用).
  */
-export function computeRelations(members: RelationMember[], focus?: string[]): Relation[] {
+export function computeRelations(
+  members: RelationMember[],
+  focus?: string[],
+  schools: SchoolSettings = DEFAULT_SCHOOLS,
+): Relation[] {
   const out: Relation[] = []
   const push = (r: Relation) => {
     if (!focus || r.members.some((m) => focus.includes(m))) out.push(r)
@@ -48,6 +55,7 @@ export function computeRelations(members: RelationMember[], focus?: string[]): R
       for (const pair of STEM_CLASH) if (isPair(pair, a.stem, b.stem)) push({ kind: '冲', text: `${stems}相冲`, members: labels })
 
       for (const [pair, el] of SIX_COMBINE) if (isPair(pair, a.branch, b.branch)) push({ kind: '合', text: `${branches}六合${el}`, members: labels })
+      if (isPair('午未', a.branch, b.branch)) push({ kind: '合', text: `${branches}六合${schools.wuWei}`, members: labels, school: 'wuWei' })
       for (const pair of SIX_CLASH) if (isPair(pair, a.branch, b.branch)) push({ kind: '冲', text: `${branches}相冲`, members: labels })
       for (const pair of SIX_HARM) if (isPair(pair, a.branch, b.branch)) push({ kind: '害', text: `${branches}相害`, members: labels })
       for (const pair of BREAK) if (isPair(pair, a.branch, b.branch)) push({ kind: '破', text: `${branches}相破`, members: labels })

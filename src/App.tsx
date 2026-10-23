@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
 import type { BaziInput } from './lib/bazi'
+import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
 
 type Tab = 'calendar' | 'bazi'
 
@@ -16,9 +17,13 @@ export function App() {
       hour: now.getHours(),
       minute: now.getMinutes(),
       gender: 1,
-      sect: 2,
     }
   })
+  const [schools, setSchools] = useState<SchoolSettings>(loadSchools)
+  const changeSchools = (next: SchoolSettings) => {
+    setSchools(next)
+    saveSchools(next)
+  }
 
   return (
     <div className="app">
@@ -42,7 +47,7 @@ export function App() {
             }}
           />
         ) : (
-          <BaziView input={baziInput} onChange={setBaziInput} />
+          <BaziView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
         )}
       </main>
       <footer className="muted">
