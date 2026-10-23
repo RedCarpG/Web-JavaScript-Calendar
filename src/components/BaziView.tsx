@@ -17,6 +17,7 @@ import { Char } from './Char'
 import { SavedCharts } from './SavedCharts'
 import { SchoolMark, SchoolSettingsPanel } from './Schools'
 import { HighlightScope, useHighlight, useTrigger } from './highlight'
+import { ConceptTip } from './GlossaryTips'
 import { PillarTable } from './PillarTable'
 import { useTerm } from '../settingsContext'
 
@@ -212,6 +213,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           <PillarTable
             pillars={chart.pillars}
             schools={schools}
+            dayMaster={chart.dayMaster.char}
             headerExtra={(p) =>
               chart.lateZiHour &&
               (p.label === '日柱' || p.label === '时柱') && <SchoolMark school="ziHour" settings={schools} />
@@ -234,13 +236,21 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         </HighlightScope>
 
         <dl className="kv inline">
-          <dt>{term('胎元')}</dt>
+          <dt>
+            <ConceptTip name="胎元" />
+          </dt>
           <dd>{chart.fetalOrigin}</dd>
-          <dt>{term('胎息')}</dt>
+          <dt>
+            <ConceptTip name="胎息" />
+          </dt>
           <dd>{chart.fetalBreath}</dd>
-          <dt>{term('命宫')}</dt>
+          <dt>
+            <ConceptTip name="命宫" />
+          </dt>
           <dd>{chart.ownSign}</dd>
-          <dt>{term('身宫')}</dt>
+          <dt>
+            <ConceptTip name="身宫" />
+          </dt>
           <dd>{chart.bodySign}</dd>
         </dl>
       </section>
@@ -362,7 +372,12 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         </p>
         <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
           <div className="table-scroll">
-            <PillarTable pillars={[...combined, ...chart.pillars]} schools={schools} dividerAt={combined.length} />
+            <PillarTable
+              pillars={[...combined, ...chart.pillars]}
+              schools={schools}
+              dividerAt={combined.length}
+              dayMaster={chart.dayMaster.char}
+            />
           </div>
           <Relations title={term('岁运刑冲合会')} items={fortuneRels} schools={schools} empty="与原局无明显刑冲合会" />
         </HighlightScope>

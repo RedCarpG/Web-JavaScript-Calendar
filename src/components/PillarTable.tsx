@@ -4,6 +4,7 @@ import type { SchoolSettings } from '../lib/schools'
 import { useTerm } from '../settingsContext'
 import { Char } from './Char'
 import { useHighlight, useTrigger } from './highlight'
+import { ConceptTip, EmptyTip, SoundTip, TerrainTip } from './GlossaryTips'
 import { SchoolMark } from './Schools'
 import { ShenShaTip } from './ShenShaTip'
 
@@ -14,19 +15,22 @@ interface Props {
   headerExtra?: (p: Pillar) => ReactNode
   /** Index of the first natal column, drawn with a divider before it */
   dividerAt?: number
+  /** 日主 (day stem), for explaining 星运 */
+  dayMaster: string
 }
 
 /** 主星 / 天干 / 地支 / 藏干 / 纳音 / 星运 / 自坐 / 空亡 / 神煞 table for any set of pillars. */
-export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props) {
+export function PillarTable({ pillars, schools, headerExtra, dividerAt, dayMaster }: Props) {
   const term = useTerm()
   const { hover } = useHighlight()
   const cls = (i: number) => (i === dividerAt ? 'divider' : undefined)
-  const rows = [
-    [term('纳音'), 'sound'],
-    [term('星运'), 'terrain'],
-    [term('自坐'), 'selfTerrain'],
-    [term('空亡'), 'empty'],
-  ] as const
+  // Each row: concept name, and how to render a pillar's value with its explanation.
+  const rows: [string, (p: Pillar) => ReactNode][] = [
+    ['纳音', (p) => <SoundTip name={p.sound} />],
+    ['星运', (p) => <TerrainTip name={p.terrain} stem={dayMaster} branch={p.branch.char} kind="terrain" />],
+    ['自坐', (p) => <TerrainTip name={p.selfTerrain} stem={p.stem.char} branch={p.branch.char} kind="self" />],
+    ['空亡', (p) => <EmptyTip empty={p.empty} xun={p.xun} ganzhi={p.stem.char + p.branch.char} />],
+  ]
   return (
     <table className={`pillars${hover ? ' hl-active' : ''}`}>
       <thead>
@@ -34,7 +38,7 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           <th />
           {pillars.map((p, i) => (
             <th key={p.label} className={cls(i)}>
-              {term(p.label)}
+              {p.label.endsWith('柱') ? term(p.label) : <ConceptTip name={p.label} />}
               {headerExtra?.(p)}
             </th>
           ))}
@@ -42,7 +46,9 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
       </thead>
       <tbody>
         <tr className="row-star">
-          <th>{term('主星')}</th>
+          <th>
+            <ConceptTip name="主星" />
+          </th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
               <Star name={p.stem.tenStar} />
@@ -50,7 +56,9 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           ))}
         </tr>
         <tr className="row-char">
-          <th>{term('天干')}</th>
+          <th>
+            <ConceptTip name="天干" />
+          </th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
               <GanzhiCell pillar={p.label} part="stem" g={p.stem} />
@@ -58,7 +66,9 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           ))}
         </tr>
         <tr className="row-char">
-          <th>{term('地支')}</th>
+          <th>
+            <ConceptTip name="地支" />
+          </th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
               <GanzhiCell pillar={p.label} part="branch" g={p.branch} />
@@ -66,7 +76,9 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
           ))}
         </tr>
         <tr>
-          <th>{term('藏干')}</th>
+          <th>
+            <ConceptTip name="藏干" />
+          </th>
           {pillars.map((p, i) => (
             <td key={p.label} className={['hidden-stems', cls(i)].filter(Boolean).join(' ')}>
               {p.hidden.map((h) => (
@@ -80,18 +92,22 @@ export function PillarTable({ pillars, schools, headerExtra, dividerAt }: Props)
             </td>
           ))}
         </tr>
-        {rows.map(([title, key]) => (
-          <tr key={key}>
-            <th>{title}</th>
+        {rows.map(([name, render]) => (
+          <tr key={name}>
+            <th>
+              <ConceptTip name={name} />
+            </th>
             {pillars.map((p, i) => (
               <td key={p.label} className={cls(i)}>
-                {term(p[key])}
+                {render(p)}
               </td>
             ))}
           </tr>
         ))}
         <tr className="row-shensha">
-          <th>{term('神煞')}</th>
+          <th>
+            <ConceptTip name="神煞" />
+          </th>
           {pillars.map((p, i) => (
             <td key={p.label} className={cls(i)}>
               {p.shenSha.map((s) => (

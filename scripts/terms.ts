@@ -19,6 +19,7 @@ import { buildBazi } from '../src/lib/bazi'
 import { buildDayDetail, buildMonthGrid } from '../src/lib/calendar'
 import { computeRelations } from '../src/lib/relations'
 import { DEFAULT_SCHOOLS } from '../src/lib/schools'
+import { CONCEPTS } from '../src/lib/glossary'
 import { SHENSHA_INFO } from '../src/lib/shenshaInfo'
 
 const STEMS = '甲乙丙丁戊己庚辛壬癸'
@@ -69,6 +70,7 @@ export function collectTerms(years: [number, number] = [1990, 2035]): string[] {
   // Bazi vocabulary
   for (const a of STEMS) for (const b of STEMS) add(HeavenStem.fromName(a).getTenStar(HeavenStem.fromName(b)).getName())
   Object.keys(SHENSHA_INFO).forEach(add)
+  Object.keys(CONCEPTS).forEach(add)
   for (let i = 0; i < 365 * 3; i += 7) {
     const day = SolarDay.fromYmd(2020, 1, 1).next(i)
     const chart = buildBazi({ year: day.getYear(), month: day.getMonth(), day: day.getDay(), hour: (i * 5) % 24, minute: 0, gender: 1 })

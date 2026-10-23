@@ -41,6 +41,8 @@ export interface Pillar {
   terrain: string
   selfTerrain: string
   empty: string
+  /** 旬首, e.g. 甲子 (this pillar belongs to the 甲子旬) */
+  xun: string
   shenSha: ShenSha[]
 }
 
@@ -127,6 +129,7 @@ function pillar(label: string, sc: SixtyCycle, me: HeavenStem, isDay: boolean): 
     terrain: me.getTerrain(branch).getName(),
     selfTerrain: stem.getTerrain(branch).getName(),
     empty: sc.getExtraEarthBranches().map((b) => b.getName()).join(''),
+    xun: sc.getTen().getName(),
     shenSha: [],
   }
 }
