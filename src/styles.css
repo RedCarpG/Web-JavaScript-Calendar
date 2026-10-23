@@ -514,10 +514,11 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .rel.hl-target { border-radius: 999px; }
 
 /* ---------- 紫微斗数命盘 ---------- */
-.ziwei-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+/* The board sizes itself to this container; below 250px it scrolls instead of squashing. */
+.ziwei-scroll { container: zw / inline-size; overflow-x: auto; }
 .ziwei-board {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(150px, auto));
-  min-width: 640px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--border); gap: 1px;
+  min-width: 250px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--border); gap: 1px;
 }
 .palace {
   position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
@@ -563,6 +564,7 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .zc-title span { font-size: 15px; color: var(--accent); font-weight: 600; }
 .ziwei-center .kv { font-size: 13px; }
 .zc-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.zw-legends { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
 .ziwei-credit { margin: 10px 0 0; }
 /* 三方四正: the hovered palace, its 对宫 and 三合 stay lit; lines join them across the centre */
 .ziwei-board { position: relative; }
@@ -594,4 +596,41 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .topbar-right { gap: 4px; }
   .tabs button { padding: 6px 8px; font-size: 13px; }
   .icon-btn { width: 32px; height: 32px; }
+}
+
+/* 紫微盘 on narrow containers (phones): stars stand in vertical columns, as on
+   paper boards, so a palace a quarter of a phone wide still holds them all. */
+@container zw (max-width: 620px) {
+  .ziwei-board { grid-template-rows: repeat(4, minmax(112px, auto)); border-radius: 8px; }
+  .palace { padding: 4px 3px 3px; gap: 2px; }
+  .palace-stars { flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 4px 2px; }
+  .stars-major, .stars-minor, .stars-adj { display: contents; }
+  .star-item { flex-direction: column; align-items: center; gap: 1px; }
+  /* One character per line: a 1em-wide box wraps every character (writing-mode
+     collapses to zero height inside these flex items in Chromium). */
+  .palace-stars .tip-label { display: block; width: 1em; white-space: normal; word-break: break-all; line-height: 1.08; }
+  .stars-major .star-name { font-size: 14px; }
+  .stars-minor .star-name { font-size: 12px; }
+  .stars-adj .tip { font-size: 10px; }
+  .star-bright { font-size: 9px; line-height: 1; }
+  .star-item .mutagen { font-size: 9px; padding: 1px 2px; }
+  /* Footer: 大限 and 宫名 stacked at the left, 干支 and 长生 standing in the right corner */
+  .palace-foot { flex-direction: column; align-items: flex-start; gap: 1px; padding-right: 14px; }
+  .palace-decadal { font-size: 10px; }
+  .palace-name { font-size: 12px; gap: 2px; }
+  .body-tag { font-size: 9px; padding: 1px 2px; }
+  .palace-gz, .palace-cs { position: absolute; right: 3px; width: 1em; word-break: break-all; line-height: 1.1; text-align: center; }
+  .palace-gz { bottom: 3px; font-size: 12px; font-weight: 700; color: var(--text); }
+  .palace-cs { top: auto; bottom: 34px; font-size: 9px; }
+  .sf-tag { display: none; }
+  .ziwei-center { padding: 6px 8px; gap: 4px; }
+  .zc-title { font-size: 14px; gap: 6px; }
+  .zc-title span { font-size: 12px; }
+  .ziwei-center .kv { font-size: 11px; gap: 2px 6px; }
+  .zc-extra { display: none; }
+}
+@container zw (max-width: 340px) {
+  .stars-major .star-name { font-size: 12.5px; }
+  .stars-minor .star-name { font-size: 11px; }
+  .ziwei-center .kv { font-size: 10px; }
 }

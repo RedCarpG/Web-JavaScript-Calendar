@@ -52,8 +52,8 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
                 <span>{term(chart.fiveElementsClass)}</span>
               </div>
               <dl className="kv">
-                <dt>阳历</dt>
-                <dd>{chart.solarText}</dd>
+                <dt className="zc-extra">阳历</dt>
+                <dd className="zc-extra">{chart.solarText}</dd>
                 {chart.trueSolar && (
                   <>
                     <dt>真太阳时</dt>
@@ -70,41 +70,45 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
                 <dd>{term(chart.soul)}</dd>
                 <dt>{term('身主')}</dt>
                 <dd>{term(chart.body)}</dd>
-                <dt>生肖 · 星座</dt>
-                <dd>
+                <dt className="zc-extra">生肖 · 星座</dt>
+                <dd className="zc-extra">
                   {term(chart.zodiac)} · {chart.sign}
                 </dd>
               </dl>
-              <div className="zc-legend">
-                {(['禄', '权', '科', '忌'] as const).map((m) => (
-                  <span key={m} className={`mutagen m-${m}`}>
-                    {term(m)}
-                  </span>
-                ))}
-                <span className="muted">生年四化</span>
-              </div>
-              <div className="zc-legend">
-                {ziweiColor === 'element' ? (
-                  ELEMENTS.map((e) => (
-                    <span key={e} className={`el-${e}`}>
-                      {e}
-                    </span>
-                  ))
-                ) : (
-                  <>
-                    <span className="luck-major">主星</span>
-                    <span className="luck-good">吉星</span>
-                    <span className="luck-bad">煞星</span>
-                  </>
-                )}
-                <span className="muted">星曜配色（可在设置中切换）</span>
-              </div>
-              <div className="zc-legend muted">
-                <span>
-                  悬停宫位看<SanFangTip />，悬停星曜看解释
-                </span>
-              </div>
             </div>
+          </div>
+        </div>
+        <div className="zw-legends">
+          <div className="zc-legend">
+            {(['禄', '权', '科', '忌'] as const).map((m) => (
+              <span key={m} className={`mutagen m-${m}`}>
+                {term(m)}
+              </span>
+            ))}
+            <span className="muted">生年四化</span>
+          </div>
+          <div className="zc-legend">
+            {ziweiColor === 'element' ? (
+              ELEMENTS.map((e) => (
+                <span key={e} className={`el-${e}`}>
+                  {e}
+                </span>
+              ))
+            ) : (
+              <>
+                <span className="luck-major">主星</span>
+                <span className="luck-good">吉星</span>
+                <span className="luck-bad">煞星</span>
+              </>
+            )}
+            <span className="muted">星曜配色（可在设置中切换）</span>
+          </div>
+          <div className="zc-legend muted">
+            <span>
+              悬停或点按宫位看
+              <SanFangTip />
+              ，悬停或点按星曜看解释
+            </span>
           </div>
         </div>
         <p className="muted row-note ziwei-credit">
@@ -135,9 +139,21 @@ function SanFangLines({ branch }: { branch: string }) {
   )
 }
 
-const ROLE_LABEL: Record<Role, string> = { self: '本宫', opposite: '对宫', trine: '三合' }
+const ROLE_LABEL: Record<Role, string> = {
+  self: '本宫',
+  opposite: '对宫',
+  trine: '三合',
+}
 
-function Palace({ palace: p, role, onActive }: { palace: ZiweiPalace; role?: Role; onActive: (branch: string | null) => void }) {
+function Palace({
+  palace: p,
+  role,
+  onActive,
+}: {
+  palace: ZiweiPalace
+  role?: Role
+  onActive: (branch: string | null) => void
+}) {
   const term = useTerm()
   const [row, col] = BOARD[p.branch]
   return (
