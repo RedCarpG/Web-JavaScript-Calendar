@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
 import { AboutBadges } from './components/AboutBadges'
+import { Logo } from './components/Logo'
 import { SavedChartsDrawer } from './components/SavedCharts'
 import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
@@ -84,7 +85,8 @@ export function App() {
       <div className="app">
         <header className="topbar">
           <h1>
-            {term('时契')}
+            <Logo />
+            星曆
             <span className="brand-en">ChroniQ</span>
           </h1>
           <div className="topbar-right">
