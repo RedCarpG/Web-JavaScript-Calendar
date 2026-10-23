@@ -417,25 +417,61 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .tabs button { padding: 6px 12px; }
 }
 
-/* ---------- 已保存的命盘 ---------- */
-.saved-charts { flex-basis: 100%; display: grid; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+/* ---------- 已保存的命盘：左侧抽屉 ---------- */
+/* Fixed to the left edge, outside .app, so it takes the 显示大小 zoom itself.
+   Closed, it slides left by the panel width and only the handle shows; open,
+   it lies over the page without moving anything. */
+.drawer {
+  --drawer-w: min(320px, calc(100vw - 56px));
+  position: fixed; top: 0; bottom: 0; left: 0; z-index: 30; zoom: var(--ui-zoom);
+  display: flex; align-items: center; pointer-events: none;
+  transform: translateX(calc(-1 * var(--drawer-w))); transition: transform 0.25s ease;
+}
+.drawer.open { transform: none; }
+.drawer > * { pointer-events: auto; }
+.drawer-panel {
+  width: var(--drawer-w); height: 100%; box-sizing: border-box; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 12px; padding: 16px;
+  background: var(--surface); border-right: 1px solid var(--border);
+  box-shadow: none; transition: box-shadow 0.25s;
+}
+.drawer.open .drawer-panel { box-shadow: 8px 0 32px rgb(0 0 0 / 0.18); }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; }
+.drawer-head h3 { margin: 0; font-size: 16px; }
+.drawer-handle {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px;
+  border: 1px solid var(--border); border-left: 0; border-radius: 0 12px 12px 0;
+  background: var(--surface); color: var(--muted); box-shadow: var(--shadow); font-size: 13px;
+}
+.drawer-handle:hover, .drawer.open .drawer-handle { color: var(--accent); }
+.drawer-handle-text { width: 1em; line-height: 1.15; word-break: break-all; }
+.drawer-count {
+  min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; box-sizing: border-box;
+  background: var(--accent); color: #fff; font-size: 11px; line-height: 18px; text-align: center;
+}
 .saved-form { display: flex; gap: 8px; }
 .saved-form input {
-  flex: 1; min-width: 0; max-width: 280px; height: 36px; padding: 0 12px;
+  flex: 1; min-width: 0; height: 36px; padding: 0 12px;
   border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
 }
 .saved-form .ghost { margin-left: 0; border-radius: 999px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px;
-  background: var(--surface); overflow: hidden;
+.saved-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.saved-list li {
+  display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
 }
-.chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.chip button { border: 0; background: none; color: inherit; height: 30px; }
-.chip-main { padding: 0 4px 0 12px; font-size: 14px; }
-.chip-x { padding: 0 10px 0 6px; color: var(--muted); font-size: 15px; }
+.saved-list li.on { border-color: var(--accent); background: var(--accent-soft); }
+.saved-item {
+  flex: 1; min-width: 0; display: grid; gap: 2px; padding: 8px 4px 8px 12px; text-align: left;
+  border: 0; background: none; color: inherit;
+}
+.saved-item:hover .saved-name { color: var(--accent); }
+.saved-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-item small { font-size: 12px; }
+.saved-empty { margin: 0; font-size: 13px; }
+.drawer-panel > small { font-size: 12px; margin-top: auto; }
+.chip-x { border: 0; background: none; padding: 0 10px 0 6px; height: 30px; color: var(--muted); font-size: 15px; }
 .chip-x:hover { color: var(--bad); }
-.saved-charts small { font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-panel { transition: none; } }
 
 /* ---------- 月 / 周 / 年视图 ---------- */
 .cal-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -651,8 +687,6 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .palace { transition: none; }
   .sf-tag, .sf-lines { animation: none; }
 }
-/* Let the saved-chart row shrink on narrow phones (grid tracks default to min-content). */
-.saved-charts { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 360px) {
   .topbar h1 { font-size: 18px; letter-spacing: 0; }
   .topbar-right { gap: 4px; }
