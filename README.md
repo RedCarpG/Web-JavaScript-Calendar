@@ -2,7 +2,7 @@
 
 中国传统历法与命理排盘工具：万年历、八字排盘，之后计划加入紫微斗数等。
 
-在线访问：<https://redcarpg.github.io/web-paipan-chroniq/>
+在线访问：<https://redcarpg.github.io/web-paipan-ChroniQ/>
 
 一个纯前端的中国传统历法应用：
 
