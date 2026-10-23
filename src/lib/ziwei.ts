@@ -2,7 +2,7 @@
 // iztro is only imported here, and this module is only loaded by the 紫微
 // tab, so the calendar and bazi pages don't pay for it.
 import { astro, util } from 'iztro'
-import { LunarDay, LunarMonth, LunarYear, SolarDay } from 'tyme4ts'
+import { LunarDay, LunarHour, LunarMonth, LunarYear, SolarDay } from 'tyme4ts'
 import { effectiveTime, formatTime, type BaziInput, type ElementName } from './bazi'
 import { mutagenTable, type ZiweiSchoolSettings } from './ziweiSchools'
 import { STAR_ELEMENT, starLuck, type StarLuck } from './ziweiStars'
@@ -70,9 +70,9 @@ export interface ZiweiDecade {
   years: number[]
 }
 
-export type LayerKind = 'decadal' | 'yearly' | 'monthly'
+export type LayerKind = 'decadal' | 'yearly' | 'monthly' | 'daily' | 'hourly'
 
-/** One 运限 layer (大限, 流年 or 流月) laid over the natal board. */
+/** One 运限 layer (大限, 流年, 流月, 流日 or 流时) laid over the natal board. */
 export interface ZiweiLayer {
   kind: LayerKind
   stem: string
@@ -183,19 +183,23 @@ export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): Ziwe
 
 const MUTAGENS = ['禄', '权', '科', '忌']
 
-/**
- * 大限, 流年 and 流月 for a lunar year (and month, 1–12). iztro works from a
- * solar date, so we ask about a day safely inside that year or month.
- */
+/** A 运限 moment: lunar year, month (1–12), day, and 时辰 (0 子 … 11 亥). */
+export interface HoroscopeTarget {
+  year: number
+  month: number
+  day: number
+  hour: number
+}
+
+/** All five 运限 layers for a lunar moment. iztro works from a solar date plus 时辰. */
 export function buildHoroscope(
   input: BaziInput,
   schools: ZiweiSchoolSettings,
-  year: number,
-  month: number,
+  { year, month, day, hour }: HoroscopeTarget,
 ): Record<LayerKind, ZiweiLayer> {
   const { chart } = cast(input, schools)
-  const solar = LunarDay.fromYmd(year, month, 15).getSolarDay()
-  const h = chart.horoscope(`${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`, 6)
+  const solar = LunarDay.fromYmd(year, month, Math.min(day, daysInMonth(year, month))).getSolarDay()
+  const h = chart.horoscope(`${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`, hour)
   const branches = chart.palaces.map((p) => p.earthlyBranch)
   const layer = (kind: LayerKind, item: (typeof h)['decadal']): ZiweiLayer => ({
     kind,
@@ -205,14 +209,21 @@ export function buildHoroscope(
     mutagens: Object.fromEntries(item.mutagen.map((name, i) => [name, MUTAGENS[i]])),
     stars: Object.fromEntries(branches.map((b, i) => [b, (item.stars?.[i] ?? []).map(star)])),
   })
-  return { decadal: layer('decadal', h.decadal), yearly: layer('yearly', h.yearly), monthly: layer('monthly', h.monthly) }
+  return {
+    decadal: layer('decadal', h.decadal),
+    yearly: layer('yearly', h.yearly),
+    monthly: layer('monthly', h.monthly),
+    daily: layer('daily', h.daily),
+    hourly: layer('hourly', h.hourly),
+  }
 }
 
-/** Today's lunar year and month (a 闰月 counts as its month number). */
-export function lunarToday(): { year: number; month: number } {
+/** Now as a 运限 moment (a 闰月 counts as its month number; 23:00 counts as this day's 子时). */
+export function lunarToday(): HoroscopeTarget {
   const now = new Date()
-  const m = SolarDay.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate()).getLunarDay().getLunarMonth()
-  return { year: m.getLunarYear().getYear(), month: m.getMonth() }
+  const d = SolarDay.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate()).getLunarDay()
+  const m = d.getLunarMonth()
+  return { year: m.getLunarYear().getYear(), month: m.getMonth(), day: d.getDay(), hour: timeIndex(now.getHours()) % 12 }
 }
 
 /** 干支 of a lunar year, e.g. 丙午 */
@@ -258,4 +269,19 @@ export function sanFangSiZheng(branch: string): { opposite: string; trines: [str
   const i = BRANCH_ORDER.indexOf(branch)
   const at = (n: number) => BRANCH_ORDER[(i + n) % 12]
   return { opposite: at(6), trines: [at(4), at(8)] }
+}
+
+/** Days in a (non-leap) lunar month: 29 or 30 */
+export const daysInMonth = (year: number, month: number) => LunarMonth.fromYm(year, month).getDayCount()
+
+/** Name and 干支 of a lunar day, e.g. 初一 庚午 */
+export function dayInfo(year: number, month: number, day: number) {
+  const d = LunarDay.fromYmd(year, month, day)
+  return { name: d.getName(), ganzhi: d.getSixtyCycle().getName() }
+}
+
+/** Name and 干支 of a 时辰 (0 子 … 11 亥) on a lunar day, e.g. 子时 丙子 */
+export function hourInfo(year: number, month: number, day: number, hour: number) {
+  const h = LunarHour.fromYmdHms(year, month, day, hour * 2, 0, 0)
+  return { name: `${BRANCH_ORDER[hour]}时`, ganzhi: h.getSixtyCycle().getName() }
 }
