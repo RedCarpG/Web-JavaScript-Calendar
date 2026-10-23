@@ -1,5 +1,7 @@
 # 万年历 · 八字排盘
 
+在线访问：<https://redcarpg.github.io/Web-JavaScript-Calendar/>
+
 一个纯前端的中国传统历法应用：
 
 - **日历**：月视图显示公历、农历、节气、节日和法定节假日（休/班）。点击任意一天可以查看干支、建除、值神、星宿、宜忌、吉神凶煞。
@@ -24,7 +26,7 @@ npm run preview   # 预览构建结果
 npm test          # 单元测试（vitest）
 ```
 
-`dist/` 是纯静态文件，可以直接部署到 GitHub Pages、Vercel 等平台。
+`dist/` 是纯静态文件。推送到 `main` 后，`.github/workflows/pages.yml` 会自动测试、构建并部署到 GitHub Pages；PR 只跑测试和构建，不部署。
 
 ## 目录
 
