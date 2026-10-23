@@ -301,6 +301,34 @@ describe('紫微斗数', () => {
     expect(where(buildZiwei({ ...base, year: 2023, month: 4, day: 10 }, month))).toEqual(['寅'])
   })
 
+  it('lists 大限 with their years, matching iztro\'s own 运限', async () => {
+    const { buildZiwei, buildHoroscope } = await import('../ziwei')
+    for (const input of [base, { ...base, year: 1997, month: 11, day: 2, hour: 9 }, { ...base, gender: 0 as const, year: 1984, month: 2, day: 3 }]) {
+      const z = buildZiwei(input, DEFAULT_ZIWEI_SCHOOLS)
+      expect(z.decades).toHaveLength(12)
+      for (const d of z.decades.slice(0, 6))
+        for (const y of [d.years[0], d.years[d.years.length - 1]]) {
+          const h = buildHoroscope(input, DEFAULT_ZIWEI_SCHOOLS, y, 6)
+          expect(h.decadal.branch, `${input.year} ${y}`).toBe(d.branch)
+          expect(h.yearly.branch).toBe('子丑寅卯辰巳午未申酉戌亥'[(y - 4) % 12])
+        }
+    }
+  })
+
+  it('gives each 运限 layer its palace names, 四化 and 流耀', async () => {
+    const { buildHoroscope } = await import('../ziwei')
+    // 1990 男, 2026 丙午年: 流年命宫 in 午; 丙干四化 天同禄 天机权 文昌科 廉贞忌
+    const h = buildHoroscope(base, DEFAULT_ZIWEI_SCHOOLS, 2026, 9)
+    expect(h.yearly.stem + h.yearly.branch).toBe('丙午')
+    expect(h.yearly.palaceNames['午']).toBe('命宫')
+    expect(h.yearly.mutagens).toEqual({ 天同: '禄', 天机: '权', 文昌: '科', 廉贞: '忌' })
+    expect(Object.values(h.yearly.stars).flat().map((s) => s.name)).toContain('流禄')
+    expect(Object.values(h.decadal.stars).flat().map((s) => s.name)).toContain('运禄')
+    expect(Object.values(h.monthly.stars).flat().map((s) => s.name)).toContain('月禄')
+    // 流禄 sits with 禄存's table: 丙 → 巳
+    expect(h.yearly.stars['巳'].map((s) => s.name)).toContain('流禄')
+  })
+
   it('finds the 三方四正 of a palace', async () => {
     const { sanFangSiZheng } = await import('../ziwei')
     expect(sanFangSiZheng('子')).toEqual({ opposite: '午', trines: ['辰', '申'] })

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { FortuneRow } from './FortuneRow'
 import {
   ELEMENTS,
   buildBazi,
@@ -318,33 +319,6 @@ function Relations({
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function FortuneRow({
-  title,
-  summary,
-  open,
-  onToggle,
-  children,
-}: {
-  title: string
-  summary: string
-  open: boolean
-  onToggle: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <div className={`fortune-group${open ? ' open' : ''}`}>
-      <button type="button" className="fortune-toggle" aria-expanded={open} onClick={onToggle}>
-        <span className="chev" aria-hidden="true">
-          ›
-        </span>
-        <span className="fortune-title">{title}</span>
-        <span className="muted fortune-summary">{summary}</span>
-      </button>
-      {open && <div className="fortune-body">{children}</div>}
     </div>
   )
 }

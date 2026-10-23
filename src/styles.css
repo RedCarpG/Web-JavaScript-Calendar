@@ -15,6 +15,10 @@
   --metal: #c09a2a;
   --water: #2d6cb5;
   --weekend: #fcf5f2;
+  /* 紫微运限 layers: 大限, 流年, 流月 */
+  --ly-decadal: #23838a;
+  --ly-yearly: #c0661a;
+  --ly-monthly: #5a62c2;
   --radius: 14px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
   color-scheme: light;
@@ -40,6 +44,9 @@
     --metal: #e3c25c;
     --water: #6aa5ea;
     --weekend: #2a201d;
+    --ly-decadal: #5cc2c7;
+    --ly-yearly: #eb9a4f;
+    --ly-monthly: #959bf0;
     --shadow: none;
     color-scheme: dark;
   }
@@ -61,6 +68,9 @@
   --metal: #e3c25c;
   --water: #6aa5ea;
   --weekend: #2a201d;
+  --ly-decadal: #5cc2c7;
+  --ly-yearly: #eb9a4f;
+  --ly-monthly: #959bf0;
   --shadow: none;
   color-scheme: dark;
 }
@@ -564,6 +574,25 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .zc-title span { font-size: 15px; color: var(--accent); font-weight: 600; }
 .ziwei-center .kv { font-size: 13px; }
 .zc-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+/* 运限 layers: 四化 badges and tags take the layer colour, 流耀 its text colour */
+.lm-decadal { background: var(--ly-decadal); color: #fff; }
+.lm-yearly { background: var(--ly-yearly); color: #fff; }
+.lm-monthly { background: var(--ly-monthly); color: #fff; }
+.fl-decadal { color: var(--ly-decadal); }
+.fl-yearly { color: var(--ly-yearly); }
+.fl-monthly { color: var(--ly-monthly); }
+.zc-legend .mutagen.lm-decadal, .zc-legend .mutagen.lm-yearly, .zc-legend .mutagen.lm-monthly { padding: 2px 5px; }
+.stars-flow { display: flex; flex-wrap: wrap; gap: 0 5px; font-size: 11px; font-weight: 600; line-height: 1.5; }
+.layer-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; margin-top: auto; }
+.layer-tag { font-size: 10px; line-height: 1; padding: 2px 4px; border-radius: 4px; animation: tip-in 0.2s ease-out; }
+/* A layer's 命宫 gets a ring in the layer colour */
+.layer-tag.soul { font-weight: 800; }
+.layer-tag.soul.lm-decadal { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-decadal); }
+.layer-tag.soul.lm-yearly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-yearly); }
+.layer-tag.soul.lm-monthly { box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--ly-monthly); }
+.fortune-row.decades { grid-template-columns: repeat(12, minmax(60px, 1fr)); }
+.fortunes-head .seg { flex-shrink: 0; }
+.fortune strong { font-size: 15px; }
 .zw-legends { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
 .ziwei-credit { margin: 10px 0 0; }
 /* 三方四正: the hovered palace, its 对宫 and 三合 stay lit; lines join them across the centre */
@@ -623,6 +652,10 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .palace-gz { bottom: 3px; font-size: 12px; font-weight: 700; color: var(--text); }
   .palace-cs { top: auto; bottom: 34px; font-size: 9px; }
   .sf-tag { display: none; }
+  .palace-stars .stars-flow { display: contents; }
+  .flow-star { display: block; width: 1em; word-break: break-all; line-height: 1.08; font-size: 10px; }
+  .layer-tags { justify-content: flex-start; gap: 2px; padding-right: 14px; }
+  .layer-tag { font-size: 9px; padding: 1px 2px; }
   .ziwei-center { padding: 6px 8px; gap: 4px; }
   .zc-title { font-size: 14px; gap: 6px; }
   .zc-title span { font-size: 12px; }

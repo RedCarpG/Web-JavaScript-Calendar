@@ -2,6 +2,7 @@
 // iztro is only imported here, and this module is only loaded by the 紫微
 // tab, so the calendar and bazi pages don't pay for it.
 import { astro, util } from 'iztro'
+import { LunarDay, LunarMonth, LunarYear, SolarDay } from 'tyme4ts'
 import { effectiveTime, formatTime, type BaziInput, type ElementName } from './bazi'
 import { mutagenTable, type ZiweiSchoolSettings } from './ziweiSchools'
 import { STAR_ELEMENT, starLuck, type StarLuck } from './ziweiStars'
@@ -53,6 +54,35 @@ export interface ZiweiChart {
   body: string
   /** All twelve palaces, keyed by 地支 */
   palaces: Record<string, ZiweiPalace>
+  /** 大限 in age order */
+  decades: ZiweiDecade[]
+  /** Lunar year of birth: 虚岁 1 */
+  birthYear: number
+}
+
+export interface ZiweiDecade {
+  /** The palace the 大限 runs through */
+  branch: string
+  stem: string
+  palace: string
+  range: [number, number]
+  /** Lunar years covered, one per 虚岁 */
+  years: number[]
+}
+
+export type LayerKind = 'decadal' | 'yearly' | 'monthly'
+
+/** One 运限 layer (大限, 流年 or 流月) laid over the natal board. */
+export interface ZiweiLayer {
+  kind: LayerKind
+  stem: string
+  branch: string
+  /** 地支 → this layer's palace name (命宫, 兄弟 …) */
+  palaceNames: Record<string, string>
+  /** Star name → this layer's 四化 (禄 权 科 忌) */
+  mutagens: Record<string, string>
+  /** 地支 → 流耀 (运禄, 流羊, 月马 …) */
+  stars: Record<string, ZiweiStar[]>
 }
 
 /** Clock hour → iztro 时辰 index: 0 早子 (00–01), 1 丑 … 11 亥, 12 晚子 (23–24). */
@@ -60,7 +90,11 @@ export const timeIndex = (hour: number) => (hour === 23 ? 12 : Math.floor((hour 
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): ZiweiChart {
+/**
+ * Cast the iztro astrolabe. iztro keeps its config globally, so anything that
+ * reads the astrolabe later (运限) casts again rather than reuse an old one.
+ */
+function cast(input: BaziInput, schools: ZiweiSchoolSettings) {
   const { corrected, time } = effectiveTime(input)
   const dateStr = `${time.year}-${pad(time.month)}-${pad(time.day)}`
   const timeIdx = timeIndex(time.hour)
@@ -80,14 +114,19 @@ export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): Ziwe
       mutagens: mutagenTable(schools) as never,
     },
   })
+  return { chart, corrected, dateStr, timeIdx }
+}
 
-  const star = (s: { name: string; type: string; brightness?: string; mutagen?: string }): ZiweiStar => ({
-    name: s.name,
-    brightness: s.brightness || undefined,
-    mutagen: s.mutagen || undefined,
-    element: STAR_ELEMENT[s.name],
-    luck: starLuck(s.type),
-  })
+const star = (s: { name: string; type: string; brightness?: string; mutagen?: string }): ZiweiStar => ({
+  name: s.name,
+  brightness: s.brightness || undefined,
+  mutagen: s.mutagen || undefined,
+  element: STAR_ELEMENT[s.name],
+  luck: starLuck(s.type),
+})
+
+export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): ZiweiChart {
+  const { chart, corrected, dateStr, timeIdx } = cast(input, schools)
 
   const palaces: Record<string, ZiweiPalace> = {}
   for (const p of chart.palaces) {
@@ -112,6 +151,17 @@ export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): Ziwe
     moveStar(palaces, '天马', MA[month])
   }
 
+  const birthYear = chart.rawDates.lunarDate.lunarYear
+  const decades = Object.values(palaces)
+    .map((p) => ({
+      branch: p.branch,
+      stem: p.stem,
+      palace: p.name,
+      range: p.decadal,
+      years: Array.from({ length: p.decadal[1] - p.decadal[0] + 1 }, (_, i) => birthYear + p.decadal[0] - 1 + i),
+    }))
+    .sort((a, b) => a.range[0] - b.range[0])
+
   return {
     gender: input.gender === 1 ? '男' : '女',
     solarText: formatTime(input),
@@ -126,7 +176,52 @@ export function buildZiwei(input: BaziInput, schools: ZiweiSchoolSettings): Ziwe
     soul: chart.soul,
     body: chart.body,
     palaces,
+    decades,
+    birthYear,
   }
+}
+
+const MUTAGENS = ['禄', '权', '科', '忌']
+
+/**
+ * 大限, 流年 and 流月 for a lunar year (and month, 1–12). iztro works from a
+ * solar date, so we ask about a day safely inside that year or month.
+ */
+export function buildHoroscope(
+  input: BaziInput,
+  schools: ZiweiSchoolSettings,
+  year: number,
+  month: number,
+): Record<LayerKind, ZiweiLayer> {
+  const { chart } = cast(input, schools)
+  const solar = LunarDay.fromYmd(year, month, 15).getSolarDay()
+  const h = chart.horoscope(`${solar.getYear()}-${pad(solar.getMonth())}-${pad(solar.getDay())}`, 6)
+  const branches = chart.palaces.map((p) => p.earthlyBranch)
+  const layer = (kind: LayerKind, item: (typeof h)['decadal']): ZiweiLayer => ({
+    kind,
+    stem: item.heavenlyStem,
+    branch: item.earthlyBranch,
+    palaceNames: Object.fromEntries(branches.map((b, i) => [b, item.palaceNames[i]])),
+    mutagens: Object.fromEntries(item.mutagen.map((name, i) => [name, MUTAGENS[i]])),
+    stars: Object.fromEntries(branches.map((b, i) => [b, (item.stars?.[i] ?? []).map(star)])),
+  })
+  return { decadal: layer('decadal', h.decadal), yearly: layer('yearly', h.yearly), monthly: layer('monthly', h.monthly) }
+}
+
+/** Today's lunar year and month (a 闰月 counts as its month number). */
+export function lunarToday(): { year: number; month: number } {
+  const now = new Date()
+  const m = SolarDay.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate()).getLunarDay().getLunarMonth()
+  return { year: m.getLunarYear().getYear(), month: m.getMonth() }
+}
+
+/** 干支 of a lunar year, e.g. 丙午 */
+export const yearGanzhi = (year: number) => LunarYear.fromYear(year).getSixtyCycle().getName()
+
+/** Name and 干支 of a lunar month, e.g. 正月 庚寅 */
+export function monthInfo(year: number, month: number) {
+  const m = LunarMonth.fromYm(year, month)
+  return { name: m.getName(), ganzhi: m.getSixtyCycle().getName() }
 }
 
 /**
