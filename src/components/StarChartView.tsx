@@ -47,7 +47,6 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
   const [when, setWhen] = useState(nowLocal)
   // Highlight: a house, or a planet (with the planets it aspects). Mouse hover, or tap / focus.
   const [focus, setFocus] = useState<Focus>(null)
-  const hl = useMemo(() => highlight(chart, focus), [chart, focus])
   const hover = (f: NonNullable<Focus>) => ({
     tabIndex: 0,
     onPointerEnter: (e: React.PointerEvent) => e.pointerType === 'mouse' && setFocus(f),
@@ -64,6 +63,7 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
     if (target.getTime() <= chart.utc.getTime()) return null
     return mode === 'transit' ? transits(chart, target, settings) : progressions(chart, target, settings)
   }, [mode, when, chart, place.timeZone, settings])
+  const hl = useMemo(() => highlight(chart, overlay, focus), [chart, overlay, focus])
   const byKey = (k: ChartPoint['key']) => chart.points.find((p) => p.key === k)!
   const sun = byKey('sun')
   const moon = byKey('moon')
@@ -159,7 +159,11 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
               </thead>
               <tbody>
                 {chart.points.map((p) => (
-                  <tr key={p.key} className={hl.row(p) ? 'on' : undefined} {...hover({ planet: p.key })}>
+                  <tr
+                    key={p.key}
+                    className={hl.row(p) ? 'on' : undefined}
+                    {...hover({ planet: p.key, layer: 'natal' })}
+                  >
                     <td>
                       <span className="planet-glyph">{p.key === 'asc' || p.key === 'mc' ? '' : p.glyph}</span>
                       <InfoTip label={p.name} title={p.name}>
@@ -196,7 +200,7 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         </div>
       </section>
 
-      {overlay && <OverlayCard overlay={overlay} timeZone={place.timeZone} />}
+      {overlay && <OverlayCard overlay={overlay} timeZone={place.timeZone} hl={hl} hover={hover} active={!!focus} />}
 
       <section className="card">
         <h3 className="section-title">宫位</h3>
@@ -462,7 +466,7 @@ function StarWheel({
             y1={y1}
             x2={x2}
             y2={y2}
-            className={`aspect-line tone-${a.type.tone}${(overlay ? hl.natalSide(a) : hl.aspect(a)) ? ' on' : ''}`}
+            className={`aspect-line tone-${a.type.tone}${(overlay ? hl.cross(a) : hl.aspect(a)) ? ' on' : ''}`}
             strokeOpacity={Math.max(0.25, 1 - a.orb / (overlay ? 2.5 : 8))}
           >
             <title>
@@ -482,7 +486,7 @@ function StarWheel({
           <g
             key={p.key}
             className={`planet el-${SIGN_ELEMENT[p.sign]}${hl.planet(p) ? ' on' : ''}`}
-            {...hover({ planet: p.key })}
+            {...hover({ planet: p.key, layer: 'natal' })}
           >
             <title>
               {p.name} {formatLon(p.lon)}
@@ -504,7 +508,11 @@ function StarWheel({
         const [px, py] = at(outerShown[i], R_OUTER_PLANET)
         const isAngle = angles.has(p.key)
         return (
-          <g key={p.key} className="outer-planet">
+          <g
+            key={p.key}
+            className={`outer-planet${hl.outer(p) ? ' on' : ''}`}
+            {...hover({ planet: p.key, layer: 'overlay' })}
+          >
             <title>
               {overlay!.kind === 'transit' ? '行运' : '推运'}
               {p.name} {formatLon(p.lon)}
@@ -561,7 +569,19 @@ function nowLocal() {
 }
 
 /** 行运 / 推运 positions and their aspects to the natal chart. */
-function OverlayCard({ overlay: o, timeZone }: { overlay: Overlay; timeZone: string }) {
+function OverlayCard({
+  overlay: o,
+  timeZone,
+  hl,
+  hover,
+  active,
+}: {
+  overlay: Overlay
+  timeZone: string
+  hl: Highlight
+  hover: (f: NonNullable<Focus>) => Record<string, unknown>
+  active: boolean
+}) {
   const label = o.kind === 'transit' ? '行运' : '推运'
   const fmt = (d: Date) =>
     new Intl.DateTimeFormat('zh-CN', { timeZone, dateStyle: 'medium', timeStyle: 'short' }).format(d)
@@ -587,7 +607,11 @@ function OverlayCard({ overlay: o, timeZone }: { overlay: Overlay; timeZone: str
           </thead>
           <tbody>
             {o.points.map((p) => (
-              <tr key={p.key}>
+              <tr
+                key={p.key}
+                className={hl.outerRow(p) ? 'on' : undefined}
+                {...hover({ planet: p.key, layer: 'overlay' })}
+              >
                 <td>
                   <span className="planet-glyph">{p.key === 'asc' || p.key === 'mc' ? '' : p.glyph}</span>
                   <InfoTip label={p.name} title={p.name}>
@@ -610,9 +634,9 @@ function OverlayCard({ overlay: o, timeZone }: { overlay: Overlay; timeZone: str
           {o.aspects.length === 0 ? (
             <p className="muted">容许度内没有相位。</p>
           ) : (
-            <div className="aspect-list">
+            <div className={`aspect-list${active ? ' has-focus' : ''}`}>
               {o.aspects.map((a) => (
-                <span key={a.a.key + a.b.key} className={`aspect-chip tone-${a.type.tone}`}>
+                <span key={a.a.key + a.b.key} className={`aspect-chip tone-${a.type.tone}${hl.cross(a) ? ' on' : ''}`}>
                   {label}
                   {a.a.name}
                   <InfoTip className="plain" label={`${a.type.glyph}${a.type.name}`} title={`${a.type.name}相`}>
@@ -630,45 +654,73 @@ function OverlayCard({ overlay: o, timeZone }: { overlay: Overlay; timeZone: str
   )
 }
 
-type Focus = { house: number; planet?: undefined } | { planet: string; house?: undefined } | null
+/** What is highlighted: a house, or a planet of the natal chart or of the 行运 / 推运 overlay. */
+type Focus = { house: number } | { planet: string; layer: 'natal' | 'overlay' } | null
 
 interface Highlight {
   active: boolean
-  /** The house to light up: the focused one, or the focused planet's */
+  /** The house to light up: the focused one, or the focused planet's (natal) house */
   house?: number
-  /** Table rows: the focused planet, or every planet in the focused house */
+  /** Natal table rows: the focused planet, the planets in the focused house, or those an overlay planet aspects */
   row: (p: ChartPoint) => boolean
-  /** Wheel glyphs: also the planets the focused planet aspects */
+  /** Natal glyphs on the wheel: also the focused natal planet's aspect partners */
   planet: (p: ChartPoint) => boolean
+  /** Natal-to-natal aspects */
   aspect: (a: Aspect) => boolean
-  /** For 行运 / 推运 lines, judged by their natal end */
-  natalSide: (a: Aspect) => boolean
+  /** Overlay glyphs on the outer ring */
+  outer: (p: ChartPoint) => boolean
+  /** Overlay card rows */
+  outerRow: (p: ChartPoint) => boolean
+  /** Overlay-to-natal aspects (lines and chips); a = overlay end, b = natal end */
+  cross: (a: Aspect) => boolean
 }
 
-function highlight(chart: StarChart, focus: Focus): Highlight {
-  if (!focus)
-    return { active: false, row: () => false, planet: () => false, aspect: () => false, natalSide: () => false }
-  if (focus.planet) {
-    const key = focus.planet
-    const partners = new Set(
-      chart.aspects.flatMap((a) => (a.a.key === key ? [a.b.key] : a.b.key === key ? [a.a.key] : [])),
-    )
+const none = () => false
+
+function highlight(chart: StarChart, overlay: Overlay | null, focus: Focus): Highlight {
+  if (!focus) return { active: false, row: none, planet: none, aspect: none, outer: none, outerRow: none, cross: none }
+  const cross = overlay?.aspects ?? []
+  if ('house' in focus) {
+    const h = focus.house
     return {
       active: true,
-      house: chart.points.find((p) => p.key === key)?.house,
-      row: (p) => p.key === key,
-      planet: (p) => p.key === key || partners.has(p.key),
-      aspect: (a) => a.a.key === key || a.b.key === key,
-      natalSide: (a) => a.b.key === key,
+      house: h,
+      row: (p) => p.house === h,
+      planet: (p) => p.house === h,
+      aspect: (a) => a.a.house === h || a.b.house === h,
+      outer: (p) => p.house === h,
+      outerRow: (p) => p.house === h,
+      cross: (a) => a.a.house === h || a.b.house === h,
     }
   }
-  const h = focus.house
+  const key = focus.planet
+  if (focus.layer === 'overlay') {
+    // An overlay planet: its natal house, the natal points it aspects, and those aspects.
+    const natalPartners = new Set(cross.filter((a) => a.a.key === key).map((a) => a.b.key))
+    return {
+      active: true,
+      house: overlay?.points.find((p) => p.key === key)?.house,
+      row: (p) => natalPartners.has(p.key),
+      planet: (p) => natalPartners.has(p.key),
+      aspect: none,
+      outer: (p) => p.key === key,
+      outerRow: (p) => p.key === key,
+      cross: (a) => a.a.key === key,
+    }
+  }
+  // A natal planet: its house, its natal aspect partners, and the overlay planets aspecting it.
+  const partners = new Set(
+    chart.aspects.flatMap((a) => (a.a.key === key ? [a.b.key] : a.b.key === key ? [a.a.key] : [])),
+  )
+  const overlayPartners = new Set(cross.filter((a) => a.b.key === key).map((a) => a.a.key))
   return {
     active: true,
-    house: h,
-    row: (p) => p.house === h,
-    planet: (p) => p.house === h,
-    aspect: (a) => a.a.house === h || a.b.house === h,
-    natalSide: (a) => a.b.house === h,
+    house: chart.points.find((p) => p.key === key)?.house,
+    row: (p) => p.key === key,
+    planet: (p) => p.key === key || (!overlay && partners.has(p.key)),
+    aspect: (a) => a.a.key === key || a.b.key === key,
+    outer: (p) => overlayPartners.has(p.key),
+    outerRow: (p) => overlayPartners.has(p.key),
+    cross: (a) => a.b.key === key,
   }
 }
