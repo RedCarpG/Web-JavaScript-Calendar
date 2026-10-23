@@ -15,6 +15,7 @@ import {
   formatCoords,
   formatLon,
   formatOffset,
+  type Aspect,
   type ChartPoint,
   type Element,
   type StarChart,
@@ -44,6 +45,16 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
   // 行运 / 推运: a moment to compare with the natal chart, read in the birthplace's time zone.
   const [mode, setMode] = useState<'natal' | OverlayKind>('natal')
   const [when, setWhen] = useState(nowLocal)
+  // Highlight: a house, or a planet (with the planets it aspects). Mouse hover, or tap / focus.
+  const [focus, setFocus] = useState<Focus>(null)
+  const hl = useMemo(() => highlight(chart, focus), [chart, focus])
+  const hover = (f: NonNullable<Focus>) => ({
+    tabIndex: 0,
+    onPointerEnter: (e: React.PointerEvent) => e.pointerType === 'mouse' && setFocus(f),
+    onPointerLeave: (e: React.PointerEvent) => e.pointerType === 'mouse' && setFocus(null),
+    onFocus: () => setFocus(f),
+    onBlur: () => setFocus(null),
+  })
   const overlay = useMemo<Overlay | null>(() => {
     if (mode === 'natal') return null
     const [y, m, d] = when.date.split('-').map(Number)
@@ -136,7 +147,7 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         </div>
         {mode !== 'natal' && !overlay && <p className="muted row-note">请选择出生之后的日期。</p>}
         <div className="star-layout">
-          <StarWheel chart={chart} overlay={overlay} />
+          <StarWheel chart={chart} overlay={overlay} hl={hl} hover={hover} />
           <div className="star-tables">
             <table className="star-table">
               <thead>
@@ -148,7 +159,7 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
               </thead>
               <tbody>
                 {chart.points.map((p) => (
-                  <tr key={p.key}>
+                  <tr key={p.key} className={hl.row(p) ? 'on' : undefined} {...hover({ planet: p.key })}>
                     <td>
                       <span className="planet-glyph">{p.key === 'asc' || p.key === 'mc' ? '' : p.glyph}</span>
                       <InfoTip label={p.name} title={p.name}>
@@ -191,7 +202,7 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         <h3 className="section-title">宫位</h3>
         <div className="house-grid">
           {chart.cusps.map((c, i) => (
-            <div key={i} className="house-cell">
+            <div key={i} className={`house-cell${hl.house === i + 1 ? ' on' : ''}`} {...hover({ house: i + 1 })}>
               <InfoTip label={`第${i + 1}宫`} title={`第${i + 1}宫`}>
                 <span>{HOUSE_INFO[i]}</span>
               </InfoTip>
@@ -204,9 +215,9 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         {chart.aspects.length === 0 ? (
           <p className="muted">没有主要相位。</p>
         ) : (
-          <div className="aspect-list">
+          <div className={`aspect-list${focus ? ' has-focus' : ''}`}>
             {chart.aspects.map((a) => (
-              <span key={a.a.key + a.b.key} className={`aspect-chip tone-${a.type.tone}`}>
+              <span key={a.a.key + a.b.key} className={`aspect-chip tone-${a.type.tone}${hl.aspect(a) ? ' on' : ''}`}>
                 {a.a.name}
                 <InfoTip className="plain" label={`${a.type.glyph}${a.type.name}`} title={`${a.type.name}相`}>
                   <span>{ASPECT_INFO[a.type.key]}</span>
@@ -331,7 +342,17 @@ const R_OUTER_PLANET = 213
  * Traditional orientation: the ascendant at nine o'clock, signs running
  * counter-clockwise, so houses 1–6 sit below the horizon.
  */
-function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | null }) {
+function StarWheel({
+  chart,
+  overlay,
+  hl,
+  hover,
+}: {
+  chart: StarChart
+  overlay: Overlay | null
+  hl: Highlight
+  hover: (f: NonNullable<Focus>) => Record<string, unknown>
+}) {
   const at = (lon: number, r: number) => {
     const d = ((lon - chart.asc) * Math.PI) / 180
     return [C - r * Math.cos(d), C + r * Math.sin(d)] as const
@@ -363,7 +384,7 @@ function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | nu
 
   return (
     <svg
-      className={`star-wheel${overlay ? ` with-${overlay.kind}` : ''}`}
+      className={`star-wheel${overlay ? ` with-${overlay.kind}` : ''}${hl.active ? ' has-focus' : ''}`}
       viewBox={`${-pad} ${-pad} ${400 + pad * 2} ${400 + pad * 2}`}
       role="img"
       aria-label="星盘"
@@ -391,6 +412,15 @@ function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | nu
       <circle cx={C} cy={C} r={R_SIGN} className="ring" />
       <circle cx={C} cy={C} r={R_HOUSE} className="ring faint" />
       <circle cx={C} cy={C} r={R_ASPECT} className="ring" />
+      {chart.cusps.map((c, i) => (
+        <path
+          key={`sector-${i}`}
+          d={arc(c, chart.cusps[(i + 1) % 12], R_SIGN, R_ASPECT)}
+          className={`house-sector${hl.house === i + 1 ? ' on' : ''}`}
+          aria-label={`第${i + 1}宫`}
+          {...hover({ house: i + 1 })}
+        />
+      ))}
       {chart.cusps.map((c, i) => {
         const angle = i % 3 === 0
         const [x1, y1] = at(c, R_ASPECT)
@@ -401,7 +431,13 @@ function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | nu
         return (
           <g key={i}>
             <line x1={x1} y1={y1} x2={x2} y2={y2} className={angle ? 'cusp angle' : 'cusp'} />
-            <text x={nx} y={ny} className="house-num" textAnchor="middle" dominantBaseline="central">
+            <text
+              x={nx}
+              y={ny}
+              className={`house-num${hl.house === i + 1 ? ' on' : ''}`}
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
               {i + 1}
             </text>
           </g>
@@ -426,7 +462,7 @@ function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | nu
             y1={y1}
             x2={x2}
             y2={y2}
-            className={`aspect-line tone-${a.type.tone}`}
+            className={`aspect-line tone-${a.type.tone}${(overlay ? hl.natalSide(a) : hl.aspect(a)) ? ' on' : ''}`}
             strokeOpacity={Math.max(0.25, 1 - a.orb / (overlay ? 2.5 : 8))}
           >
             <title>
@@ -443,7 +479,11 @@ function StarWheel({ chart, overlay }: { chart: StarChart; overlay: Overlay | nu
         const [px, py] = at(shown[i], R_PLANET)
         const [dx, dy] = at(shown[i], R_DEG)
         return (
-          <g key={p.key} className={`planet el-${SIGN_ELEMENT[p.sign]}`}>
+          <g
+            key={p.key}
+            className={`planet el-${SIGN_ELEMENT[p.sign]}${hl.planet(p) ? ' on' : ''}`}
+            {...hover({ planet: p.key })}
+          >
             <title>
               {p.name} {formatLon(p.lon)}
               {p.retrograde ? ' 逆行' : ''} · 第{p.house}宫
@@ -588,4 +628,47 @@ function OverlayCard({ overlay: o, timeZone }: { overlay: Overlay; timeZone: str
       </div>
     </section>
   )
+}
+
+type Focus = { house: number; planet?: undefined } | { planet: string; house?: undefined } | null
+
+interface Highlight {
+  active: boolean
+  /** The house to light up: the focused one, or the focused planet's */
+  house?: number
+  /** Table rows: the focused planet, or every planet in the focused house */
+  row: (p: ChartPoint) => boolean
+  /** Wheel glyphs: also the planets the focused planet aspects */
+  planet: (p: ChartPoint) => boolean
+  aspect: (a: Aspect) => boolean
+  /** For 行运 / 推运 lines, judged by their natal end */
+  natalSide: (a: Aspect) => boolean
+}
+
+function highlight(chart: StarChart, focus: Focus): Highlight {
+  if (!focus)
+    return { active: false, row: () => false, planet: () => false, aspect: () => false, natalSide: () => false }
+  if (focus.planet) {
+    const key = focus.planet
+    const partners = new Set(
+      chart.aspects.flatMap((a) => (a.a.key === key ? [a.b.key] : a.b.key === key ? [a.a.key] : [])),
+    )
+    return {
+      active: true,
+      house: chart.points.find((p) => p.key === key)?.house,
+      row: (p) => p.key === key,
+      planet: (p) => p.key === key || partners.has(p.key),
+      aspect: (a) => a.a.key === key || a.b.key === key,
+      natalSide: (a) => a.b.key === key,
+    }
+  }
+  const h = focus.house
+  return {
+    active: true,
+    house: h,
+    row: (p) => p.house === h,
+    planet: (p) => p.house === h,
+    aspect: (a) => a.a.house === h || a.b.house === h,
+    natalSide: (a) => a.b.house === h,
+  }
 }

@@ -691,8 +691,15 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .fortune-row.decades { grid-template-columns: repeat(12, minmax(60px, 1fr)); }
 .fortunes-head .seg { flex-shrink: 0; }
 .fortune strong { font-size: 15px; }
-.zc-hint { margin: 4px 0 0; font-size: 12px; }
-.zc-sanfang { display: grid; gap: 3px; margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 13px; animation: tip-in 0.15s ease-out; }
+/* Fixed height so hovering a palace never resizes the centre (and the board under the pointer). */
+.zc-sf-area {
+  height: 128px; flex: none; overflow: hidden; margin-top: 2px; padding-top: 8px;
+  border-top: 1px dashed var(--border); display: flex; flex-direction: column;
+}
+.zc-hint { margin: auto 0; font-size: 12px; text-align: center; animation: sf-fade 0.25s ease-out; }
+.zc-sanfang { display: grid; gap: 3px; font-size: 13px; animation: sf-fade 0.25s ease-out; }
+@keyframes sf-fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .zc-hint, .zc-sanfang { animation: none; } }
 .zc-sanfang > strong { font-size: 13px; color: var(--accent); }
 .zc-sf-row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .zc-sf-row .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -762,7 +769,7 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .zc-title span { font-size: 12px; }
   .ziwei-center .kv { font-size: 11px; gap: 2px 6px; }
   .zc-extra { display: none; }
-  .zc-hint, .zc-sanfang { display: none; }
+  .zc-sf-area { display: none; }
 }
 @container zw (max-width: 340px) {
   .stars-major .star-name { font-size: 12.5px; }
@@ -841,3 +848,21 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .overlay-card.is-transit .section-title { color: var(--ly-yearly); }
 .overlay-card.is-progressed .section-title { color: var(--ly-decadal); }
 .overlay-subtitle { margin: 0 0 6px; font-size: 14px; }
+/* 星盘 highlight: a house (sector, its planets, rows) or a planet (its aspects and partners) */
+.star-wheel .house-sector { fill: transparent; cursor: pointer; outline: none; transition: fill 0.2s; }
+.star-wheel .house-sector.on { fill: color-mix(in srgb, var(--accent) 11%, transparent); }
+.star-wheel .house-num.on { fill: var(--accent); font-weight: 700; }
+.star-wheel .planet { outline: none; cursor: pointer; transition: opacity 0.2s; }
+.star-wheel .aspect-line { transition: opacity 0.2s, stroke-width 0.2s; }
+.star-wheel.has-focus .planet:not(.on) { opacity: 0.25; }
+.star-wheel.has-focus .aspect-line:not(.on) { opacity: 0.08; }
+.star-wheel.has-focus .aspect-line.on { stroke-width: 1.8; }
+.star-table tbody tr { outline: none; cursor: default; transition: background-color 0.2s; }
+.star-table tbody tr.on td { background: var(--accent-soft); }
+.house-cell { outline: none; transition: border-color 0.2s, background-color 0.2s; }
+.house-cell.on { border-color: var(--accent); background: var(--accent-soft); }
+.aspect-chip { transition: opacity 0.2s; }
+.aspect-list.has-focus .aspect-chip:not(.on) { opacity: 0.3; }
+@media (prefers-reduced-motion: reduce) {
+  .star-wheel .house-sector, .star-wheel .planet, .star-wheel .aspect-line, .star-table tbody tr, .house-cell, .aspect-chip { transition: none; }
+}
