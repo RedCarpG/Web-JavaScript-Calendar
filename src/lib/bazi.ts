@@ -103,7 +103,7 @@ const childLimitProviders = {
   china95: new China95ChildLimitProvider(),
 }
 
-function glyph(x: { getName(): string; getElement(): { getName(): string } }, tenStar?: string): Glyph {
+export function glyph(x: { getName(): string; getElement(): { getName(): string } }, tenStar?: string): Glyph {
   return { char: x.getName(), element: x.getElement().getName() as ElementName, tenStar }
 }
 

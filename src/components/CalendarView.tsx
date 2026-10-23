@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
 import { SolarDay } from 'tyme4ts'
+import { Char } from './Char'
 import { WEEK_TITLES, buildDayDetail, buildMonthGrid, sameDay, todaySolar } from '../lib/calendar'
+
+// tyme4ts handles far wider ranges; this keeps the dropdown a manageable length.
+const MIN_YEAR = 1900
+const MAX_YEAR = 2100
+const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i)
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
 interface Props {
   onPickBazi: (day: SolarDay) => void
@@ -16,7 +23,8 @@ export function CalendarView({ onPickBazi }: Props) {
   const shiftMonth = (delta: number) =>
     setView(({ year, month }) => {
       const m = year * 12 + (month - 1) + delta
-      return { year: Math.floor(m / 12), month: (m % 12) + 1 }
+      const next = { year: Math.floor(m / 12), month: (m % 12) + 1 }
+      return next.year < MIN_YEAR || next.year > MAX_YEAR ? { year, month } : next
     })
 
   const select = (day: SolarDay) => {
@@ -31,8 +39,29 @@ export function CalendarView({ onPickBazi }: Props) {
       <section className="card calendar">
         <header className="cal-head">
           <div className="cal-title">
-            <h2>
-              {view.year}年{view.month}月
+            <h2 className="cal-pickers">
+              <select
+                aria-label="年份"
+                value={view.year}
+                onChange={(e) => setView((v) => ({ ...v, year: Number(e.target.value) }))}
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}年
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="月份"
+                value={view.month}
+                onChange={(e) => setView((v) => ({ ...v, month: Number(e.target.value) }))}
+              >
+                {MONTHS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}月
+                  </option>
+                ))}
+              </select>
             </h2>
             <span className="muted">
               {lunarYear.getName()}年 · {lunarYear.getEarthBranch().getZodiac().getName()}年
@@ -91,7 +120,15 @@ export function CalendarView({ onPickBazi }: Props) {
           农历{detail.lunarText}
           <span className="muted"> · 属{detail.zodiac}</span>
         </div>
-        <div className="ganzhi">{detail.ganzhi}</div>
+        <div className="day-pillars" aria-label={detail.ganzhi}>
+          {detail.pillars.map((p) => (
+            <div key={p.label} className="day-pillar">
+              <span className="muted">{p.label}</span>
+              <Char g={p.stem} />
+              <Char g={p.branch} />
+            </div>
+          ))}
+        </div>
         {detail.festivals.length > 0 && (
           <div className="tags">
             {detail.festivals.map((f) => (

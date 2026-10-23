@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { ELEMENTS, buildBazi, fortuneRelations, type BaziInput, type Glyph } from '../lib/bazi'
+import { ELEMENTS, buildBazi, fortuneRelations, type BaziInput } from '../lib/bazi'
 import type { Relation } from '../lib/relations'
 import type { SchoolSettings } from '../lib/schools'
 import { CITIES } from '../lib/solarTime'
+import { Char } from './Char'
 import { SchoolMark, SchoolSettingsPanel } from './Schools'
 
 interface Props {
@@ -327,13 +328,5 @@ function Relations({
         </div>
       )}
     </div>
-  )
-}
-
-function Char({ g, small }: { g: Glyph; small?: boolean }) {
-  return (
-    <span className={`char el-${g.element}${small ? ' small' : ''}`} title={g.element}>
-      {g.char}
-    </span>
   )
 }

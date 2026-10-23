@@ -80,6 +80,12 @@ footer { text-align: center; font-size: 13px; margin-top: 24px; }
 
 .cal-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .cal-title h2 { margin: 0; font-size: 22px; }
+.cal-pickers { display: flex; gap: 4px; }
+.cal-pickers select {
+  font: inherit; font-weight: 700; border: 1px solid transparent; border-radius: 8px; background: transparent;
+  padding: 0 4px; cursor: pointer;
+}
+.cal-pickers select:hover, .cal-pickers select:focus-visible { border-color: var(--border); background: var(--surface-2); }
 .cal-nav { display: flex; gap: 4px; }
 .cal-nav button {
   border: 1px solid var(--border); background: var(--surface); border-radius: 8px;
@@ -116,7 +122,13 @@ footer { text-align: center; font-size: 13px; margin-top: 24px; }
 .detail-hero { display: flex; align-items: center; gap: 12px; }
 .detail-hero .big { font-size: 48px; font-weight: 700; color: var(--accent); line-height: 1; }
 .lunar-line { font-size: 18px; font-weight: 600; }
-.ganzhi { letter-spacing: 1px; }
+.day-pillars { display: flex; gap: 8px; }
+.day-pillar {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0 8px;
+  border-radius: 10px; background: var(--surface-2);
+}
+.day-pillar .muted { font-size: 12px; }
+.day-pillar .char { font-size: 30px; font-weight: 800; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
 
