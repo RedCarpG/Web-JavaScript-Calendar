@@ -512,3 +512,53 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .hl-target.hl-on, .rel.hl-on { animation: none; }
 }
 .rel.hl-target { border-radius: 999px; }
+
+/* ---------- 紫微斗数命盘 ---------- */
+.ziwei-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.ziwei-board {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(150px, auto));
+  min-width: 640px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--border); gap: 1px;
+}
+.palace {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  padding: 8px; background: var(--surface); min-width: 0;
+}
+.palace.soul { background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.palace-stars { display: flex; flex-direction: column; gap: 4px; }
+.stars-major, .stars-minor { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+.stars-major .star-name { font-size: 15px; font-weight: 700; color: var(--accent); }
+.stars-minor .star-name { font-size: 13px; font-weight: 600; }
+.star-item { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
+.star-bright { font-size: 10px; color: var(--muted); }
+.stars-adj { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.mutagen {
+  display: inline-block; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 3px; border-radius: 4px; color: #fff;
+}
+.m-禄 { background: var(--good); }
+.m-权 { background: #8a4fbf; }
+.m-科 { background: var(--water); }
+.m-忌 { background: var(--bad); }
+.palace-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; font-size: 12px; }
+.palace-decadal { color: var(--muted); }
+.palace-name { font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 4px; }
+.palace.soul .palace-name { color: var(--accent); }
+.body-tag { font-size: 10px; padding: 1px 4px; border-radius: 4px; background: var(--earth); color: #fff; }
+.palace-gz { color: var(--muted); }
+.palace-cs { position: absolute; top: 8px; right: 8px; font-size: 10px; color: var(--muted); }
+.ziwei-center {
+  grid-row: 2 / span 2; grid-column: 2 / span 2; background: var(--surface); padding: 16px 20px;
+  display: flex; flex-direction: column; justify-content: center; gap: 10px;
+}
+.zc-title { display: flex; align-items: baseline; gap: 10px; font-size: 18px; }
+.zc-title span { font-size: 15px; color: var(--accent); font-weight: 600; }
+.ziwei-center .kv { font-size: 13px; }
+.zc-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.ziwei-credit { margin: 10px 0 0; }
+/* Let the saved-chart row shrink on narrow phones (grid tracks default to min-content). */
+.saved-charts { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 360px) {
+  .topbar h1 { font-size: 18px; letter-spacing: 0; }
+  .topbar-right { gap: 4px; }
+  .tabs button { padding: 6px 8px; font-size: 13px; }
+  .icon-btn { width: 32px; height: 32px; }
+}

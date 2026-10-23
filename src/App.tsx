@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
 import { SettingsMenu } from './components/SettingsMenu'
@@ -9,7 +9,10 @@ import { applyTheme, loadSettings, saveSettings, type Settings } from './lib/set
 import { toTrad } from './lib/trad'
 import { SettingsContext } from './settingsContext'
 
-type Tab = 'calendar' | 'bazi'
+type Tab = 'calendar' | 'bazi' | 'ziwei'
+
+// 紫微斗数 pulls in iztro (~150 KB gzip); load it only when the tab is opened.
+const ZiweiView = lazy(() => import('./components/ZiweiView').then((m) => ({ default: m.ZiweiView })))
 
 export function App() {
   const [tab, setTab] = useState<Tab>('calendar')
@@ -57,6 +60,9 @@ export function App() {
               <button className={tab === 'bazi' ? 'on' : undefined} onClick={() => setTab('bazi')}>
                 {term('八字排盘')}
               </button>
+              <button className={tab === 'ziwei' ? 'on' : undefined} onClick={() => setTab('ziwei')}>
+                {term('紫微斗数')}
+              </button>
             </nav>
             <SettingsMenu settings={settings} onChange={changeSettings} />
           </div>
@@ -69,8 +75,12 @@ export function App() {
                 setTab('bazi')
               }}
             />
-          ) : (
+          ) : tab === 'bazi' ? (
             <BaziView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
+          ) : (
+            <Suspense fallback={<div className="card muted">正在加载紫微斗数…</div>}>
+              <ZiweiView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
+            </Suspense>
           )}
         </main>
         <footer className="muted">

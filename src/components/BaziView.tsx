@@ -12,10 +12,9 @@ import {
 } from '../lib/bazi'
 import type { Relation } from '../lib/relations'
 import type { SchoolSettings } from '../lib/schools'
-import { CITIES } from '../lib/solarTime'
 import { Char } from './Char'
-import { SavedCharts } from './SavedCharts'
-import { SchoolMark, SchoolSettingsPanel } from './Schools'
+import { BirthForm } from './BirthForm'
+import { SchoolMark } from './Schools'
 import { HighlightScope, useHighlight, useTrigger } from './highlight'
 import { ConceptTip } from './GlossaryTips'
 import { PillarTable } from './PillarTable'
@@ -28,11 +27,8 @@ interface Props {
   onSchoolsChange: (schools: SchoolSettings) => void
 }
 
-const pad = (n: number) => String(n).padStart(2, '0')
-
 export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   const chart = useMemo(() => buildBazi(input, schools), [input, schools])
-  const [showSchools, setShowSchools] = useState(false)
   const term = useTerm()
   const thisYear = new Date().getFullYear()
   const currentDecade = Math.max(
@@ -87,11 +83,8 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
     const next = !Object.values(open).every(Boolean)
     setOpen({ decade: next, year: next, month: next, day: next })
   }
-  const city = CITIES.find((c) => c.longitude === input.longitude)
   const total = ELEMENTS.reduce((s, e) => s + chart.elementCount[e], 0)
 
-  const dateValue = `${input.year}-${pad(input.month)}-${pad(input.day)}`
-  const timeValue = `${pad(input.hour)}:${pad(input.minute)}`
   const update = (patch: Partial<BaziInput>) => {
     setPicked(null)
     setPickedYear(null)
@@ -102,95 +95,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
 
   return (
     <div className="bazi-layout">
-      <section className="card bazi-form">
-        <label>
-          出生日期
-          <input
-            type="date"
-            min="1900-01-01"
-            max="2100-12-31"
-            value={dateValue}
-            onChange={(e) => {
-              const [y, m, d] = e.target.value.split('-').map(Number)
-              if (y >= 1900 && y <= 2100) update({ year: y, month: m, day: d })
-            }}
-          />
-        </label>
-        <label>
-          出生时间
-          <input
-            type="time"
-            value={timeValue}
-            onChange={(e) => {
-              const [h, mi] = e.target.value.split(':').map(Number)
-              if (!Number.isNaN(h)) update({ hour: h, minute: mi })
-            }}
-          />
-        </label>
-        <div className="seg" role="group" aria-label="性别">
-          {(['男', '女'] as const).map((g, i) => (
-            <button
-              key={g}
-              className={input.gender === 1 - i ? 'on' : undefined}
-              onClick={() => update({ gender: (1 - i) as 0 | 1 })}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-        <label className="check">
-          <input
-            type="checkbox"
-            checked={input.longitude != null}
-            onChange={(e) => update({ longitude: e.target.checked ? CITIES[0].longitude : undefined })}
-          />
-          真太阳时
-        </label>
-        {input.longitude != null && (
-          <>
-            <label>
-              出生地
-              <select
-                value={city?.name ?? ''}
-                onChange={(e) => {
-                  const c = CITIES.find((x) => x.name === e.target.value)
-                  if (c) update({ longitude: c.longitude })
-                }}
-              >
-                {!city && <option value="">自定义</option>}
-                {CITIES.map((c) => (
-                  <option key={c.name} value={c.name}>{c.name}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              东经
-              <input
-                type="number"
-                className="narrow"
-                min={73}
-                max={135}
-                step={0.01}
-                value={input.longitude}
-                onChange={(e) => {
-                  const v = Number(e.target.value)
-                  if (e.target.value !== '' && v >= -180 && v <= 180) update({ longitude: v })
-                }}
-              />
-            </label>
-          </>
-        )}
-        <button
-          type="button"
-          className={`ghost${showSchools ? ' on' : ''}`}
-          aria-expanded={showSchools}
-          onClick={() => setShowSchools((v) => !v)}
-        >
-          流派设置
-        </button>
-        {showSchools && <SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
-        <SavedCharts input={input} onLoad={(next) => update(next)} />
-      </section>
+      <BirthForm input={input} onChange={update} schools={schools} onSchoolsChange={onSchoolsChange} />
 
       <section className="card">
         <div className="chart-meta">

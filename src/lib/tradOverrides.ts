@@ -10,6 +10,8 @@ export const TRAD_OVERRIDES: Record<string, string> = {
   干: '干',
   // 上梁、作梁指房梁: 统一作「樑」
   梁: '樑',
+  // 斗宿、紫微斗数的「斗」是北斗之斗, 不作「鬥」(OpenCC 会把单字「斗」转成鬥)
+  斗: '斗',
   // 「后」按词处理, 见 TRAD_TERMS
   后: '后',
 }
