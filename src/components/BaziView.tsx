@@ -4,9 +4,10 @@ import type { Relation } from '../lib/relations'
 import type { SchoolSettings } from '../lib/schools'
 import { CITIES } from '../lib/solarTime'
 import { Char } from './Char'
+import { SavedCharts } from './SavedCharts'
 import { SchoolMark, SchoolSettingsPanel } from './Schools'
 import { ShenShaTip } from './ShenShaTip'
-import { useT } from '../settingsContext'
+import { useTerm } from '../settingsContext'
 
 interface Props {
   input: BaziInput
@@ -20,7 +21,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   const chart = useMemo(() => buildBazi(input, schools), [input, schools])
   const [showSchools, setShowSchools] = useState(false)
-  const t = useT()
+  const term = useTerm()
   const thisYear = new Date().getFullYear()
   const currentDecade = Math.max(
     0,
@@ -133,12 +134,13 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           流派设置
         </button>
         {showSchools && <SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
+        <SavedCharts input={input} onLoad={(next) => update(next)} />
       </section>
 
       <section className="card">
         <div className="chart-meta">
           <div>
-            <strong>{chart.gender === '男' ? t('乾造') : t('坤造')}</strong> · 属{t(chart.zodiac)}
+            <strong>{chart.gender === '男' ? term('乾造') : term('坤造')}</strong> · 属{term(chart.zodiac)}
           </div>
           <div className="muted">阳历 {chart.solarText}</div>
           {chart.trueSolar && (
@@ -148,7 +150,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
             </div>
           )}
           <div className="muted">
-            {t('农历')} {t(chart.lunarText)}
+            {term('农历')} {term(chart.lunarText)}
           </div>
         </div>
 
@@ -158,7 +160,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
               <th />
               {chart.pillars.map((p) => (
                 <th key={p.label}>
-                  {t(p.label)}
+                  {term(p.label)}
                   {chart.lateZiHour && (p.label === '日柱' || p.label === '时柱') && (
                     <SchoolMark school="ziHour" settings={schools} />
                   )}
@@ -168,31 +170,31 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           </thead>
           <tbody>
             <tr className="row-star">
-              <th>{t('主星')}</th>
+              <th>{term('主星')}</th>
               {chart.pillars.map((p) => (
-                <td key={p.label}>{t(p.stem.tenStar ?? '')}</td>
+                <td key={p.label}>{term(p.stem.tenStar ?? '')}</td>
               ))}
             </tr>
             <tr className="row-char">
-              <th>{t('天干')}</th>
+              <th>{term('天干')}</th>
               {chart.pillars.map((p) => (
                 <td key={p.label}><Char g={p.stem} /></td>
               ))}
             </tr>
             <tr className="row-char">
-              <th>{t('地支')}</th>
+              <th>{term('地支')}</th>
               {chart.pillars.map((p) => (
                 <td key={p.label}><Char g={p.branch} /></td>
               ))}
             </tr>
             <tr>
-              <th>{t('藏干')}</th>
+              <th>{term('藏干')}</th>
               {chart.pillars.map((p) => (
                 <td key={p.label} className="hidden-stems">
                   {p.hidden.map((h) => (
                     <div key={h.char}>
                       <span className={`el-${h.element}`}>{h.char}</span>
-                      <small>{t(h.tenStar ?? '')}</small>
+                      <small>{term(h.tenStar ?? '')}</small>
                     </div>
                   ))}
                 </td>
@@ -200,21 +202,21 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
             </tr>
             {(
               [
-                [t('纳音'), 'sound'],
-                [t('星运'), 'terrain'],
-                [t('自坐'), 'selfTerrain'],
-                [t('空亡'), 'empty'],
+                [term('纳音'), 'sound'],
+                [term('星运'), 'terrain'],
+                [term('自坐'), 'selfTerrain'],
+                [term('空亡'), 'empty'],
               ] as const
             ).map(([title, key]) => (
               <tr key={key}>
                 <th>{title}</th>
                 {chart.pillars.map((p) => (
-                  <td key={p.label}>{t(p[key])}</td>
+                  <td key={p.label}>{term(p[key])}</td>
                 ))}
               </tr>
             ))}
             <tr className="row-shensha">
-              <th>{t('神煞')}</th>
+              <th>{term('神煞')}</th>
               {chart.pillars.map((p) => (
                 <td key={p.label}>
                   {p.shenSha.map((s) => (
@@ -241,22 +243,22 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           ))}
         </div>
 
-        <Relations title={t('原局刑冲合会')} items={chart.relations} schools={schools} />
+        <Relations title={term('原局刑冲合会')} items={chart.relations} schools={schools} />
 
         <dl className="kv inline">
-          <dt>{t('胎元')}</dt>
+          <dt>{term('胎元')}</dt>
           <dd>{chart.fetalOrigin}</dd>
-          <dt>{t('胎息')}</dt>
+          <dt>{term('胎息')}</dt>
           <dd>{chart.fetalBreath}</dd>
-          <dt>{t('命宫')}</dt>
+          <dt>{term('命宫')}</dt>
           <dd>{chart.ownSign}</dd>
-          <dt>{t('身宫')}</dt>
+          <dt>{term('身宫')}</dt>
           <dd>{chart.bodySign}</dd>
         </dl>
       </section>
 
       <section className="card fortunes">
-        <h3>{t('大运')}</h3>
+        <h3>{term('大运')}</h3>
         <p className="muted">
           {chart.startText}
           <SchoolMark school="childLimit" settings={schools} />
@@ -272,13 +274,13 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
               <small className="muted">{d.startYear}</small>
               <Char g={d.stem} small />
               <Char g={d.branch} small />
-              <small>{t(d.stem.tenStar ?? '')}</small>
+              <small>{term(d.stem.tenStar ?? '')}</small>
             </button>
           ))}
         </div>
         <h3>
-          {t('流年')} · {decade.ganzhi}
-          {t('运')}
+          {term('流年')} · {decade.ganzhi}
+          {term('运')}
         </h3>
         <div className="fortune-row">
           {decade.years.map((y) => (
@@ -293,15 +295,15 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
               <small className="muted">{y.age}岁</small>
               <Char g={y.stem} small />
               <Char g={y.branch} small />
-              <small>{t(y.stem.tenStar ?? '')}</small>
-              <small className="muted" title={t('小运')}>
+              <small>{term(y.stem.tenStar ?? '')}</small>
+              <small className="muted" title={term('小运')}>
                 {y.smallFortune}
               </small>
             </button>
           ))}
         </div>
         <Relations
-          title={`${t('岁运')}作用 · ${decade.ganzhi}${t('运')} ${fortuneYear.year}${fortuneYear.ganzhi}年`}
+          title={`${term('岁运')}作用 · ${decade.ganzhi}${term('运')} ${fortuneYear.year}${fortuneYear.ganzhi}年`}
           items={fortuneRels}
           schools={schools}
           empty="与原局无明显刑冲合会"
@@ -322,7 +324,7 @@ function Relations({
   schools: SchoolSettings
   empty?: string
 }) {
-  const t = useT()
+  const term = useTerm()
   return (
     <div className="relations">
       <h4>{title}</h4>
@@ -332,7 +334,7 @@ function Relations({
         <div className="tags">
           {items.map((r) => (
             <span key={r.text + r.members.join('')} className={`rel rel-${r.kind}`}>
-              <b>{t(r.members.join(''))}</b> {t(r.text)}
+              <b>{term(r.members.join(''))}</b> {term(r.text)}
               {r.school && <SchoolMark school={r.school} settings={schools} />}
             </span>
           ))}

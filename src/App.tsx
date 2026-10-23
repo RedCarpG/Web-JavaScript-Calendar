@@ -3,6 +3,7 @@ import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
 import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
+import { loadLastInput, saveLastInput } from './lib/savedCharts'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
 import { applyTheme, loadSettings, saveSettings, type Settings } from './lib/settings'
 import { toTrad } from './lib/trad'
@@ -13,6 +14,8 @@ type Tab = 'calendar' | 'bazi'
 export function App() {
   const [tab, setTab] = useState<Tab>('calendar')
   const [baziInput, setBaziInput] = useState<BaziInput>(() => {
+    const last = loadLastInput()
+    if (last) return last
     const now = new Date()
     return {
       year: now.getFullYear(),
@@ -23,6 +26,8 @@ export function App() {
       gender: 1,
     }
   })
+  // Remember the latest birth data so the chart is back after a reload.
+  useEffect(() => saveLastInput(baziInput), [baziInput])
   const [schools, setSchools] = useState<SchoolSettings>(loadSchools)
   const changeSchools = (next: SchoolSettings) => {
     setSchools(next)
@@ -34,23 +39,23 @@ export function App() {
     saveSettings(next)
   }
   useEffect(() => applyTheme(settings.theme), [settings.theme])
-  const t = settings.script === 'trad' ? toTrad : (s: string) => s
+  const term = settings.script === 'trad' ? toTrad : (s: string) => s
 
   return (
     <SettingsContext.Provider value={settings}>
       <div className="app">
         <header className="topbar">
           <h1>
-            {t('时契')}
+            {term('时契')}
             <span className="brand-en">ChroniQ</span>
           </h1>
           <div className="topbar-right">
             <nav className="tabs">
               <button className={tab === 'calendar' ? 'on' : undefined} onClick={() => setTab('calendar')}>
-                {t('日历')}
+                {term('日历')}
               </button>
               <button className={tab === 'bazi' ? 'on' : undefined} onClick={() => setTab('bazi')}>
-                {t('八字排盘')}
+                {term('八字排盘')}
               </button>
             </nav>
             <SettingsMenu settings={settings} onChange={changeSettings} />

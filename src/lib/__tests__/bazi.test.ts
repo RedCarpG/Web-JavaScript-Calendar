@@ -182,3 +182,17 @@ describe('神煞说明', () => {
     expect(seen.size).toBe(Object.keys(SHENSHA_INFO).length)
   })
 })
+
+describe('saved charts', () => {
+  it('validates stored input and upserts by name', async () => {
+    const { toBaziInput, upsertChart } = await import('../savedCharts')
+    expect(toBaziInput({ ...base, longitude: 87.62 })).toEqual({ ...base, longitude: 87.62 })
+    expect(toBaziInput({ ...base, month: 13 })).toBeNull()
+    expect(toBaziInput({ ...base, gender: 2 })).toBeNull()
+    expect(toBaziInput('junk')).toBeNull()
+    let charts = upsertChart([], '张三', base)
+    charts = upsertChart(charts, '李四', { ...base, gender: 0 })
+    charts = upsertChart(charts, '张三', { ...base, hour: 8 })
+    expect(charts.map((c) => [c.name, c.input.hour, c.input.gender])).toEqual([['张三', 8, 1], ['李四', 10, 0]])
+  })
+})
