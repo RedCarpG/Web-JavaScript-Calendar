@@ -196,6 +196,7 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
                   {term(chart.zodiac)} · {chart.sign}
                 </dd>
               </dl>
+              <SanFangSummary chart={chart} active={active} />
             </div>
           </div>
         </div>
@@ -554,5 +555,37 @@ function StarItem({ star: s, layers }: { star: ZiweiStar; layers: ZiweiLayer[] }
           ),
       )}
     </span>
+  )
+}
+
+/** Centre-panel summary of the selected palace's 三方四正, or a hint when none is selected. */
+function SanFangSummary({ chart, active }: { chart: ReturnType<typeof buildZiwei>; active: string | null }) {
+  const term = useTerm()
+  if (!active) return <p className="zc-hint muted">悬停或点按宫位，这里会列出它的{term('三方四正')}</p>
+  const { opposite, trines } = sanFangSiZheng(active)
+  const rows: [Role, string][] = [
+    ['self', active],
+    ['opposite', opposite],
+    ['trine', trines[0]],
+    ['trine', trines[1]],
+  ]
+  return (
+    <div className="zc-sanfang">
+      <strong>{term('三方四正')}</strong>
+      {rows.map(([role, b]) => {
+        const p = chart.palaces[b]
+        return (
+          <div key={b} className={`zc-sf-row sf-${role}`}>
+            <span className="zc-sf-role">{ROLE_LABEL[role]}</span>
+            <b>{term(p.name)}</b>
+            <span className="muted">
+              {p.major.length
+                ? p.major.map((s) => term(s.name)).join(' ')
+                : `空宫，借对宫 ${chart.palaces[sanFangSiZheng(b).opposite].major.map((s) => term(s.name)).join(' ')}`}
+            </span>
+          </div>
+        )
+      })}
+    </div>
   )
 }

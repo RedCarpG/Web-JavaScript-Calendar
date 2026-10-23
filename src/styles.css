@@ -562,6 +562,17 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 /* ---------- 岁运盘 ---------- */
 .section-title + .row-note { margin-top: 4px; }
 .table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.table-scroll.fortune-only .pillars { min-width: 0; }
+/* 八字 page: sticky jump links to 原局 / 岁运 / 岁运盘 */
+.section-nav {
+  position: sticky; top: 8px; z-index: 6; justify-self: center; display: flex; gap: 4px; padding: 4px;
+  border-radius: 999px; border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow);
+}
+.section-nav button { border: 0; background: none; padding: 4px 14px; border-radius: 999px; font-size: 13px; color: var(--muted); }
+.section-nav button:hover { color: var(--accent); background: var(--surface-2); }
+#bazi-natal, #bazi-fortune, #bazi-combined { scroll-margin-top: 56px; }
+.ghost.toggle.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 /* Horizontal scrollers fade out on the side that has more (useScrollHints sets the classes). */
 .fortune-row { position: relative; }
 .can-right { mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
@@ -673,6 +684,13 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .fortune-row.decades { grid-template-columns: repeat(12, minmax(60px, 1fr)); }
 .fortunes-head .seg { flex-shrink: 0; }
 .fortune strong { font-size: 15px; }
+.zc-hint { margin: 4px 0 0; font-size: 12px; }
+.zc-sanfang { display: grid; gap: 3px; margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 13px; animation: tip-in 0.15s ease-out; }
+.zc-sanfang > strong { font-size: 13px; color: var(--accent); }
+.zc-sf-row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.zc-sf-row .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zc-sf-role { flex: none; font-size: 10px; line-height: 1; padding: 2px 5px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.zc-sf-row.sf-self .zc-sf-role { background: var(--accent); color: #fff; }
 .zw-legends { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
 .ziwei-credit { margin: 10px 0 0; }
 /* 三方四正: the hovered palace, its 对宫 and 三合 stay lit; lines join them across the centre */
@@ -737,6 +755,7 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .zc-title span { font-size: 12px; }
   .ziwei-center .kv { font-size: 11px; gap: 2px 6px; }
   .zc-extra { display: none; }
+  .zc-hint, .zc-sanfang { display: none; }
 }
 @container zw (max-width: 340px) {
   .stars-major .star-name { font-size: 12.5px; }

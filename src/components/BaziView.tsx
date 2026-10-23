@@ -79,8 +79,10 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   const combined = fortunePillars(chart, columns, schools)
   const fortuneRels = fortuneRelations(chart, columns, schools)
 
+  // 岁运盘: phones show only the four 岁运 columns unless 合参原局 is switched on.
+  const [withNatal, setWithNatal] = useState(() => window.matchMedia('(min-width: 640px)').matches)
   const tableRef = useRef<HTMLDivElement>(null)
-  useScrollHints(tableRef, `${decadeIndex}|${fortuneYear.year}|${month.index}|${day.key}`)
+  useScrollHints(tableRef, `${decadeIndex}|${fortuneYear.year}|${month.index}|${day.key}|${withNatal}`)
 
   const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true })
   const toggle = (key: keyof typeof open) => setOpen((o) => ({ ...o, [key]: !o[key] }))
@@ -106,7 +108,15 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         schoolsPanel={<SchoolSettingsPanel settings={schools} onChange={onSchoolsChange} />}
       />
 
-      <section className="card">
+      <SectionNav
+        items={[
+          ['bazi-natal', term('原局')],
+          ['bazi-fortune', term('岁运')],
+          ['bazi-combined', term('岁运盘')],
+        ]}
+      />
+
+      <section className="card" id="bazi-natal">
         <div className="chart-meta">
           <div>
             <strong>{chart.gender === '男' ? term('乾造') : term('坤造')}</strong> · 属{term(chart.zodiac)}
@@ -169,7 +179,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         </dl>
       </section>
 
-      <section className="card fortunes">
+      <section className="card fortunes" id="bazi-fortune">
         <div className="fortunes-head">
           <h3>{term('岁运')}</h3>
           <button type="button" className="ghost" onClick={toggleAll}>
@@ -277,19 +287,29 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
         </FortuneRow>
       </section>
 
-      <section className="card">
-        <h3 className="section-title">{term('岁运盘')}</h3>
+      <section className="card" id="bazi-combined">
+        <div className="fortunes-head">
+          <h3 className="section-title">{term('岁运盘')}</h3>
+          <button
+            type="button"
+            className={`ghost toggle${withNatal ? ' on' : ''}`}
+            aria-pressed={withNatal}
+            onClick={() => setWithNatal((v) => !v)}
+          >
+            合参{term('原局')}
+          </button>
+        </div>
         <p className="muted row-note">
           {day.month}月{day.day}日 · {month.ganzhi}月 · {fortuneYear.year}
           {fortuneYear.ganzhi}年 · {decade.ganzhi}
           {term('运')}，合参命主原局
         </p>
         <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
-          <div className="table-scroll" ref={tableRef}>
+          <div className={`table-scroll${withNatal ? '' : ' fortune-only'}`} ref={tableRef}>
             <PillarTable
-              pillars={[...combined, ...chart.pillars]}
+              pillars={withNatal ? [...combined, ...chart.pillars] : combined}
               schools={schools}
-              dividerAt={combined.length}
+              dividerAt={withNatal ? combined.length : undefined}
               dayMaster={chart.dayMaster.char}
             />
           </div>
@@ -337,5 +357,22 @@ function RelationChip({ relation: r, index, schools }: { relation: Relation; ind
       <b>{term(r.members.join('·'))}</b> {term(r.text)}
       {r.school && <SchoolMark school={r.school} settings={schools} />}
     </span>
+  )
+}
+
+/** Sticky row of jump links to the page's sections. */
+function SectionNav({ items }: { items: [id: string, label: string][] }) {
+  return (
+    <nav className="section-nav" aria-label="页面导航">
+      {items.map(([id, label]) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        >
+          {label}
+        </button>
+      ))}
+    </nav>
   )
 }
