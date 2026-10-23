@@ -28,7 +28,9 @@ export function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <h1>万年历</h1>
+        <h1>
+          时契<span className="brand-en">ChroniQ</span>
+        </h1>
         <nav className="tabs">
           <button className={tab === 'calendar' ? 'on' : undefined} onClick={() => setTab('calendar')}>
             日历
