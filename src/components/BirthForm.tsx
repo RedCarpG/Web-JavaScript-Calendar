@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { BaziInput } from '../lib/bazi'
 import { CITIES } from '../lib/solarTime'
-import { SavedCharts } from './SavedCharts'
 
 interface Props {
   input: BaziInput
@@ -12,7 +11,7 @@ interface Props {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-/** Birth date/time, gender, 真太阳时, 流派设置 and saved charts — shared by 八字 and 紫微. */
+/** Birth date/time, gender, 真太阳时 and 流派设置 — shared by 八字 and 紫微. */
 export function BirthForm({ input, onChange, schoolsPanel }: Props) {
   const [showSchools, setShowSchools] = useState(false)
   const city = CITIES.find((c) => c.longitude === input.longitude)
@@ -108,7 +107,6 @@ export function BirthForm({ input, onChange, schoolsPanel }: Props) {
         流派设置
       </button>
       {showSchools && schoolsPanel}
-      <SavedCharts input={input} onLoad={(next) => change(next)} />
     </section>
   )
 }

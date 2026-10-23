@@ -1,6 +1,8 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
+import { AboutBadges } from './components/AboutBadges'
+import { SavedChartsDrawer } from './components/SavedCharts'
 import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
@@ -36,6 +38,12 @@ export function App() {
   const changeSchools = (next: SchoolSettings) => {
     setSchools(next)
     saveSchools(next)
+  }
+  // Loading a saved chart remounts the 八字 / 紫微 view so its 运 picks start fresh.
+  const [loads, setLoads] = useState(0)
+  const loadChart = (next: BaziInput) => {
+    setBaziInput(next)
+    setLoads((n) => n + 1)
   }
   const [ziweiSchools, setZiweiSchools] = useState<ZiweiSchoolSettings>(loadZiweiSchools)
   const changeZiweiSchools = (next: ZiweiSchoolSettings) => {
@@ -83,10 +91,17 @@ export function App() {
               }}
             />
           ) : tab === 'bazi' ? (
-            <BaziView input={baziInput} onChange={setBaziInput} schools={schools} onSchoolsChange={changeSchools} />
+            <BaziView
+              key={loads}
+              input={baziInput}
+              onChange={setBaziInput}
+              schools={schools}
+              onSchoolsChange={changeSchools}
+            />
           ) : (
             <Suspense fallback={<div className="card muted">正在加载紫微斗数…</div>}>
               <ZiweiView
+                key={loads}
                 input={baziInput}
                 onChange={setBaziInput}
                 schools={ziweiSchools}
@@ -96,9 +111,14 @@ export function App() {
           )}
         </main>
         <footer className="muted">
-          历法数据由 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> 提供 · 仅供参考
+          <span>
+            历法数据由 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> 提供 · 仅供参考
+          </span>
+          <AboutBadges />
         </footer>
       </div>
+      {/* Outside .app: the drawer is fixed to the screen edge and takes the zoom itself */}
+      {tab !== 'calendar' && <SavedChartsDrawer input={baziInput} onLoad={loadChart} />}
     </SettingsContext.Provider>
   )
 }

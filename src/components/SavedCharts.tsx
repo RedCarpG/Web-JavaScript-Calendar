@@ -1,12 +1,21 @@
-import { useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { BaziInput } from '../lib/bazi'
 import { loadCharts, sameInput, saveCharts, upsertChart, type SavedChart } from '../lib/savedCharts'
+import { useDismiss } from './useDismiss'
 
-/** Row of saved charts: name + 保存, then chips to load or delete. */
-export function SavedCharts({ input, onLoad }: { input: BaziInput; onLoad: (input: BaziInput) => void }) {
+/**
+ * Saved charts in a drawer on the left edge of the screen. Closed, only a
+ * slim 命盘 tab shows; open, the panel slides over the page (nothing below
+ * moves). Loading a chart closes it again.
+ */
+export function SavedChartsDrawer({ input, onLoad }: { input: BaziInput; onLoad: (input: BaziInput) => void }) {
   const [charts, setCharts] = useState<SavedChart[]>(loadCharts)
   const active = charts.find((c) => sameInput(c.input, input))
   const [name, setName] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const close = useCallback(() => setOpen(false), [])
+  useDismiss(ref, open, close)
 
   const update = (next: SavedChart[]) => {
     setCharts(next)
@@ -19,45 +28,74 @@ export function SavedCharts({ input, onLoad }: { input: BaziInput; onLoad: (inpu
   }
 
   return (
-    <div className="saved-charts">
-      <form
-        className="saved-form"
-        onSubmit={(e) => {
-          e.preventDefault()
-          save()
-        }}
-      >
-        <input
-          aria-label="命盘名称"
-          placeholder={active ? `已保存为「${active.name}」` : '命盘名称（可选）'}
-          maxLength={20}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button type="submit" className="ghost">
-          {name.trim() && charts.some((c) => c.name === name.trim()) ? '更新' : '保存'}
-        </button>
-      </form>
-      {charts.length > 0 && (
-        <div className="chips" role="list" aria-label="已保存的命盘">
-          {charts.map((c) => (
-            <span key={c.id} role="listitem" className={`chip${c === active ? ' on' : ''}`}>
-              <button type="button" className="chip-main" onClick={() => onLoad(c.input)} title={describe(c.input)}>
-                {c.name}
-              </button>
-              <button
-                type="button"
-                className="chip-x"
-                aria-label={`删除${c.name}`}
-                onClick={() => update(charts.filter((x) => x !== c))}
-              >
-                ×
-              </button>
-            </span>
-          ))}
+    <div className={`drawer${open ? ' open' : ''}`} ref={ref}>
+      <aside id="saved-charts" className="drawer-panel" aria-label="已保存的命盘" inert={!open}>
+        <div className="drawer-head">
+          <h3>已保存的命盘</h3>
+          <button type="button" className="chip-x" aria-label="收起" onClick={close}>
+            ×
+          </button>
         </div>
-      )}
-      <small className="muted">命盘只保存在本机浏览器中，不会上传。</small>
+        <form
+          className="saved-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            save()
+          }}
+        >
+          <input
+            aria-label="命盘名称"
+            placeholder={active ? `已保存为「${active.name}」` : '为当前命盘命名（可选）'}
+            maxLength={20}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button type="submit" className="ghost">
+            {name.trim() && charts.some((c) => c.name === name.trim()) ? '更新' : '保存'}
+          </button>
+        </form>
+        {charts.length > 0 ? (
+          <ul className="saved-list">
+            {charts.map((c) => (
+              <li key={c.id} className={c === active ? 'on' : undefined}>
+                <button
+                  type="button"
+                  className="saved-item"
+                  onClick={() => {
+                    onLoad(c.input)
+                    close()
+                  }}
+                >
+                  <span className="saved-name">{c.name}</span>
+                  <small className="muted">{describe(c.input)}</small>
+                </button>
+                <button
+                  type="button"
+                  className="chip-x"
+                  aria-label={`删除${c.name}`}
+                  onClick={() => update(charts.filter((x) => x !== c))}
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted saved-empty">还没有保存的命盘。填好出生信息后，在上面命名并保存。</p>
+        )}
+        <small className="muted">命盘只保存在本机浏览器中，不会上传。</small>
+      </aside>
+      <button
+        type="button"
+        className="drawer-handle"
+        aria-expanded={open}
+        aria-controls="saved-charts"
+        title="已保存的命盘"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="drawer-handle-text">命盘</span>
+        {charts.length > 0 && <span className="drawer-count">{charts.length}</span>}
+      </button>
     </div>
   )
 }
