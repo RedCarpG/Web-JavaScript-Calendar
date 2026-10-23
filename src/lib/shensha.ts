@@ -94,9 +94,17 @@ const TIAN_SHE: Record<string, string> = {
  * Branch-referenced stars (驿马, 桃花 …) skip the reference pillar itself, so
  * e.g. a 子 year never marks itself 将星.
  */
-export function computeShenSha(pillars: PillarGanzhi[], schools: SchoolSettings = DEFAULT_SCHOOLS): ShenSha[][] {
+export function computeShenSha(
+  pillars: PillarGanzhi[],
+  schools: SchoolSettings = DEFAULT_SCHOOLS,
+  /** Extra pillars (大运, 流年 …) checked against the natal chart; results follow the natal ones. */
+  extras: PillarGanzhi[] = [],
+): ShenSha[][] {
   const [year, month, day] = pillars
-  const result = pillars.map(() => new Map<string, ShenSha>())
+  // Indices 0–3 are the natal pillars; 4+ are extras, which never match the
+  // 日柱/时柱-only rules or the reference-pillar skip.
+  const all = [...pillars, ...extras]
+  const result = all.map(() => new Map<string, ShenSha>())
   const tianYi = schools.tianYi === 'gengTigerHorse' ? TIAN_YI_GENG_TIGER_HORSE : TIAN_YI
   const stemRefs = schools.stemRef === 'dayOnly' ? [day.stem] : [day.stem, year.stem]
   const branchRefs = (
@@ -106,7 +114,7 @@ export function computeShenSha(pillars: PillarGanzhi[], schools: SchoolSettings 
     ] as const
   ).filter(([i]) => schools.branchRef === 'yearAndDay' || (schools.branchRef === 'yearOnly' ? i === 0 : i === 2))
 
-  pillars.forEach((p, i) => {
+  all.forEach((p, i) => {
     const add = (name: string, school?: SchoolKey) => {
       // Keep the most specific school note when two rules yield the same star.
       if (!result[i].get(name)?.school) result[i].set(name, { name, school })

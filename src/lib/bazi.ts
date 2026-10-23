@@ -13,6 +13,8 @@ import {
   LunarHour,
   LunarSect2EightCharProvider,
   SixtyCycle,
+  SixtyCycleYear,
+  SolarDay,
   SolarTime,
   type DecadeFortune,
 } from 'tyme4ts'
@@ -226,22 +228,106 @@ function relationMembers(pillars: Pillar[]): RelationMember[] {
   return pillars.map((p) => ({ label: p.label[0], stem: p.stem.char, branch: p.branch.char }))
 }
 
-/** 岁运与原局的刑冲合会: only relations involving the given 大运 / 流年. */
+export interface FlowMonth {
+  /** 0 = 寅月 (from 立春) … 11 = 丑月 */
+  index: number
+  ganzhi: string
+  stem: Glyph
+  branch: Glyph
+  /** First day (the 节), e.g. "2/4" */
+  start: string
+}
+
+export interface FlowDay {
+  key: string
+  ganzhi: string
+  stem: Glyph
+  branch: Glyph
+  month: number
+  day: number
+  isToday: boolean
+}
+
+/** 流月: the twelve 节令 months of a 干支 year (立春 to 立春). */
+export function flowMonths(year: number, dayMaster: string): FlowMonth[] {
+  const me = HeavenStem.fromName(dayMaster)
+  return SixtyCycleYear.fromYear(year)
+    .getMonths()
+    .map((m, index) => {
+      const sc = m.getSixtyCycle()
+      const first = m.getFirstDay().getSolarDay()
+      return {
+        index,
+        ganzhi: sc.getName(),
+        stem: stemGlyph(sc.getHeavenStem(), me),
+        branch: glyph(sc.getEarthBranch()),
+        start: `${first.getMonth()}/${first.getDay()}`,
+      }
+    })
+}
+
+/** 流日: every day of a 流月. */
+export function flowDays(year: number, monthIndex: number, dayMaster: string): FlowDay[] {
+  const me = HeavenStem.fromName(dayMaster)
+  const now = new Date()
+  const today = SolarDay.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  return SixtyCycleYear.fromYear(year)
+    .getMonths()
+    [monthIndex].getDays()
+    .map((d) => {
+      const sc = d.getSixtyCycle()
+      const solar = d.getSolarDay()
+      return {
+        key: solar.toString(),
+        ganzhi: sc.getName(),
+        stem: stemGlyph(sc.getHeavenStem(), me),
+        branch: glyph(sc.getEarthBranch()),
+        month: solar.getMonth(),
+        day: solar.getDay(),
+        isToday: solar.equals(today),
+      }
+    })
+}
+
+/** Index of the 流月 containing today, if today falls in that 干支 year (立春 to 立春). */
+export function currentFlowMonth(year: number): number | undefined {
+  const now = new Date()
+  const today = SolarDay.fromYmd(now.getFullYear(), now.getMonth() + 1, now.getDate())
+  const starts = SixtyCycleYear.fromYear(year).getMonths().map((m) => m.getFirstDay().getSolarDay())
+  const nextYearStart = SixtyCycleYear.fromYear(year + 1).getFirstMonth().getFirstDay().getSolarDay()
+  if (today.isBefore(starts[0]) || !today.isBefore(nextYearStart)) return undefined
+  return starts.findLastIndex((s) => !s.isAfter(today))
+}
+
+export interface FortuneColumn {
+  /** 大运 / 流年 / 流月 / 流日 */
+  label: string
+  ganzhi: string
+}
+
+/** Full pillar data for 岁运 columns, with 神煞 looked up from the natal chart. */
+export function fortunePillars(chart: BaziChart, columns: FortuneColumn[], schools: SchoolSettings = DEFAULT_SCHOOLS): Pillar[] {
+  const me = HeavenStem.fromName(chart.dayMaster.char)
+  const pillars = columns.map((c) => pillar(c.label, SixtyCycle.fromName(c.ganzhi), me, false))
+  const stars = computeShenSha(
+    chart.pillars.map((p) => ({ stem: p.stem.char, branch: p.branch.char })),
+    schools,
+    pillars.map((p) => ({ stem: p.stem.char, branch: p.branch.char })),
+  ).slice(4)
+  pillars.forEach((p, i) => (p.shenSha = stars[i]))
+  return pillars
+}
+
+/** 岁运与原局的刑冲合会: only relations involving at least one 岁运 column. */
 export function fortuneRelations(
   chart: BaziChart,
-  decade?: DecadeInfo,
-  year?: FortuneYear,
+  columns: FortuneColumn[],
   schools: SchoolSettings = DEFAULT_SCHOOLS,
 ): Relation[] {
-  const members = relationMembers(chart.pillars)
-  const focus: string[] = []
-  if (decade) {
-    members.push({ label: '运', stem: decade.stem.char, branch: decade.branch.char })
-    focus.push('运')
-  }
-  if (year) {
-    members.push({ label: '岁', stem: year.stem.char, branch: year.branch.char })
-    focus.push('岁')
-  }
-  return focus.length ? computeRelations(members, focus, schools) : []
+  if (columns.length === 0) return []
+  const members = [
+    ...relationMembers(chart.pillars),
+    ...columns.map((c) => ({ label: c.label, stem: c.ganzhi[0], branch: c.ganzhi[1] })),
+  ]
+  return computeRelations(members, columns.map((c) => c.label), schools)
 }

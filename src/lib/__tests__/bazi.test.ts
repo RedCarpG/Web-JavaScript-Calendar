@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildBazi, fortuneRelations } from '../bazi'
+import { buildBazi, flowDays, flowMonths, fortunePillars, fortuneRelations } from '../bazi'
 import { computeRelations } from '../relations'
 import { DEFAULT_SCHOOLS } from '../schools'
 import { computeShenSha } from '../shensha'
@@ -27,14 +27,32 @@ describe('buildBazi', () => {
     expect(chart.pillars[3].stem.char + chart.pillars[3].branch.char).toBe('庚辰')
   })
 
-  it('lists 岁运 relations only when they involve the fortune', () => {
+  it('lists 岁运 relations only when they involve a fortune column', () => {
     const chart = buildBazi(base)
-    const decade = chart.decades.find((d) => d.ganzhi === '壬午')!
-    const rels = fortuneRelations(chart, decade)
-    // 壬午运: 午 meets 年支午 → 自刑; every relation must involve 运
+    // 壬午运: 午 meets 年支午 → 自刑; every relation must involve 大运
+    const rels = fortuneRelations(chart, [{ label: '大运', ganzhi: '壬午' }])
     expect(rels.map((r) => r.text)).toContain('午午自刑')
-    expect(rels.every((r) => r.members.includes('运'))).toBe(true)
-    expect(fortuneRelations(chart).length).toBe(0)
+    expect(rels.every((r) => r.members.includes('大运'))).toBe(true)
+    expect(fortuneRelations(chart, []).length).toBe(0)
+  })
+
+  it('builds 流月 by 节令 and 流日 within them', () => {
+    const months = flowMonths(2026, '庚')
+    expect(months.map((m) => m.ganzhi)).toEqual(['庚寅', '辛卯', '壬辰', '癸巳', '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑'])
+    expect(months[0].start).toBe('2/4') // 立春
+    expect(months[8].stem.tenStar).toBe('偏印') // 庚 → 戊
+    const days = flowDays(2026, 8, '庚') // 戊戌月: 寒露 10/8 – 11/6
+    expect([days[0].month, days[0].day, days.at(-1)!.month, days.at(-1)!.day]).toEqual([10, 8, 11, 6])
+    expect(days.find((d) => d.month === 10 && d.day === 23)?.ganzhi).toBe('庚午')
+  })
+
+  it('gives 岁运 columns full pillar data with natal-based 神煞', () => {
+    const chart = buildBazi(base) // 庚午 辛巳 庚辰 辛巳
+    const [decade] = fortunePillars(chart, [{ label: '大运', ganzhi: '丁丑' }])
+    expect(decade.stem.tenStar).toBe('正官')
+    expect(decade.hidden.map((h) => h.char)).toEqual(['己', '癸', '辛'])
+    // 庚日 天乙 in 丑未 → 丑 qualifies; 年支午 → 华盖戌 does not
+    expect(decade.shenSha.map((x) => x.name)).toContain('天乙贵人')
   })
 })
 
