@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { ELEMENTS, buildBazi, type BaziInput, type Glyph } from '../lib/bazi'
+import { ELEMENTS, buildBazi, fortuneRelations, type BaziInput, type Glyph } from '../lib/bazi'
+import type { Relation } from '../lib/relations'
+import { CITIES } from '../lib/solarTime'
 
 interface Props {
   input: BaziInput
@@ -18,12 +20,18 @@ export function BaziView({ input, onChange }: Props) {
   const [picked, setPicked] = useState<number | null>(null)
   const decadeIndex = picked ?? currentDecade
   const decade = chart.decades[decadeIndex]
+  const [pickedYear, setPickedYear] = useState<number | null>(null)
+  const fortuneYear =
+    decade.years.find((y) => y.year === pickedYear) ?? decade.years.find((y) => y.year === thisYear) ?? decade.years[0]
+  const fortuneRels = fortuneRelations(chart, decade, fortuneYear)
+  const city = CITIES.find((c) => c.longitude === input.longitude)
   const total = ELEMENTS.reduce((s, e) => s + chart.elementCount[e], 0)
 
   const dateValue = `${input.year}-${pad(input.month)}-${pad(input.day)}`
   const timeValue = `${pad(input.hour)}:${pad(input.minute)}`
   const update = (patch: Partial<BaziInput>) => {
     setPicked(null)
+    setPickedYear(null)
     onChange({ ...input, ...patch })
   }
 
@@ -72,6 +80,48 @@ export function BaziView({ input, onChange }: Props) {
             <option value={1}>日柱算明天</option>
           </select>
         </label>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={input.longitude != null}
+            onChange={(e) => update({ longitude: e.target.checked ? CITIES[0].longitude : undefined })}
+          />
+          真太阳时
+        </label>
+        {input.longitude != null && (
+          <>
+            <label>
+              出生地
+              <select
+                value={city?.name ?? ''}
+                onChange={(e) => {
+                  const c = CITIES.find((x) => x.name === e.target.value)
+                  if (c) update({ longitude: c.longitude })
+                }}
+              >
+                {!city && <option value="">自定义</option>}
+                {CITIES.map((c) => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              东经
+              <input
+                type="number"
+                className="narrow"
+                min={73}
+                max={135}
+                step={0.01}
+                value={input.longitude}
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  if (e.target.value !== '' && v >= -180 && v <= 180) update({ longitude: v })
+                }}
+              />
+            </label>
+          </>
+        )}
       </section>
 
       <section className="card">
@@ -80,6 +130,12 @@ export function BaziView({ input, onChange }: Props) {
             <strong>{chart.gender === '男' ? '乾造' : '坤造'}</strong> · 属{chart.zodiac}
           </div>
           <div className="muted">阳历 {chart.solarText}</div>
+          {chart.trueSolar && (
+            <div className="muted">
+              真太阳时 {chart.trueSolar.text}（{chart.trueSolar.offsetMinutes >= 0 ? '+' : '−'}
+              {Math.abs(Math.round(chart.trueSolar.offsetMinutes))}分）
+            </div>
+          )}
           <div className="muted">农历 {chart.lunarText}</div>
         </div>
 
@@ -139,6 +195,16 @@ export function BaziView({ input, onChange }: Props) {
                 ))}
               </tr>
             ))}
+            <tr className="row-shensha">
+              <th>神煞</th>
+              {chart.pillars.map((p) => (
+                <td key={p.label}>
+                  {p.shenSha.map((n) => (
+                    <div key={n}>{n}</div>
+                  ))}
+                </td>
+              ))}
+            </tr>
           </tbody>
         </table>
 
@@ -153,6 +219,8 @@ export function BaziView({ input, onChange }: Props) {
             </div>
           ))}
         </div>
+
+        <Relations title="原局刑冲合会" items={chart.relations} />
 
         <dl className="kv inline">
           <dt>胎元</dt>
@@ -187,17 +255,47 @@ export function BaziView({ input, onChange }: Props) {
         <h3>流年 · {decade.ganzhi}运</h3>
         <div className="fortune-row">
           {decade.years.map((y) => (
-            <div key={y.year} className={['fortune', y.year === thisYear && 'current'].filter(Boolean).join(' ')}>
+            <button
+              key={y.year}
+              className={['fortune', y.year === thisYear && 'current', y.year === fortuneYear.year && 'selected']
+                .filter(Boolean)
+                .join(' ')}
+              onClick={() => setPickedYear(y.year)}
+            >
               <small>{y.year}</small>
               <small className="muted">{y.age}岁</small>
               <Char g={y.stem} small />
               <Char g={y.branch} small />
               <small>{y.stem.tenStar}</small>
               <small className="muted" title="小运">{y.smallFortune}</small>
-            </div>
+            </button>
           ))}
         </div>
+        <Relations
+          title={`岁运作用 · ${decade.ganzhi}运 ${fortuneYear.year}${fortuneYear.ganzhi}年`}
+          items={fortuneRels}
+          empty="与原局无明显刑冲合会"
+        />
       </section>
+    </div>
+  )
+}
+
+function Relations({ title, items, empty = '无' }: { title: string; items: Relation[]; empty?: string }) {
+  return (
+    <div className="relations">
+      <h4>{title}</h4>
+      {items.length === 0 ? (
+        <p className="muted">{empty}</p>
+      ) : (
+        <div className="tags">
+          {items.map((r) => (
+            <span key={r.text + r.members.join('')} className={`rel rel-${r.kind}`}>
+              <b>{r.members.join('')}</b> {r.text}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

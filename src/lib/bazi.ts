@@ -12,6 +12,9 @@ import {
   SolarTime,
   type DecadeFortune,
 } from 'tyme4ts'
+import { computeRelations, type Relation, type RelationMember } from './relations'
+import { computeShenSha } from './shensha'
+import { toTrueSolarTime } from './solarTime'
 
 export type ElementName = '木' | '火' | '土' | '金' | '水'
 export const ELEMENTS: ElementName[] = ['木', '火', '土', '金', '水']
@@ -31,6 +34,7 @@ export interface Pillar {
   terrain: string
   selfTerrain: string
   empty: string
+  shenSha: string[]
 }
 
 export interface FortuneYear {
@@ -68,6 +72,9 @@ export interface BaziChart {
   startText: string
   decades: DecadeInfo[]
   elementCount: Record<ElementName, number>
+  relations: Relation[]
+  /** Set when 真太阳时 is applied */
+  trueSolar?: { text: string; offsetMinutes: number }
 }
 
 export interface BaziInput {
@@ -79,6 +86,8 @@ export interface BaziInput {
   gender: 0 | 1
   /** 1: 晚子时日柱算明天; 2: 晚子时日柱算当天 */
   sect: 1 | 2
+  /** Birthplace longitude; when set, the chart uses 真太阳时 */
+  longitude?: number
 }
 
 const providers = { 1: new DefaultEightCharProvider(), 2: new LunarSect2EightCharProvider() }
@@ -105,6 +114,7 @@ function pillar(label: string, sc: SixtyCycle, me: HeavenStem, isDay: boolean): 
     terrain: me.getTerrain(branch).getName(),
     selfTerrain: stem.getTerrain(branch).getName(),
     empty: sc.getExtraEarthBranches().map((b) => b.getName()).join(''),
+    shenSha: [],
   }
 }
 
@@ -140,7 +150,9 @@ function decadeInfo(df: DecadeFortune, me: HeavenStem): DecadeInfo {
 
 export function buildBazi(input: BaziInput): BaziChart {
   LunarHour.provider = providers[input.sect]
-  const time = SolarTime.fromYmdHms(input.year, input.month, input.day, input.hour, input.minute, 0)
+  const corrected = input.longitude == null ? undefined : toTrueSolarTime(input, input.longitude)
+  const t = corrected?.time ?? input
+  const time = SolarTime.fromYmdHms(t.year, t.month, t.day, t.hour, t.minute, 0)
   const lunarHour = time.getLunarHour()
   const ec = lunarHour.getEightChar()
   const me = ec.getDay().getHeavenStem()
@@ -150,6 +162,9 @@ export function buildBazi(input: BaziInput): BaziChart {
     pillar('日柱', ec.getDay(), me, true),
     pillar('时柱', ec.getHour(), me, false),
   ]
+
+  const shenSha = computeShenSha(pillars.map((p) => ({ stem: p.stem.char, branch: p.branch.char })))
+  pillars.forEach((p, i) => (p.shenSha = shenSha[i]))
 
   const elementCount = Object.fromEntries(ELEMENTS.map((e) => [e, 0])) as Record<ElementName, number>
   for (const p of pillars) {
@@ -169,7 +184,7 @@ export function buildBazi(input: BaziInput): BaziChart {
   const lunarDay = lunarHour.getLunarDay()
   return {
     gender: input.gender === 1 ? '男' : '女',
-    solarText: `${input.year}年${input.month}月${input.day}日 ${String(input.hour).padStart(2, '0')}:${String(input.minute).padStart(2, '0')}`,
+    solarText: formatTime(input),
     lunarText: `${lunarDay.getLunarMonth().getLunarYear().getSixtyCycle().getName()}年${lunarDay.getLunarMonth().getName()}${lunarDay.getName()} ${lunarHour.getName()}`,
     zodiac: ec.getYear().getEarthBranch().getZodiac().getName(),
     dayMaster: glyph(me),
@@ -181,5 +196,30 @@ export function buildBazi(input: BaziInput): BaziChart {
     startText: `出生后${childLimit.getYearCount()}年${childLimit.getMonthCount()}个月${childLimit.getDayCount()}天起运（${end.getYear()}年${end.getMonth()}月${end.getDay()}日交运），${childLimit.isForward() ? '顺' : '逆'}排`,
     decades,
     elementCount,
+    relations: computeRelations(relationMembers(pillars)),
+    trueSolar: corrected && { text: formatTime(corrected.time), offsetMinutes: corrected.offsetMinutes },
   }
+}
+
+const pad = (n: number) => String(n).padStart(2, '0')
+const formatTime = (t: { year: number; month: number; day: number; hour: number; minute: number }) =>
+  `${t.year}年${t.month}月${t.day}日 ${pad(t.hour)}:${pad(t.minute)}`
+
+function relationMembers(pillars: Pillar[]): RelationMember[] {
+  return pillars.map((p) => ({ label: p.label[0], stem: p.stem.char, branch: p.branch.char }))
+}
+
+/** 岁运与原局的刑冲合会: only relations involving the given 大运 / 流年. */
+export function fortuneRelations(chart: BaziChart, decade?: DecadeInfo, year?: FortuneYear): Relation[] {
+  const members = relationMembers(chart.pillars)
+  const focus: string[] = []
+  if (decade) {
+    members.push({ label: '运', stem: decade.stem.char, branch: decade.branch.char })
+    focus.push('运')
+  }
+  if (year) {
+    members.push({ label: '岁', stem: year.stem.char, branch: year.branch.char })
+    focus.push('岁')
+  }
+  return focus.length ? computeRelations(members, focus) : []
 }

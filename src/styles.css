@@ -191,6 +191,21 @@ button.fortune:hover { background: var(--surface-2); }
 .fortune.current { border-color: var(--accent); }
 .fortune.selected { background: var(--accent-soft); }
 
+.bazi-form .check { flex-direction: row; align-items: center; gap: 6px; height: 36px; color: var(--text); font-size: 14px; }
+.bazi-form .check input { height: auto; accent-color: var(--accent); }
+.bazi-form input.narrow { width: 96px; }
+
+.pillars .row-shensha td { font-size: 12px; vertical-align: top; color: var(--muted); line-height: 1.6; }
+
+.relations { margin-top: 16px; }
+.relations h4 { margin: 0 0 8px; font-size: 14px; }
+.relations p { margin: 0; font-size: 13px; }
+.rel { font-size: 13px; padding: 2px 10px; border-radius: 999px; background: var(--surface-2); }
+.rel b { font-weight: 600; margin-right: 2px; }
+.rel-合, .rel-会 { background: color-mix(in srgb, var(--good) 15%, transparent); color: var(--good); }
+.rel-冲 { background: var(--accent-soft); color: var(--bad); }
+.rel-刑, .rel-害, .rel-破 { background: color-mix(in srgb, var(--earth) 18%, transparent); color: var(--earth); }
+
 @media (max-width: 860px) {
   .calendar-layout { grid-template-columns: 1fr; }
   .elements { grid-template-columns: repeat(3, 1fr); }
