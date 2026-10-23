@@ -130,3 +130,12 @@ export const BOARD: Record<string, [number, number]> = {
   卯: [3, 1], 戌: [3, 4],
   寅: [4, 1], 丑: [4, 2], 子: [4, 3], 亥: [4, 4],
 }
+
+const BRANCH_ORDER = '子丑寅卯辰巳午未申酉戌亥'
+
+/** 三方四正 of a palace: its 对宫 (six palaces on) and the two 三合 palaces (four on, either way). */
+export function sanFangSiZheng(branch: string): { opposite: string; trines: [string, string] } {
+  const i = BRANCH_ORDER.indexOf(branch)
+  const at = (n: number) => BRANCH_ORDER[(i + n) % 12]
+  return { opposite: at(6), trines: [at(4), at(8)] }
+}

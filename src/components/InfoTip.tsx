@@ -13,7 +13,18 @@ type Place = { mode: 'float'; left: number; top: number; above: boolean } | { mo
  * and placed against the viewport, so scrolling containers can't clip it; on
  * phones it docks to the bottom of the screen.
  */
-export function InfoTip({ label, title, children }: { label: ReactNode; title: ReactNode; children: ReactNode }) {
+export function InfoTip({
+  label,
+  title,
+  children,
+  className,
+}: {
+  label: ReactNode
+  title: ReactNode
+  children: ReactNode
+  /** Extra class on the trigger, e.g. "plain" to drop the dotted underline */
+  className?: string
+}) {
   const ref = useRef<HTMLSpanElement>(null)
   const [place, setPlace] = useState<Place | null>(null)
 
@@ -48,7 +59,7 @@ export function InfoTip({ label, title, children }: { label: ReactNode; title: R
   return (
     <span
       ref={ref}
-      className="tip"
+      className={className ? `tip ${className}` : 'tip'}
       tabIndex={0}
       onPointerEnter={(e) => e.pointerType === 'mouse' && show()}
       onPointerLeave={(e) => e.pointerType === 'mouse' && hide()}

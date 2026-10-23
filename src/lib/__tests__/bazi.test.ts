@@ -4,6 +4,7 @@ import { computeRelations } from '../relations'
 import { DEFAULT_SCHOOLS } from '../schools'
 import { DEFAULT_ZIWEI_SCHOOLS } from '../ziweiSchools'
 import { STAR_ELEMENT, starLuck } from '../ziweiStars'
+import { BRIGHTNESS_INFO, MUTAGEN_INFO, STAR_INFO } from '../ziweiInfo'
 import { computeShenSha } from '../shensha'
 import { equationOfTime, toTrueSolarTime } from '../solarTime'
 
@@ -281,5 +282,29 @@ describe('紫微斗数', () => {
     expect(stars.find((s) => s.name === '擎羊')?.luck).toBe('bad')
     expect(stars.find((s) => s.name === '禄存')?.luck).toBe('good')
     expect(starLuck('adjective')).toBe('neutral')
+  })
+
+  it('finds the 三方四正 of a palace', async () => {
+    const { sanFangSiZheng } = await import('../ziwei')
+    expect(sanFangSiZheng('子')).toEqual({ opposite: '午', trines: ['辰', '申'] })
+    expect(sanFangSiZheng('寅')).toEqual({ opposite: '申', trines: ['午', '戌'] })
+    expect(sanFangSiZheng('亥')).toEqual({ opposite: '巳', trines: ['卯', '未'] })
+  })
+
+  it('explains every star, 亮度 and 四化 iztro can place', async () => {
+    const { buildZiwei } = await import('../ziwei')
+    const missing = new Set<string>()
+    for (const algorithm of ['default', 'zhongzhou'] as const)
+      for (let i = 0; i < 24; i++) {
+        const input = { ...base, year: 1960 + i * 2, month: 1 + (i % 12), hour: i, gender: (i % 2) as 0 | 1 }
+        const z = buildZiwei(input, { ...DEFAULT_ZIWEI_SCHOOLS, algorithm })
+        for (const p of Object.values(z.palaces))
+          for (const s of [...p.major, ...p.minor, ...p.adjective]) {
+            if (!STAR_INFO[s.name]) missing.add(s.name)
+            if (s.brightness && !BRIGHTNESS_INFO[s.brightness]) missing.add(s.brightness)
+            if (s.mutagen && !MUTAGEN_INFO[s.mutagen]) missing.add(s.mutagen)
+          }
+      }
+    expect([...missing]).toEqual([])
   })
 })

@@ -540,6 +540,7 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .star-item { display: inline-flex; align-items: baseline; gap: 2px; white-space: nowrap; }
 .star-bright { font-size: 10px; color: var(--muted); }
 .stars-adj { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.stars-adj .star-name { font-weight: 400; color: inherit; }
 .mutagen {
   display: inline-block; font-size: 10px; font-weight: 700; line-height: 1; padding: 2px 3px; border-radius: 4px; color: #fff;
 }
@@ -563,6 +564,29 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .ziwei-center .kv { font-size: 13px; }
 .zc-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .ziwei-credit { margin: 10px 0 0; }
+/* 三方四正: the hovered palace, its 对宫 and 三合 stay lit; lines join them across the centre */
+.ziwei-board { position: relative; }
+.palace { outline: none; cursor: pointer; transition: opacity 0.2s, box-shadow 0.2s; }
+.sf-active .palace:not(.sf-self, .sf-opposite, .sf-trine) { opacity: 0.4; }
+.palace.sf-self { box-shadow: inset 0 0 0 2px var(--accent); }
+.palace.sf-opposite, .palace.sf-trine { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
+.sf-tag {
+  position: absolute; right: 8px; bottom: 28px; font-size: 10px; line-height: 1; padding: 2px 5px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); animation: tip-in 0.2s ease-out;
+}
+.sf-self .sf-tag { background: var(--accent); color: #fff; }
+.sf-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; animation: tip-in 0.25s ease-out; }
+.sf-lines polygon, .sf-lines line {
+  fill: color-mix(in srgb, var(--accent) 5%, transparent); stroke: var(--accent); stroke-width: 1.5;
+  stroke-opacity: 0.55; vector-effect: non-scaling-stroke;
+}
+.sf-lines line { stroke-dasharray: 5 4; }
+.tip.plain .tip-label { border-bottom: none; }
+.stars-adj { display: flex; flex-wrap: wrap; gap: 0 5px; }
+@media (prefers-reduced-motion: reduce) {
+  .palace { transition: none; }
+  .sf-tag, .sf-lines { animation: none; }
+}
 /* Let the saved-chart row shrink on narrow phones (grid tracks default to min-content). */
 .saved-charts { min-width: 0; grid-template-columns: minmax(0, 1fr); }
 @media (max-width: 360px) {
