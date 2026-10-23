@@ -16,6 +16,7 @@ import { CITIES } from '../lib/solarTime'
 import { Char } from './Char'
 import { SavedCharts } from './SavedCharts'
 import { SchoolMark, SchoolSettingsPanel } from './Schools'
+import { HighlightScope, useHighlight, useTrigger } from './highlight'
 import { PillarTable } from './PillarTable'
 import { useTerm } from '../settingsContext'
 
@@ -207,14 +208,15 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           </div>
         </div>
 
-        <PillarTable
-          pillars={chart.pillars}
-          schools={schools}
-          headerExtra={(p) =>
-            chart.lateZiHour &&
-            (p.label === '日柱' || p.label === '时柱') && <SchoolMark school="ziHour" settings={schools} />
-          }
-        />
+        <HighlightScope pillars={chart.pillars} relations={chart.relations}>
+          <PillarTable
+            pillars={chart.pillars}
+            schools={schools}
+            headerExtra={(p) =>
+              chart.lateZiHour &&
+              (p.label === '日柱' || p.label === '时柱') && <SchoolMark school="ziHour" settings={schools} />
+            }
+          />
 
         <div className="elements">
           {ELEMENTS.map((e) => (
@@ -228,7 +230,8 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           ))}
         </div>
 
-        <Relations title={term('原局刑冲合会')} items={chart.relations} schools={schools} />
+          <Relations title={term('原局刑冲合会')} items={chart.relations} schools={schools} />
+        </HighlightScope>
 
         <dl className="kv inline">
           <dt>{term('胎元')}</dt>
@@ -357,10 +360,12 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           {fortuneYear.ganzhi}年 · {decade.ganzhi}
           {term('运')}，合参命主原局
         </p>
-        <div className="table-scroll">
-          <PillarTable pillars={[...combined, ...chart.pillars]} schools={schools} dividerAt={combined.length} />
-        </div>
-        <Relations title={term('岁运刑冲合会')} items={fortuneRels} schools={schools} empty="与原局无明显刑冲合会" />
+        <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
+          <div className="table-scroll">
+            <PillarTable pillars={[...combined, ...chart.pillars]} schools={schools} dividerAt={combined.length} />
+          </div>
+          <Relations title={term('岁运刑冲合会')} items={fortuneRels} schools={schools} empty="与原局无明显刑冲合会" />
+        </HighlightScope>
       </section>
     </div>
   )
@@ -377,7 +382,6 @@ function Relations({
   schools: SchoolSettings
   empty?: string
 }) {
-  const term = useTerm()
   return (
     <div className="relations">
       <h4>{title}</h4>
@@ -385,11 +389,8 @@ function Relations({
         <p className="muted">{empty}</p>
       ) : (
         <div className="tags">
-          {items.map((r) => (
-            <span key={r.text + r.members.join('')} className={`rel rel-${r.kind}`}>
-              <b>{term(r.members.join('·'))}</b> {term(r.text)}
-              {r.school && <SchoolMark school={r.school} settings={schools} />}
-            </span>
+          {items.map((r, i) => (
+            <RelationChip key={r.text + r.members.join('')} relation={r} index={i} schools={schools} />
           ))}
         </div>
       )}
@@ -421,5 +422,18 @@ function FortuneRow({
       </button>
       {open && <div className="fortune-body">{children}</div>}
     </div>
+  )
+}
+
+function RelationChip({ relation: r, index, schools }: { relation: Relation; index: number; schools: SchoolSettings }) {
+  const term = useTerm()
+  const { hover, rels } = useHighlight()
+  const trigger = useTrigger({ kind: 'rel', index })
+  const state = rels.has(index) ? ' hl-on' : hover ? ' hl-dim' : ''
+  return (
+    <span className={`rel rel-${r.kind} hl-target${state}`} {...trigger}>
+      <b>{term(r.members.join('·'))}</b> {term(r.text)}
+      {r.school && <SchoolMark school={r.school} settings={schools} />}
+    </span>
   )
 }
