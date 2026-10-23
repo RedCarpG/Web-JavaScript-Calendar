@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
+import { AboutBadges } from './components/AboutBadges'
 import { SettingsMenu } from './components/SettingsMenu'
 import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
@@ -96,7 +97,10 @@ export function App() {
           )}
         </main>
         <footer className="muted">
-          历法数据由 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> 提供 · 仅供参考
+          <span>
+            历法数据由 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> 提供 · 仅供参考
+          </span>
+          <AboutBadges />
         </footer>
       </div>
     </SettingsContext.Provider>
