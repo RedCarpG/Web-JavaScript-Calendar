@@ -5,9 +5,11 @@ export interface Settings {
   /** 专有名词字形 */
   script: 'trad' | 'simp'
   weekStart: 'mon' | 'sun'
+  /** 日历格子里显示日干支 */
+  dayGanzhi: 'show' | 'hide'
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'system', script: 'trad', weekStart: 'mon' }
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', script: 'trad', weekStart: 'mon', dayGanzhi: 'show' }
 
 export const SETTING_OPTIONS: { [K in keyof Settings]: { title: string; options: { value: Settings[K]; label: string }[] } } = {
   theme: {
@@ -30,6 +32,13 @@ export const SETTING_OPTIONS: { [K in keyof Settings]: { title: string; options:
     options: [
       { value: 'mon', label: '周一' },
       { value: 'sun', label: '周日' },
+    ],
+  },
+  dayGanzhi: {
+    title: '日历显示日干支',
+    options: [
+      { value: 'show', label: '显示' },
+      { value: 'hide', label: '隐藏' },
     ],
   },
 }

@@ -11,6 +11,8 @@ export interface DayCell {
   /** Text under the day number: festival > solar term > lunar day */
   sub: string
   subKind: 'festival' | 'term' | 'lunar' | 'month'
+  /** 日干支, e.g. 庚午 */
+  ganzhi: string
   /** Statutory holiday marker: 休 (off) / 班 (make-up workday) */
   holiday?: '休' | '班'
 }
@@ -66,6 +68,7 @@ export function buildMonthGrid(year: number, month: number, weekStart: WeekStart
       isToday: sameDay(solar, today),
       isWeekend: solar.getWeek().getIndex() % 6 === 0,
       holiday: holiday ? (holiday.isWork() ? '班' : '休') : undefined,
+      ganzhi: solar.getLunarDay().getSixtyCycle().getName(),
       ...describe(solar),
     })
   }

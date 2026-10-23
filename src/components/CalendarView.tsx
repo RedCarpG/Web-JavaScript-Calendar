@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SolarDay } from 'tyme4ts'
 import { Char } from './Char'
+import { MonthPicker } from './MonthPicker'
 import { buildDayDetail, buildMonthGrid, sameDay, todaySolar, weekTitles } from '../lib/calendar'
 import { useSettings, useT } from '../settingsContext'
 
@@ -18,7 +19,7 @@ export function CalendarView({ onPickBazi }: Props) {
   const [selected, setSelected] = useState(todaySolar)
   const [view, setView] = useState(() => ({ year: selected.getYear(), month: selected.getMonth() }))
 
-  const { weekStart } = useSettings()
+  const { weekStart, dayGanzhi } = useSettings()
   const t = useT()
   const cells = useMemo(() => buildMonthGrid(view.year, view.month, weekStart), [view, weekStart])
   const detail = useMemo(() => buildDayDetail(selected), [selected])
@@ -65,6 +66,14 @@ export function CalendarView({ onPickBazi }: Props) {
                   </option>
                 ))}
               </select>
+              <MonthPicker
+                year={view.year}
+                month={view.month}
+                minYear={MIN_YEAR}
+                maxYear={MAX_YEAR}
+                onPickMonth={(year, month) => setView({ year, month })}
+                onPickDay={select}
+              />
             </h2>
             <span className="muted">
               {lunarYear.getName()}年 · {t(lunarYear.getEarthBranch().getZodiac().getName())}年
@@ -104,6 +113,7 @@ export function CalendarView({ onPickBazi }: Props) {
               {c.holiday && <span className={`badge ${c.holiday === '休' ? 'off' : 'work'}`}>{c.holiday}</span>}
               <span className="num">{c.day}</span>
               <span className={`sub ${c.subKind}`}>{t(c.sub)}</span>
+              {dayGanzhi === 'show' && <span className="gz">{c.ganzhi}</span>}
             </button>
           ))}
         </div>
