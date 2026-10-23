@@ -34,23 +34,23 @@ export function App() {
     saveSettings(next)
   }
   useEffect(() => applyTheme(settings.theme), [settings.theme])
-  const t = settings.script === 'trad' ? toTrad : (s: string) => s
+  const term = settings.script === 'trad' ? toTrad : (s: string) => s
 
   return (
     <SettingsContext.Provider value={settings}>
       <div className="app">
         <header className="topbar">
           <h1>
-            {t('时契')}
+            {term('时契')}
             <span className="brand-en">ChroniQ</span>
           </h1>
           <div className="topbar-right">
             <nav className="tabs">
               <button className={tab === 'calendar' ? 'on' : undefined} onClick={() => setTab('calendar')}>
-                {t('日历')}
+                {term('日历')}
               </button>
               <button className={tab === 'bazi' ? 'on' : undefined} onClick={() => setTab('bazi')}>
-                {t('八字排盘')}
+                {term('八字排盘')}
               </button>
             </nav>
             <SettingsMenu settings={settings} onChange={changeSettings} />

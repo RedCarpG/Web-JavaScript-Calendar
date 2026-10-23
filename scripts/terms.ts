@@ -24,14 +24,14 @@ import { SHENSHA_INFO } from '../src/lib/shenshaInfo'
 const STEMS = '甲乙丙丁戊己庚辛壬癸'
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥'
 
-/** String literals passed to t('…') in the UI source. */
+/** String literals passed to term('…') in the UI source. */
 function literalTerms(): string[] {
   const dirs = ['src', 'src/components']
   const out: string[] = []
   for (const dir of dirs) {
     for (const f of readdirSync(dir).filter((n) => n.endsWith('.tsx'))) {
       const src = readFileSync(join(dir, f), 'utf8')
-      for (const m of src.matchAll(/\bt\(\s*'([^']+)'\s*\)/g)) out.push(m[1])
+      for (const m of src.matchAll(/\bterm\(\s*'([^']+)'\s*\)/g)) out.push(m[1])
     }
   }
   return out

@@ -3,7 +3,7 @@ import { SolarDay } from 'tyme4ts'
 import { Char } from './Char'
 import { MonthPicker } from './MonthPicker'
 import { buildDayDetail, buildMonthGrid, sameDay, todaySolar, weekTitles } from '../lib/calendar'
-import { useSettings, useT } from '../settingsContext'
+import { useSettings, useTerm } from '../settingsContext'
 
 // tyme4ts handles far wider ranges; this keeps the dropdown a manageable length.
 const MIN_YEAR = 1900
@@ -20,7 +20,7 @@ export function CalendarView({ onPickBazi }: Props) {
   const [view, setView] = useState(() => ({ year: selected.getYear(), month: selected.getMonth() }))
 
   const { weekStart, dayGanzhi } = useSettings()
-  const t = useT()
+  const term = useTerm()
   const cells = useMemo(() => buildMonthGrid(view.year, view.month, weekStart), [view, weekStart])
   const detail = useMemo(() => buildDayDetail(selected), [selected])
 
@@ -76,7 +76,7 @@ export function CalendarView({ onPickBazi }: Props) {
               />
             </h2>
             <span className="muted">
-              {lunarYear.getName()}年 · {t(lunarYear.getEarthBranch().getZodiac().getName())}年
+              {lunarYear.getName()}年 · {term(lunarYear.getEarthBranch().getZodiac().getName())}年
             </span>
           </div>
           <div className="cal-nav">
@@ -112,7 +112,7 @@ export function CalendarView({ onPickBazi }: Props) {
             >
               {c.holiday && <span className={`badge ${c.holiday === '休' ? 'off' : 'work'}`}>{c.holiday}</span>}
               <span className="num">{c.day}</span>
-              <span className={`sub ${c.subKind}`}>{t(c.sub)}</span>
+              <span className={`sub ${c.subKind}`}>{term(c.sub)}</span>
               {dayGanzhi === 'show' && <span className="gz">{c.ganzhi}</span>}
             </button>
           ))}
@@ -130,9 +130,9 @@ export function CalendarView({ onPickBazi }: Props) {
           </div>
         </div>
         <div className="lunar-line">
-          {t('农历')}
-          {t(detail.lunarText)}
-          <span className="muted"> · 属{t(detail.zodiac)}</span>
+          {term('农历')}
+          {term(detail.lunarText)}
+          <span className="muted"> · 属{term(detail.zodiac)}</span>
         </div>
         <div className="day-pillars" aria-label={detail.ganzhi}>
           {detail.pillars.map((p) => (
@@ -147,25 +147,25 @@ export function CalendarView({ onPickBazi }: Props) {
           <div className="tags">
             {detail.festivals.map((f) => (
               <span key={f} className="tag festival">
-                {t(f)}
+                {term(f)}
               </span>
             ))}
           </div>
         )}
         <dl className="kv">
-          <dt>{t('节气')}</dt>
-          <dd>{t(detail.term)}</dd>
-          <dt>{t('建除')}</dt>
-          <dd>{t(detail.duty)}日</dd>
-          <dt>{t('值神')}</dt>
-          <dd>{t(detail.twelveStar)}</dd>
-          <dt>{t('星宿')}</dt>
-          <dd>{t(detail.twentyEightStar)}宿</dd>
+          <dt>{term('节气')}</dt>
+          <dd>{term(detail.term)}</dd>
+          <dt>{term('建除')}</dt>
+          <dd>{term(detail.duty)}日</dd>
+          <dt>{term('值神')}</dt>
+          <dd>{term(detail.twelveStar)}</dd>
+          <dt>{term('星宿')}</dt>
+          <dd>{term(detail.twentyEightStar)}宿</dd>
         </dl>
-        <TagBlock title={t('宜')} kind="good" items={detail.recommends.map(t)} />
-        <TagBlock title={t('忌')} kind="bad" items={detail.avoids.map(t)} />
-        <TagBlock title={t('吉神')} kind="neutral" items={detail.goodGods.map(t)} />
-        <TagBlock title={t('凶煞')} kind="neutral" items={detail.badGods.map(t)} />
+        <TagBlock title={term('宜')} kind="good" items={detail.recommends.map(term)} />
+        <TagBlock title={term('忌')} kind="bad" items={detail.avoids.map(term)} />
+        <TagBlock title={term('吉神')} kind="neutral" items={detail.goodGods.map(term)} />
+        <TagBlock title={term('凶煞')} kind="neutral" items={detail.badGods.map(term)} />
         <button className="primary block" onClick={() => onPickBazi(selected)}>
           以此日排八字 →
         </button>
