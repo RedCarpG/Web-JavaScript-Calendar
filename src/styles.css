@@ -90,7 +90,15 @@ button { cursor: pointer; }
 a { color: var(--accent); }
 .muted { color: var(--muted); }
 
-.app { max-width: 1120px; margin: 0 auto; padding: 16px; }
+.app { max-width: 1120px; margin: 0 auto; padding: 16px; zoom: var(--ui-zoom); }
+/* 显示大小: the whole page scales with CSS zoom (sizes here are in px). "Auto"
+   grows it on large screens so the 1120px column doesn't look tiny there. */
+:root { --ui-zoom: 1; }
+@media (min-width: 1500px) { :root:not([data-scale]) { --ui-zoom: 1.15; } }
+@media (min-width: 1800px) { :root:not([data-scale]) { --ui-zoom: 1.3; } }
+@media (min-width: 2300px) { :root:not([data-scale]) { --ui-zoom: 1.6; } }
+:root[data-scale='115'] { --ui-zoom: 1.15; }
+:root[data-scale='130'] { --ui-zoom: 1.3; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .topbar h1 { margin: 0; font-size: 22px; letter-spacing: 2px; display: flex; align-items: baseline; gap: 8px; }
@@ -353,6 +361,7 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   font-size: 12px; line-height: 1.6; color: var(--text); font-weight: 400;
   pointer-events: none; animation: tip-in 0.12s ease-out;
 }
+.tip-pop.float { zoom: var(--ui-zoom); }
 .tip-pop.sheet { left: 16px; right: 16px; bottom: 16px; }
 .tip-pop strong { font-size: 14px; margin-bottom: 2px; }
 .tip-pop b { color: var(--muted); font-weight: 500; margin-right: 6px; }
