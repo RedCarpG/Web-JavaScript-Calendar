@@ -331,29 +331,24 @@ button.fortune:hover { background: var(--surface-2); }
   .pillars .row-shensha td { font-size: 11px; }
 }
 
-/* ---------- 神煞说明气泡 ---------- */
-.tip { position: relative; display: inline-block; outline: none; }
+/* ---------- 说明气泡（神煞、术语） ---------- */
+.tip { display: inline-block; outline: none; }
 .tip-label { cursor: help; border-bottom: 1px dotted currentColor; }
 .tip:focus-visible .tip-label { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
+th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transparent); }
 .tip-pop {
-  display: none; position: absolute; z-index: 10; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
-  width: 260px; padding: 10px 12px; border-radius: 10px; text-align: left; white-space: normal;
+  position: fixed; z-index: 50; display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; border-radius: 10px; text-align: left; white-space: normal;
   background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgb(0 0 0 / 0.15);
-  font-size: 12px; line-height: 1.6; color: var(--text);
+  font-size: 12px; line-height: 1.6; color: var(--text); font-weight: 400;
+  pointer-events: none; animation: tip-in 0.12s ease-out;
 }
-.tip-pop > * { display: block; }
-.tip-pop strong { font-size: 14px; margin-bottom: 4px; }
+.tip-pop.sheet { left: 16px; right: 16px; bottom: 16px; }
+.tip-pop strong { font-size: 14px; margin-bottom: 2px; }
 .tip-pop b { color: var(--muted); font-weight: 500; margin-right: 6px; }
-.tip-pop span + span { margin-top: 4px; }
-.tip-pop small { margin-top: 6px; color: var(--muted); font-size: 11px; }
-.tip:hover .tip-pop, .tip:focus .tip-pop { display: block; }
-/* Keep bubbles in the first and last columns on screen */
-.pillars td:nth-child(2) .tip-pop { left: 0; transform: none; }
-.pillars td:last-child .tip-pop { left: auto; right: 0; transform: none; }
-@media (max-width: 480px) {
-  .tip-pop { position: fixed; left: 16px; right: 16px; top: auto; bottom: 16px; width: auto; transform: none; }
-  .pillars td:nth-child(2) .tip-pop, .pillars td:last-child .tip-pop { left: 16px; right: 16px; }
-}
+.tip-pop small { margin-top: 4px; color: var(--muted); font-size: 11px; }
+@keyframes tip-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tip-pop { animation: none; } }
 
 /* ---------- 设置菜单 ---------- */
 .topbar-right { display: flex; align-items: center; gap: 8px; }

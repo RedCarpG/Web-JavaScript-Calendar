@@ -214,3 +214,21 @@ describe('saved charts', () => {
     expect(charts.map((c) => [c.name, c.input.hour, c.input.gender])).toEqual([['张三', 8, 1], ['李四', 10, 0]])
   })
 })
+
+describe('术语说明', () => {
+  it('covers every 纳音, 十二长生 and table concept', async () => {
+    const { Sound, Terrain } = await import('tyme4ts')
+    const { CONCEPTS, SOUND_INFO, TERRAIN_INFO } = await import('../glossary')
+    const sounds = Array.from({ length: 30 }, (_, i) => Sound.fromIndex(i).getName())
+    const terrains = Array.from({ length: 12 }, (_, i) => Terrain.fromIndex(i).getName())
+    expect(sounds.filter((n) => !SOUND_INFO[n])).toEqual([])
+    expect(terrains.filter((n) => !TERRAIN_INFO[n])).toEqual([])
+    const shown = ['主星', '天干', '地支', '藏干', '纳音', '星运', '自坐', '空亡', '神煞', '大运', '流年', '流月', '流日', '胎元', '胎息', '命宫', '身宫']
+    expect(shown.filter((n) => !CONCEPTS[n])).toEqual([])
+  })
+
+  it('records the 旬 behind each pillar\'s 空亡', () => {
+    const [year] = buildBazi(base).pillars // 庚午: 甲子旬, 空亡 戌亥
+    expect([year.xun, year.empty]).toEqual(['甲子', '戌亥'])
+  })
+})
