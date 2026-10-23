@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { SolarDay } from 'tyme4ts'
 import { Char } from './Char'
 import { MonthPicker } from './MonthPicker'
-import { buildDayDetail, buildMonthGrid, sameDay, todaySolar, weekTitles } from '../lib/calendar'
+import { WeekView, YearView } from './CalendarViews'
+import { buildDayDetail, buildMonthGrid, buildWeek, buildYear, sameDay, todaySolar, weekTitles } from '../lib/calendar'
 import { useSettings, useTerm } from '../settingsContext'
 
 // tyme4ts handles far wider ranges; this keeps the dropdown a manageable length.
@@ -10,6 +11,19 @@ const MIN_YEAR = 1900
 const MAX_YEAR = 2100
 const YEARS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i)
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
+
+type ViewMode = 'month' | 'week' | 'year'
+const VIEW_MODES: [ViewMode, string][] = [
+  ['month', '月'],
+  ['week', '周'],
+  ['year', '年'],
+]
+// aria-labels for « ‹ › » in each mode
+const NAV_LABELS: Record<ViewMode, [string, string, string, string]> = {
+  month: ['上一年', '上个月', '下个月', '下一年'],
+  week: ['前四周', '上一周', '下一周', '后四周'],
+  year: ['', '上一年', '下一年', ''],
+}
 
 interface Props {
   onPickBazi: (day: SolarDay) => void
@@ -21,7 +35,17 @@ export function CalendarView({ onPickBazi }: Props) {
 
   const { weekStart, dayGanzhi } = useSettings()
   const term = useTerm()
-  const cells = useMemo(() => buildMonthGrid(view.year, view.month, weekStart), [view, weekStart])
+  const [mode, setMode] = useState<ViewMode>('month')
+  const cells = useMemo(
+    () => (mode === 'month' ? buildMonthGrid(view.year, view.month, weekStart) : []),
+    [mode, view, weekStart],
+  )
+  const weekDays = useMemo(() => (mode === 'week' ? buildWeek(selected, weekStart) : []), [mode, selected, weekStart])
+  const yearMonths = useMemo(() => (mode === 'year' ? buildYear(view.year, weekStart) : []), [mode, view.year, weekStart])
+  const weekRange =
+    weekDays.length > 0
+      ? `${weekDays[0].solar.getMonth()}月${weekDays[0].day}日 – ${weekDays[6].solar.getMonth()}月${weekDays[6].day}日`
+      : ''
   const detail = useMemo(() => buildDayDetail(selected), [selected])
 
   const shiftMonth = (delta: number) =>
@@ -32,8 +56,16 @@ export function CalendarView({ onPickBazi }: Props) {
     })
 
   const select = (day: SolarDay) => {
+    if (day.getYear() < MIN_YEAR || day.getYear() > MAX_YEAR) return
     setSelected(day)
     setView({ year: day.getYear(), month: day.getMonth() })
+  }
+
+  /** ‹ › step by ±1 (month / week / year); « » by ±2 (year / four weeks). */
+  const shift = (step: -2 | -1 | 1 | 2) => {
+    if (mode === 'week') select(selected.next(Math.sign(step) * (Math.abs(step) === 2 ? 28 : 7)))
+    else if (mode === 'year') shiftMonth(step * 12)
+    else shiftMonth(Math.abs(step) === 2 ? Math.sign(step) * 12 : step)
   }
 
   const lunarYear = SolarDay.fromYmd(view.year, view.month, 15).getLunarDay().getYearSixtyCycle()
@@ -44,34 +76,42 @@ export function CalendarView({ onPickBazi }: Props) {
         <header className="cal-head">
           <div className="cal-title">
             <h2 className="cal-pickers">
-              <select
-                aria-label="年份"
-                value={view.year}
-                onChange={(e) => setView((v) => ({ ...v, year: Number(e.target.value) }))}
-              >
-                {YEARS.map((y) => (
-                  <option key={y} value={y}>
-                    {y}年
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="月份"
-                value={view.month}
-                onChange={(e) => setView((v) => ({ ...v, month: Number(e.target.value) }))}
-              >
-                {MONTHS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}月
-                  </option>
-                ))}
-              </select>
+              {mode === 'week' ? (
+                <span className="week-range">{weekRange}</span>
+              ) : (
+                <select
+                  aria-label="年份"
+                  value={view.year}
+                  onChange={(e) => setView((v) => ({ ...v, year: Number(e.target.value) }))}
+                >
+                  {YEARS.map((y) => (
+                    <option key={y} value={y}>
+                      {y}年
+                    </option>
+                  ))}
+                </select>
+              )}
+              {mode === 'month' && (
+                <select
+                  aria-label="月份"
+                  value={view.month}
+                  onChange={(e) => setView((v) => ({ ...v, month: Number(e.target.value) }))}
+                >
+                  {MONTHS.map((m) => (
+                    <option key={m} value={m}>
+                      {m}月
+                    </option>
+                  ))}
+                </select>
+              )}
               <MonthPicker
                 year={view.year}
                 month={view.month}
                 minYear={MIN_YEAR}
                 maxYear={MAX_YEAR}
-                onPickMonth={(year, month) => setView({ year, month })}
+                onPickMonth={(year, month) =>
+                  mode === 'week' ? select(SolarDay.fromYmd(year, month, 1)) : setView({ year, month })
+                }
                 onPickDay={select}
               />
             </h2>
@@ -79,44 +119,92 @@ export function CalendarView({ onPickBazi }: Props) {
               {lunarYear.getName()}年 · {term(lunarYear.getEarthBranch().getZodiac().getName())}年
             </span>
           </div>
-          <div className="cal-nav">
-            <button onClick={() => shiftMonth(-12)} aria-label="上一年">«</button>
-            <button onClick={() => shiftMonth(-1)} aria-label="上个月">‹</button>
-            <button onClick={() => select(todaySolar())}>今天</button>
-            <button onClick={() => shiftMonth(1)} aria-label="下个月">›</button>
-            <button onClick={() => shiftMonth(12)} aria-label="下一年">»</button>
+          <div className="cal-tools">
+            <div className="seg small" role="group" aria-label="视图">
+              {VIEW_MODES.map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={mode === value ? 'on' : undefined}
+                  aria-pressed={mode === value}
+                  onClick={() => setMode(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="cal-nav">
+              {mode !== 'year' && (
+                <button onClick={() => shift(-2)} aria-label={NAV_LABELS[mode][0]}>
+                  «
+                </button>
+              )}
+              <button onClick={() => shift(-1)} aria-label={NAV_LABELS[mode][1]}>
+                ‹
+              </button>
+              <button onClick={() => select(todaySolar())}>今天</button>
+              <button onClick={() => shift(1)} aria-label={NAV_LABELS[mode][2]}>
+                ›
+              </button>
+              {mode !== 'year' && (
+                <button onClick={() => shift(2)} aria-label={NAV_LABELS[mode][3]}>
+                  »
+                </button>
+              )}
+            </div>
           </div>
         </header>
 
-        <div className="grid week-titles">
-          {weekTitles(weekStart).map((w) => (
-            <div key={w.name} className={w.weekend ? 'weekend' : undefined}>
-              {w.name}
+        {mode === 'month' && (
+          <>
+            <div className="grid week-titles">
+              {weekTitles(weekStart).map((w) => (
+                <div key={w.name} className={w.weekend ? 'weekend' : undefined}>
+                  {w.name}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="grid days">
-          {cells.map((c) => (
-            <button
-              key={c.key}
-              className={[
-                'day',
-                !c.inMonth && 'out',
-                c.isToday && 'today',
-                c.isWeekend && 'weekend',
-                sameDay(c.solar, selected) && 'selected',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              onClick={() => select(c.solar)}
-            >
-              {c.holiday && <span className={`badge ${c.holiday === '休' ? 'off' : 'work'}`}>{c.holiday}</span>}
-              <span className="num">{c.day}</span>
-              <span className={`sub ${c.subKind}`}>{term(c.sub)}</span>
-              {dayGanzhi === 'show' && <span className="gz">{c.ganzhi}</span>}
-            </button>
-          ))}
-        </div>
+            <div className="grid days">
+              {cells.map((c) => (
+                <button
+                  key={c.key}
+                  className={[
+                    'day',
+                    !c.inMonth && 'out',
+                    c.isToday && 'today',
+                    c.isWeekend && 'weekend',
+                    sameDay(c.solar, selected) && 'selected',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => select(c.solar)}
+                >
+                  {c.holiday && <span className={`badge ${c.holiday === '休' ? 'off' : 'work'}`}>{c.holiday}</span>}
+                  <span className="num">{c.day}</span>
+                  <span className={`sub ${c.subKind}`}>{term(c.sub)}</span>
+                  {dayGanzhi === 'show' && <span className="gz">{c.ganzhi}</span>}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {mode === 'week' && (
+          <WeekView days={weekDays} selected={selected} onSelect={select} showGanzhi={dayGanzhi === 'show'} />
+        )}
+
+        {mode === 'year' && (
+          <YearView
+            months={yearMonths}
+            weekStart={weekStart}
+            selected={selected}
+            onSelect={select}
+            onOpenMonth={(month) => {
+              setView((v) => ({ ...v, month }))
+              setMode('month')
+            }}
+          />
+        )}
       </section>
 
       <aside className="card detail">
