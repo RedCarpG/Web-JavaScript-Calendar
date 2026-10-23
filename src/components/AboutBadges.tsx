@@ -40,7 +40,10 @@ export function AboutBadges() {
               <b>{term('八字排盘')}</b>：四柱、十神、神煞、刑冲合会、{term('大运')}流年流月流日
             </li>
             <li>
-              <b>{term('紫微斗数')}</b>：十二宫命盘、{term('三方四正')}、星曜解释、大限流年流月
+              <b>{term('紫微斗数')}</b>：十二宫命盘、{term('三方四正')}、星曜解释、大限至流时
+            </li>
+            <li>
+              <b>{term('星盘')}</b>：西洋占星本命盘，行星、宫位与相位，行运与推运
             </li>
           </ul>
           <p className="muted">
@@ -59,7 +62,8 @@ export function AboutBadges() {
           </p>
           <p className="muted about-credits">
             制作：<a href="https://github.com/RedCarpG">RedCarpG</a> · 历法 <a href="https://github.com/6tail/tyme4ts">tyme4ts</a> ·
-            紫微 <a href="https://github.com/SylarLong/iztro">iztro</a>
+            紫微 <a href="https://github.com/SylarLong/iztro">iztro</a> · 星盘{' '}
+            <a href="https://github.com/cosinekitty/astronomy">astronomy-engine</a>
           </p>
         </div>
       )}

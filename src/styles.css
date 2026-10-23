@@ -408,9 +408,13 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .seg.small { height: 32px; }
 .seg.small button { flex: 1; padding: 0 8px; font-size: 13px; }
 .topbar h1, .tabs button { white-space: nowrap; }
-@media (max-width: 420px) {
-  .brand-en { display: none; }
-  .tabs button { padding: 6px 12px; }
+@media (max-width: 480px) {
+  /* Brand and settings share the first line; the tabs get the full width below. */
+  .topbar { flex-wrap: wrap; row-gap: 10px; }
+  .topbar-right { display: contents; }
+  .topbar .settings { order: 1; margin-left: auto; }
+  .tabs { order: 2; flex-basis: 100%; }
+  .tabs button { flex: 1; padding: 7px 8px; }
 }
 
 /* ---------- 已保存的命盘：左侧抽屉 ---------- */
@@ -558,6 +562,22 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 /* ---------- 岁运盘 ---------- */
 .section-title + .row-note { margin-top: 4px; }
 .table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.table-scroll.fortune-only .pillars { min-width: 0; }
+/* 八字 page: sticky jump links to 原局 / 岁运 / 岁运盘 */
+.section-nav {
+  position: sticky; top: 8px; z-index: 6; justify-self: center; display: flex; gap: 4px; padding: 4px;
+  border-radius: 999px; border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow);
+}
+.section-nav button { border: 0; background: none; padding: 4px 14px; border-radius: 999px; font-size: 13px; color: var(--muted); }
+.section-nav button:hover { color: var(--accent); background: var(--surface-2); }
+#bazi-natal, #bazi-fortune, #bazi-combined { scroll-margin-top: 56px; }
+.ghost.toggle.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+/* Horizontal scrollers fade out on the side that has more (useScrollHints sets the classes). */
+.fortune-row { position: relative; }
+.can-right { mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+.can-left { mask-image: linear-gradient(to right, transparent, #000 32px); }
+.can-left.can-right { mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
 .table-scroll .pillars { min-width: 640px; }
 .pillars th.divider, .pillars td.divider { border-left: 2px solid var(--border); }
 
@@ -664,6 +684,13 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .fortune-row.decades { grid-template-columns: repeat(12, minmax(60px, 1fr)); }
 .fortunes-head .seg { flex-shrink: 0; }
 .fortune strong { font-size: 15px; }
+.zc-hint { margin: 4px 0 0; font-size: 12px; }
+.zc-sanfang { display: grid; gap: 3px; margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 13px; animation: tip-in 0.15s ease-out; }
+.zc-sanfang > strong { font-size: 13px; color: var(--accent); }
+.zc-sf-row { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.zc-sf-row .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zc-sf-role { flex: none; font-size: 10px; line-height: 1; padding: 2px 5px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.zc-sf-row.sf-self .zc-sf-role { background: var(--accent); color: #fff; }
 .zw-legends { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; }
 .ziwei-credit { margin: 10px 0 0; }
 /* 三方四正: the hovered palace, its 对宫 and 三合 stay lit; lines join them across the centre */
@@ -690,8 +717,6 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .sf-tag, .sf-lines { animation: none; }
 }
 @media (max-width: 360px) {
-  .topbar h1 { font-size: 18px; letter-spacing: 0; }
-  .topbar-right { gap: 4px; }
   .tabs button { padding: 6px 8px; font-size: 13px; }
   .icon-btn { width: 32px; height: 32px; }
 }
@@ -730,9 +755,82 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .zc-title span { font-size: 12px; }
   .ziwei-center .kv { font-size: 11px; gap: 2px 6px; }
   .zc-extra { display: none; }
+  .zc-hint, .zc-sanfang { display: none; }
 }
 @container zw (max-width: 340px) {
   .stars-major .star-name { font-size: 12.5px; }
   .stars-minor .star-name { font-size: 11px; }
   .ziwei-center .kv { font-size: 10px; }
 }
+
+/* ---------- 星盘 ---------- */
+/* Western elements: fire red, earth green, air gold, water blue */
+.el-fire { color: var(--fire); }
+.el-earth { color: var(--wood); }
+.el-air { color: var(--metal); }
+.el-water { color: var(--water); }
+.big-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.b3 {
+  display: grid; justify-items: center; gap: 2px; padding: 10px 6px; border-radius: 12px;
+  background: color-mix(in srgb, currentColor 8%, var(--surface));
+}
+.b3 small { color: var(--muted); }
+.b3-glyph { font-size: 28px; line-height: 1.1; }
+.b3 strong { font-size: 16px; color: var(--text); }
+.star-meta { margin: 10px 0 4px; }
+.star-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .star-layout { grid-template-columns: minmax(0, 1fr); } }
+.star-wheel { width: 100%; max-width: 520px; justify-self: center; height: auto; overflow: visible; }
+.star-wheel .sign-band { stroke: var(--border); stroke-width: 0.6; }
+.star-wheel .band-fire { fill: color-mix(in srgb, var(--fire) 10%, var(--surface)); }
+.star-wheel .band-earth { fill: color-mix(in srgb, var(--wood) 10%, var(--surface)); }
+.star-wheel .band-air { fill: color-mix(in srgb, var(--metal) 12%, var(--surface)); }
+.star-wheel .band-water { fill: color-mix(in srgb, var(--water) 10%, var(--surface)); }
+.star-wheel .sign-glyph { font-size: 15px; fill: currentColor; }
+.star-wheel .tick { stroke: var(--muted); stroke-width: 0.5; opacity: 0.6; }
+.star-wheel .ring { fill: none; stroke: var(--border); stroke-width: 1; }
+.star-wheel .ring.faint { stroke-dasharray: 2 3; }
+.star-wheel .cusp { stroke: var(--muted); stroke-width: 0.6; opacity: 0.6; }
+.star-wheel .cusp.angle { stroke: var(--text); stroke-width: 1.4; opacity: 0.9; }
+.star-wheel .house-num { font-size: 9px; fill: var(--muted); }
+.star-wheel .angle-label { font-size: 9px; font-weight: 700; fill: var(--accent); }
+.star-wheel .planet-glyph-svg { font-size: 17px; fill: currentColor; font-weight: 600; }
+.star-wheel .planet-deg { font-size: 8.5px; fill: var(--muted); }
+.star-wheel .planet-tick { stroke: currentColor; stroke-width: 1.4; }
+.star-wheel .planet { cursor: default; }
+.star-wheel .aspect-line { stroke-width: 1.1; }
+.star-wheel .aspect-line.tone-soft { stroke: var(--water); }
+.star-wheel .aspect-line.tone-hard { stroke: var(--bad); }
+.star-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.star-table th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.star-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.planet-glyph { display: inline-block; width: 1.3em; color: var(--muted); }
+.retro { margin-left: 4px; color: var(--bad); font-weight: 700; }
+.element-bars { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 13px; }
+.element-bars b { color: var(--text); }
+.house-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+.house-cell { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; }
+.aspects-title { margin-top: 18px !important; }
+.aspect-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.aspect-chip {
+  display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 10px; border-radius: 999px; font-size: 13px;
+  background: var(--surface-2);
+}
+.aspect-chip small { color: var(--muted); font-size: 11px; }
+.aspect-chip.tone-soft .tip-label { color: var(--water); font-weight: 600; }
+.aspect-chip.tone-hard .tip-label { color: var(--bad); font-weight: 600; }
+.aspect-chip.tone-major .tip-label { color: var(--accent); font-weight: 600; }
+/* 行运 / 推运 */
+.overlay-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.overlay-bar input { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.overlay-bar .ghost { margin-left: 0; height: 32px; font-size: 13px; }
+.star-wheel.with-transit { --overlay: var(--ly-yearly); }
+.star-wheel.with-progressed { --overlay: var(--ly-decadal); }
+.star-wheel .outer-band { fill: color-mix(in srgb, var(--overlay) 7%, transparent); stroke: var(--overlay); stroke-opacity: 0.4; }
+.star-wheel .outer-planet { color: var(--overlay); }
+.star-wheel .outer-angle { font-size: 9px; font-weight: 700; fill: var(--overlay); }
+.overlay-card.is-transit { border-color: color-mix(in srgb, var(--ly-yearly) 45%, var(--border)); }
+.overlay-card.is-progressed { border-color: color-mix(in srgb, var(--ly-decadal) 45%, var(--border)); }
+.overlay-card.is-transit .section-title { color: var(--ly-yearly); }
+.overlay-card.is-progressed .section-title { color: var(--ly-decadal); }
+.overlay-subtitle { margin: 0 0 6px; font-size: 14px; }
