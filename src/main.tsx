@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
+import { SPLASH_FADE_MS, SPLASH_MIN_MS } from './components/Splash'
 import './styles.css'
 
 createRoot(document.getElementById('root')!).render(
@@ -8,3 +9,12 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// The app is up: fade out the loading screen from index.html (once it has been
+// up SPLASH_MIN_MS since the page opened), then drop it.
+const splash = document.getElementById('splash')
+if (splash) {
+  const wait = Math.max(0, SPLASH_MIN_MS - performance.now())
+  setTimeout(() => splash.classList.add('done'), wait)
+  setTimeout(() => splash.remove(), wait + SPLASH_FADE_MS)
+}

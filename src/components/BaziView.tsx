@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { FortuneRow } from './FortuneRow'
+import { TitleMark } from './Logo'
+import { SectionNav } from './SectionNav'
 import { useScrollHints } from './useScrollHints'
 import {
   ELEMENTS,
@@ -55,6 +57,14 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
   )
   const day = days.find((d) => d.key === pickedDay) ?? days.find((d) => d.isToday) ?? days[0]
 
+  // Clicking the picked chip again leaves that level out of the 岁运盘; picking
+  // any chip of the level brings it back. The 大运 is always in.
+  const [off, setOff] = useState<Record<FortuneLevel, boolean>>({ year: false, month: false, day: false })
+  const choose = (level: FortuneLevel, again: boolean, pick: () => void) => {
+    if (again && !off[level]) return setOff((o) => ({ ...o, [level]: true }))
+    setOff((o) => ({ ...o, [level]: false }))
+    pick()
+  }
   // Picking a coarser level resets the finer ones to their defaults.
   const pickDecade = (i: number) => {
     setPicked(i)
@@ -62,33 +72,59 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
     setPickedMonth(null)
     setPickedDay(null)
   }
+  // 流月 and 流日 hang off the 流年: leaving it out shuts and drops them too, and
+  // bringing it back opens the 流月 list to pick from.
   const pickYear = (y: number) => {
-    setPickedYear(y)
-    setPickedMonth(null)
-    setPickedDay(null)
+    if (y === fortuneYear.year && !off.year) {
+      setOff((o) => ({ ...o, year: true, month: true, day: true }))
+      setOpen((o) => ({ ...o, month: false, day: false }))
+      return
+    }
+    if (off.year) setOpen((o) => ({ ...o, month: true }))
+    choose('year', false, () => {
+      setPickedYear(y)
+      setPickedMonth(null)
+      setPickedDay(null)
+    })
   }
+  // 流日 hangs off the 流月 the same way.
   const pickMonth = (i: number) => {
-    setPickedMonth(i)
-    setPickedDay(null)
+    if (i === month.index && !off.month) {
+      setOff((o) => ({ ...o, month: true, day: true }))
+      setOpen((o) => ({ ...o, day: false }))
+      return
+    }
+    if (off.month) setOpen((o) => ({ ...o, day: true }))
+    choose('month', false, () => {
+      setPickedMonth(i)
+      setPickedDay(null)
+    })
   }
+  const pickDay = (key: string) => choose('day', key === day.key, () => setPickedDay(key))
+  const chipClass = (level: FortuneLevel, selected: boolean, current: boolean) =>
+    ['fortune', current && 'current', selected && !off[level] && 'selected'].filter(Boolean).join(' ')
 
   // 流日 → 大运, the usual 岁运盘 order (finest first), then the natal chart.
-  const columns: FortuneColumn[] = [
-    { label: '流日', ganzhi: day.ganzhi },
-    { label: '流月', ganzhi: month.ganzhi },
-    { label: '流年', ganzhi: fortuneYear.ganzhi },
-    { label: '大运', ganzhi: decade.ganzhi },
+  const levels: [FortuneLevel | 'decade', FortuneColumn, string][] = [
+    ['day', { label: '流日', ganzhi: day.ganzhi }, `${day.month}月${day.day}日`],
+    ['month', { label: '流月', ganzhi: month.ganzhi }, `${month.ganzhi}月`],
+    ['year', { label: '流年', ganzhi: fortuneYear.ganzhi }, `${fortuneYear.year}${fortuneYear.ganzhi}年`],
+    ['decade', { label: '大运', ganzhi: decade.ganzhi }, `${decade.ganzhi}${term('运')}`],
   ]
+  const shown = levels.filter(([level]) => level === 'decade' || !off[level])
+  const columns = shown.map(([, column]) => column)
   const combined = fortunePillars(chart, columns, schools)
   const fortuneRels = fortuneRelations(chart, columns, schools)
 
   // 岁运盘: phones show only the four 岁运 columns unless 合参原局 is switched on.
   const [withNatal, setWithNatal] = useState(() => window.matchMedia('(min-width: 640px)').matches)
+  // With no 岁运 picked, the 岁运盘 falls back to the natal chart alone.
+  const natalShown = withNatal || columns.length === 0
   const tableRef = useRef<HTMLDivElement>(null)
-  useScrollHints(tableRef, `${decadeIndex}|${fortuneYear.year}|${month.index}|${day.key}|${withNatal}`)
+  useScrollHints(tableRef, `${decadeIndex}|${fortuneYear.year}|${month.index}|${day.key}|${withNatal}|${columns.length}`)
 
   const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true })
-  // The 岁运 picker is a side panel of the 岁运盘 card; collapsed, it leaves a slim tab.
+  // The 岁运 picker is a panel laid over the 岁运盘; closed, it leaves a slim tab.
   const [sideOpen, setSideOpen] = useState(() => {
     try {
       return localStorage.getItem(SIDE_KEY) !== 'closed'
@@ -199,19 +235,27 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
       </section>
 
       <section className={`card fortunes fortune-combo${sideOpen ? ' side-open' : ''}`} id="bazi-fortune">
-        {!sideOpen && (
-          <button type="button" className="side-handle" aria-expanded={false} onClick={toggleSide} title="展开岁运">
-            <span className="side-handle-title">{term('岁运')}</span>
-            <span className="side-handle-sub">
-              {decade.ganzhi}
-              {term('运')} · {fortuneYear.year}
-            </span>
-            <span aria-hidden="true">›</span>
-          </button>
-        )}
-        <aside className="fortune-side" aria-label={term('岁运')} hidden={!sideOpen}>
+        <button
+          type="button"
+          className="side-handle"
+          aria-expanded={sideOpen}
+          aria-controls="fortune-side"
+          onClick={toggleSide}
+          title={sideOpen ? '收起岁运' : '展开岁运'}
+        >
+          <span className="side-handle-title">{term('岁运')}</span>
+          <span className="side-handle-sub">
+            {decade.ganzhi}
+            {term('运')} · {fortuneYear.year}
+          </span>
+          <span aria-hidden="true">›</span>
+        </button>
+        <aside id="fortune-side" className="fortune-side" aria-label={term('岁运')} hidden={!sideOpen}>
           <div className="fortunes-head">
-            <h3>{term('岁运')}</h3>
+            <h3>
+              <TitleMark />
+              {term('岁运')}
+            </h3>
             <button type="button" className="ghost" onClick={toggleAll}>
               {Object.values(open).every(Boolean) ? '全部收起' : '全部展开'}
             </button>
@@ -249,7 +293,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           </FortuneRow>
           <FortuneRow
             title={term('流年')}
-            summary={`${fortuneYear.year} ${fortuneYear.ganzhi} · ${fortuneYear.age}岁`}
+            summary={off.year ? UNPICKED : `${fortuneYear.year} ${fortuneYear.ganzhi} · ${fortuneYear.age}岁`}
             open={open.year}
             onToggle={() => toggle('year')}
           >
@@ -257,9 +301,8 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
               {decade.years.map((y) => (
                 <button
                   key={y.year}
-                  className={['fortune', y.year === thisYear && 'current', y.year === fortuneYear.year && 'selected']
-                    .filter(Boolean)
-                    .join(' ')}
+                  className={chipClass('year', y.year === fortuneYear.year, y.year === thisYear)}
+                  aria-pressed={y.year === fortuneYear.year && !off.year}
                   onClick={() => pickYear(y.year)}
                 >
                   <small>{y.year}</small>
@@ -267,16 +310,13 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
                   <Char g={y.stem} small />
                   <Char g={y.branch} small />
                   <small>{term(y.stem.tenStar ?? '')}</small>
-                  <small className="muted" title={term('小运')}>
-                    {y.smallFortune}
-                  </small>
                 </button>
               ))}
             </div>
           </FortuneRow>
           <FortuneRow
             title={term('流月')}
-            summary={`${month.ganzhi} · ${month.start}起`}
+            summary={off.month ? UNPICKED : `${month.ganzhi} · ${month.start}起`}
             open={open.month}
             onToggle={() => toggle('month')}
           >
@@ -284,9 +324,8 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
               {months.map((m) => (
                 <button
                   key={m.index}
-                  className={['fortune', m.index === todayMonth && 'current', m.index === month.index && 'selected']
-                    .filter(Boolean)
-                    .join(' ')}
+                  className={chipClass('month', m.index === month.index, m.index === todayMonth)}
+                  aria-pressed={m.index === month.index && !off.month}
                   onClick={() => pickMonth(m.index)}
                 >
                   <small>{m.start}</small>
@@ -299,7 +338,7 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
           </FortuneRow>
           <FortuneRow
             title={term('流日')}
-            summary={`${day.month}/${day.day} ${day.ganzhi}`}
+            summary={off.day ? UNPICKED : `${day.month}/${day.day} ${day.ganzhi}`}
             open={open.day}
             onToggle={() => toggle('day')}
           >
@@ -307,10 +346,9 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
               {days.map((d) => (
                 <button
                   key={d.key}
-                  className={['fortune', d.isToday && 'current', d.key === day.key && 'selected']
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => setPickedDay(d.key)}
+                  className={chipClass('day', d.key === day.key, d.isToday)}
+                  aria-pressed={d.key === day.key && !off.day}
+                  onClick={() => pickDay(d.key)}
                 >
                   <small>
                     {d.month}/{d.day}
@@ -326,7 +364,10 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
 
         <div className="fortune-main" id="bazi-combined">
           <div className="fortunes-head">
-            <h3 className="section-title">{term('岁运盘')}</h3>
+            <h3 className="section-title">
+              <TitleMark />
+              {term('岁运盘')}
+            </h3>
             <button
               type="button"
               className={`ghost toggle${withNatal ? ' on' : ''}`}
@@ -337,17 +378,18 @@ export function BaziView({ input, onChange, schools, onSchoolsChange }: Props) {
             </button>
           </div>
           <p className="muted row-note">
-            {day.month}月{day.day}日 · {month.ganzhi}月 · {fortuneYear.year}
-            {fortuneYear.ganzhi}年 · {decade.ganzhi}
-            {term('运')}，合参命主原局
+            {shown.length > 0
+              ? `${shown.map(([, , note]) => note).join(' · ')}，合参命主原局`
+              : `未选中${term('岁运')}，在${term('岁运')}中点选大运、流年、流月或流日`}
           </p>
           <HighlightScope pillars={[...combined, ...chart.pillars]} relations={fortuneRels}>
-            <div className={`table-scroll${withNatal ? '' : ' fortune-only'}`} ref={tableRef}>
+            <div className={`table-scroll${natalShown ? '' : ' fortune-only'}`} ref={tableRef}>
               <PillarTable
-                pillars={withNatal ? [...combined, ...chart.pillars] : combined}
+                pillars={natalShown ? [...combined, ...chart.pillars] : combined}
                 schools={schools}
-                dividerAt={withNatal ? combined.length : undefined}
+                dividerAt={natalShown && combined.length > 0 ? combined.length : undefined}
                 dayMaster={chart.dayMaster.char}
+                animate
               />
             </div>
             <Relations
@@ -376,7 +418,10 @@ function Relations({
 }) {
   return (
     <div className="relations">
-      <h4>{title}</h4>
+      <h4>
+        <TitleMark />
+        {title}
+      </h4>
       {items.length === 0 ? (
         <p className="muted">{empty}</p>
       ) : (
@@ -404,20 +449,7 @@ function RelationChip({ relation: r, index, schools }: { relation: Relation; ind
 }
 
 const SIDE_KEY = 'chroniq-fortune-side'
+const UNPICKED = '未选 · 不入盘'
 
-/** Sticky row of jump links to the page's sections. */
-function SectionNav({ items }: { items: [id: string, label: string][] }) {
-  return (
-    <nav className="section-nav" aria-label="页面导航">
-      {items.map(([id, label]) => (
-        <button
-          key={id}
-          type="button"
-          onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-        >
-          {label}
-        </button>
-      ))}
-    </nav>
-  )
-}
+/** The 岁运 levels that can be left out of the 岁运盘 (the 大运 cannot). */
+type FortuneLevel = 'year' | 'month' | 'day'

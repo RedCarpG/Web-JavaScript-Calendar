@@ -22,7 +22,9 @@ import { ZIWEI_SCHOOLS, type ZiweiSchoolSettings } from '../lib/ziweiSchools'
 import { useSettings, useTerm } from '../settingsContext'
 import { BirthForm } from './BirthForm'
 import { FortuneRow } from './FortuneRow'
+import { TitleMark } from './Logo'
 import { SchoolSettingsPanel } from './Schools'
+import { SectionNav } from './SectionNav'
 import { SanFangTip, StarTip } from './ZiweiTips'
 
 /** A palace's part in the selected palace's 三方四正 */
@@ -39,6 +41,9 @@ const DEPTHS: { value: Depth; label: string }[] = [
   { value: 'hourly', label: '流时' },
 ]
 const LAYER_ORDER: LayerKind[] = ['decadal', 'yearly', 'monthly', 'daily', 'hourly']
+/** The 运限 row each layer is picked in */
+const ROW_OF = { decadal: 'decade', yearly: 'year', monthly: 'month', daily: 'day', hourly: 'hour' } as const
+const INITIAL_OPEN = { decade: true, year: false, month: false, day: false, hour: false }
 /** One-character layer prefix: 大命, 年财, 月兄, 日福, 时官 … */
 const LAYER_CHAR: Record<LayerKind, string> = { decadal: '大', yearly: '年', monthly: '月', daily: '日', hourly: '时' }
 const LAYER_NAME: Record<LayerKind, string> = {
@@ -96,41 +101,67 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
         DEPTHS.findIndex((d) => d.value === depth),
       ).map((k) => horoscope[k])
     : []
-  const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true, hour: true })
+  // The board starts at 本命 and 运限 are picked one level at a time, so only the
+  // 大限 row starts open; picking a level opens the next one.
+  const [open, setOpen] = useState(INITIAL_OPEN)
   const toggle = (key: keyof typeof open) => setOpen((o) => ({ ...o, [key]: !o[key] }))
+  // Clicking the picked chip of a shown level again peels the board back to the
+  // level above and shuts the finer rows; picking a level that was not shown
+  // opens the next finer row to pick from.
+  const choose = (kind: LayerKind, again: boolean, pick: () => void) => {
+    const i = LAYER_ORDER.indexOf(kind)
+    if (again && shows(kind)) {
+      setDepth(DEPTHS[i].value)
+      setOpen((o) => {
+        const next = { ...o }
+        for (const k of LAYER_ORDER.slice(i + 1)) next[ROW_OF[k]] = false
+        return next
+      })
+      return
+    }
+    const finer = LAYER_ORDER[i + 1]
+    if (finer && !shows(kind)) setOpen((o) => ({ ...o, [ROW_OF[finer]]: true }))
+    pick()
+  }
   // Picking a coarser level resets the finer ones; picking any level shows it.
-  const pickDecade = (i: number) => {
-    setPickedDecade(i)
-    setPickedYear(null)
-    setPickedMonth(null)
-    setPickedDay(null)
-    setPickedHour(null)
-    setDepth('decadal')
-  }
-  const pickYear = (y: number) => {
-    setPickedYear(y)
-    setPickedMonth(null)
-    setPickedDay(null)
-    setPickedHour(null)
-    setDepth('yearly')
-  }
-  const pickMonth = (m: number) => {
-    setPickedMonth(m)
-    setPickedDay(null)
-    setPickedHour(null)
-    setDepth('monthly')
-  }
-  const pickDay = (d: number) => {
-    setPickedDay(d)
-    setPickedHour(null)
-    setDepth('daily')
-  }
-  const pickHour = (h: number) => {
-    setPickedHour(h)
-    setDepth('hourly')
-  }
+  const pickDecade = (i: number) =>
+    choose('decadal', i === decadeIndex, () => {
+      setPickedDecade(i)
+      setPickedYear(null)
+      setPickedMonth(null)
+      setPickedDay(null)
+      setPickedHour(null)
+      setDepth('decadal')
+    })
+  const pickYear = (y: number) =>
+    choose('yearly', y === year, () => {
+      setPickedYear(y)
+      setPickedMonth(null)
+      setPickedDay(null)
+      setPickedHour(null)
+      setDepth('yearly')
+    })
+  const pickMonth = (m: number) =>
+    choose('monthly', m === month, () => {
+      setPickedMonth(m)
+      setPickedDay(null)
+      setPickedHour(null)
+      setDepth('monthly')
+    })
+  const pickDay = (d: number) =>
+    choose('daily', d === day, () => {
+      setPickedDay(d)
+      setPickedHour(null)
+      setDepth('daily')
+    })
+  const pickHour = (h: number) =>
+    choose('hourly', h === hour, () => {
+      setPickedHour(h)
+      setDepth('hourly')
+    })
   const update = (next: BaziInput) => {
     setDepth('natal')
+    setOpen(INITIAL_OPEN)
     setPickedDecade(null)
     setPickedYear(null)
     setPickedMonth(null)
@@ -157,7 +188,13 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
         onChange={update}
         schoolsPanel={<SchoolSettingsPanel registry={ZIWEI_SCHOOLS} settings={schools} onChange={onSchoolsChange} />}
       />
-      <section className="card">
+      <SectionNav
+        items={[
+          ['ziwei-board', term('盘面')],
+          ['ziwei-fortune', term('运限')],
+        ]}
+      />
+      <section className="card" id="ziwei-board">
         <div className="ziwei-scroll">
           <div className={`ziwei-board color-${ziweiColor}${roles ? ' sf-active' : ''}`}>
             {Object.values(chart.palaces).map((p) => (
@@ -249,9 +286,12 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
         </p>
       </section>
 
-      <section className="card fortunes">
+      <section className="card fortunes ziwei-fortunes" id="ziwei-fortune">
         <div className="fortunes-head">
-          <h3>{term('运限')}</h3>
+          <h3>
+            <TitleMark />
+            {term('运限')}
+          </h3>
           <div className="seg small" role="group" aria-label="叠加到">
             {DEPTHS.map((d) => (
               <button key={d.value} className={depth === d.value ? 'on' : undefined} onClick={() => setDepth(d.value)}>

@@ -27,7 +27,10 @@ export function FortuneRow({
         <span className="fortune-title">{title}</span>
         <span className="muted fortune-summary">{summary}</span>
       </button>
-      {open && <div className="fortune-body">{children}</div>}
+      {/* Always rendered, so opening and closing can slide (see .fortune-body-wrap). */}
+      <div className="fortune-body-wrap" inert={!open}>
+        <div className="fortune-body">{children}</div>
+      </div>
     </div>
   )
 }

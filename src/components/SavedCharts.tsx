@@ -2,6 +2,10 @@ import { useCallback, useRef, useState } from 'react'
 import type { BaziInput } from '../lib/bazi'
 import { loadCharts, sameInput, saveCharts, upsertChart, type SavedChart } from '../lib/savedCharts'
 import { useDismiss } from './useDismiss'
+import { TitleMark } from './Logo'
+
+/** id of the spot under the 命盘 tab where a page can portal its own tabs. */
+export const DRAWER_RAIL_SLOT = 'drawer-rail-slot'
 
 /**
  * Saved charts in a drawer on the left edge of the screen. Closed, only a
@@ -31,7 +35,10 @@ export function SavedChartsDrawer({ input, onLoad }: { input: BaziInput; onLoad:
     <div className={`drawer${open ? ' open' : ''}`} ref={ref}>
       <aside id="saved-charts" className="drawer-panel" aria-label="已保存的命盘" inert={!open}>
         <div className="drawer-head">
-          <h3>已保存的命盘</h3>
+          <h3>
+            <TitleMark />
+            已保存的命盘
+          </h3>
           <button type="button" className="chip-x" aria-label="收起" onClick={close}>
             ×
           </button>
@@ -85,17 +92,21 @@ export function SavedChartsDrawer({ input, onLoad }: { input: BaziInput; onLoad:
         )}
         <small className="muted">命盘只保存在本机浏览器中，不会上传。</small>
       </aside>
-      <button
-        type="button"
-        className="drawer-handle"
-        aria-expanded={open}
-        aria-controls="saved-charts"
-        title="已保存的命盘"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span className="drawer-handle-text">命盘</span>
-        {charts.length > 0 && <span className="drawer-count">{charts.length}</span>}
-      </button>
+      <div className="drawer-rail">
+        <button
+          type="button"
+          className="drawer-handle"
+          aria-expanded={open}
+          aria-controls="saved-charts"
+          title="已保存的命盘"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <span className="drawer-handle-text">命盘</span>
+          {charts.length > 0 && <span className="drawer-count">{charts.length}</span>}
+        </button>
+        {/* Pages can portal their own tabs in here, below the 命盘 tab. */}
+        <div id={DRAWER_RAIL_SLOT} className="drawer-rail-slot" />
+      </div>
     </div>
   )
 }

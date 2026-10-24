@@ -28,7 +28,9 @@ import { WORLD_CITIES, allTimeZones } from '../lib/worldCities'
 import { STAR_SCHOOLS, cityPlace } from '../lib/starPrefs'
 import { BirthForm } from './BirthForm'
 import { InfoTip, TipLine } from './InfoTip'
+import { TitleMark } from './Logo'
 import { SchoolSettingsPanel } from './Schools'
+import { SectionNav } from './SectionNav'
 
 interface Props {
   input: BaziInput
@@ -84,8 +86,15 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
         extra={<PlacePicker place={place} onChange={onPlaceChange} />}
         schoolsPanel={<SchoolSettingsPanel registry={STAR_SCHOOLS} settings={settings} onChange={onSettingsChange} />}
       />
+      <SectionNav
+        items={[
+          ['star-natal', '本命'],
+          ...(overlay ? [['star-overlay', overlay.kind === 'transit' ? '行运' : '推运'] as [string, string]] : []),
+          ['star-houses', '宫位'],
+        ]}
+      />
 
-      <section className="card">
+      <section className="card" id="star-natal">
         <div className="big-three">
           {[
             [sun, '太阳'],
@@ -202,8 +211,11 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
 
       {overlay && <OverlayCard overlay={overlay} timeZone={place.timeZone} hl={hl} hover={hover} active={!!focus} />}
 
-      <section className="card">
-        <h3 className="section-title">宫位</h3>
+      <section className="card" id="star-houses">
+        <h3 className="section-title">
+          <TitleMark />
+          宫位
+        </h3>
         <div className="house-grid">
           {chart.cusps.map((c, i) => (
             <div key={i} className={`house-cell${hl.house === i + 1 ? ' on' : ''}`} {...hover({ house: i + 1 })}>
@@ -215,7 +227,10 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
           ))}
         </div>
 
-        <h3 className="section-title aspects-title">相位</h3>
+        <h3 className="section-title aspects-title">
+          <TitleMark />
+          相位
+        </h3>
         {chart.aspects.length === 0 ? (
           <p className="muted">没有主要相位。</p>
         ) : (
@@ -586,8 +601,9 @@ function OverlayCard({
   const fmt = (d: Date) =>
     new Intl.DateTimeFormat('zh-CN', { timeZone, dateStyle: 'medium', timeStyle: 'short' }).format(d)
   return (
-    <section className={`card overlay-card is-${o.kind}`}>
+    <section className={`card overlay-card is-${o.kind}`} id="star-overlay">
       <h3 className="section-title">
+        <TitleMark />
         {label} · {fmt(o.target)}
       </h3>
       <p className="muted row-note">
@@ -630,7 +646,10 @@ function OverlayCard({
           </tbody>
         </table>
         <div>
-          <h4 className="overlay-subtitle">与本命的相位</h4>
+          <h4 className="overlay-subtitle">
+            <TitleMark />
+            与本命的相位
+          </h4>
           {o.aspects.length === 0 ? (
             <p className="muted">容许度内没有相位。</p>
           ) : (

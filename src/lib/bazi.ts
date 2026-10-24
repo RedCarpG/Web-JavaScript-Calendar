@@ -50,8 +50,6 @@ export interface FortuneYear {
   year: number
   age: number
   ganzhi: string
-  /** 小运 */
-  smallFortune: string
   stem: Glyph
   branch: Glyph
 }
@@ -146,7 +144,6 @@ function decadeInfo(df: DecadeFortune, me: HeavenStem): DecadeInfo {
       year: sixtyCycleYear.getYear(),
       age: f.getAge(),
       ganzhi: ysc.getName(),
-      smallFortune: f.getSixtyCycle().getName(),
       stem: stemGlyph(ysc.getHeavenStem(), me),
       branch: glyph(ysc.getEarthBranch()),
     })

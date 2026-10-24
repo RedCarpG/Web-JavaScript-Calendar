@@ -112,6 +112,20 @@ a { color: var(--accent); }
 :root[data-scale='115'] { --ui-zoom: 1.15; }
 :root[data-scale='130'] { --ui-zoom: 1.3; }
 
+/* Page switches (App goTab): the old page slides out and fades while the new one
+   slides in from the side of the new tab. data-page-dir says which way. */
+main { view-transition-name: page; }
+:root { --page-shift: 48px; }
+:root[data-page-dir='back'] { --page-shift: -48px; }
+::view-transition-group(page) { animation-duration: 0.4s; animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
+::view-transition-old(page) { animation: page-out 0.25s ease-in both; }
+::view-transition-new(page) { animation: page-in 0.4s cubic-bezier(0.33, 1, 0.68, 1) 0.05s both; }
+@keyframes page-out { to { opacity: 0; transform: translateX(calc(-1 * var(--page-shift))); } }
+@keyframes page-in { from { opacity: 0; transform: translateX(var(--page-shift)); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(page), ::view-transition-old(page), ::view-transition-new(page) { animation: none; }
+}
+
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .topbar h1 { margin: 0; font-size: 22px; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
 .topbar h1 .logo { flex: none; }
@@ -445,6 +459,12 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .drawer.open .drawer-panel { box-shadow: 8px 0 32px rgb(0 0 0 / 0.18); }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; }
 .drawer-head h3 { margin: 0; font-size: 16px; }
+/* The 命盘 tab plus any page tabs below it, a little below the middle of the left edge. */
+.drawer-rail {
+  align-self: center; translate: 0 8vh;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.drawer-rail-slot:empty { display: none; }
 .drawer-handle {
   display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px;
   border: 1px solid var(--border); border-left: 0; border-radius: 0 12px 12px 0;
@@ -550,6 +570,8 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 /* ---------- 岁运：可折叠的大运 / 流年 / 流月 / 流日 ---------- */
 .fortunes-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .fortunes-head h3, .section-title { margin: 0; font-size: 16px; }
+/* The small 星曆 mark before a section heading */
+.title-mark { flex: none; display: inline-block; vertical-align: -0.15em; margin-right: 0.35em; width: 1em; height: 1em; }
 .fortunes-head .ghost { margin-left: 0; height: 32px; font-size: 13px; }
 .fortune-group { border-top: 1px solid var(--border); }
 .fortune-toggle {
@@ -557,11 +579,30 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   border: 0; background: none; text-align: left;
 }
 .fortune-toggle:hover .fortune-title { color: var(--accent); }
-.chev { display: inline-block; width: 12px; color: var(--muted); transition: transform 0.15s; }
+.chev { display: inline-block; width: 12px; color: var(--muted); transition: transform 0.45s cubic-bezier(0.33, 1, 0.68, 1); }
 .fortune-group.open .chev { transform: rotate(90deg); }
 .fortune-title { font-weight: 600; font-size: 15px; }
 .fortune-summary { font-size: 13px; }
 .fortune-body { padding: 0 0 12px; }
+/* Rows slide open and shut: the wrapper's single grid row eases between 0fr and 1fr. */
+.fortune-body-wrap {
+  --ease-row: cubic-bezier(0.33, 1, 0.68, 1);
+  display: grid; grid-template-rows: 0fr; opacity: 0;
+  transition: grid-template-rows 0.45s var(--ease-row), opacity 0.25s ease;
+}
+.fortune-group.open > .fortune-body-wrap {
+  grid-template-rows: 1fr; opacity: 1;
+  transition: grid-template-rows 0.45s var(--ease-row), opacity 0.35s ease 0.08s;
+}
+/* The bottom gap is a spacer, not padding, so a shut row really reaches 0.
+   The chips also ease down a little as the row opens. */
+.fortune-body-wrap > .fortune-body {
+  min-height: 0; overflow: hidden; padding: 0;
+  transform: translateY(-8px); transition: transform 0.45s var(--ease-row);
+}
+.fortune-group.open > .fortune-body-wrap > .fortune-body { transform: none; }
+.fortune-body-wrap > .fortune-body::after { content: ''; display: block; height: 12px; }
+@media (prefers-reduced-motion: reduce) { .fortune-body-wrap, .fortune-body-wrap > .fortune-body { transition: none; } }
 .fortunes .row-note, .row-note { margin: 0 0 8px; font-size: 13px; }
 .fortune-row.months { grid-template-columns: repeat(12, minmax(52px, 1fr)); }
 .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); }
@@ -570,15 +611,33 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .section-title + .row-note { margin-top: 4px; }
 .table-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
 .table-scroll.fortune-only .pillars { min-width: 0; }
-/* 八字 page: sticky jump links to 原局 / 岁运 / 岁运盘 */
+/* 八字 / 紫微 / 星盘: jump links to the page's sections, as tabs on the left edge under
+   the 命盘 tab (portalled into .drawer-rail-slot), between ↑ top and ↓ bottom.
+   The thumb slides to the section in view. */
 .section-nav {
-  position: sticky; top: 8px; z-index: 6; justify-self: center; display: flex; gap: 4px; padding: 4px;
-  border-radius: 999px; border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(8px); box-shadow: var(--shadow);
+  --tab-h: 52px;
+  display: flex; flex-direction: column; padding: 4px;
+  border: 1px solid var(--border); border-left: 0; border-radius: 0 12px 12px 0;
+  background: var(--surface); box-shadow: var(--shadow);
 }
-.section-nav button { border: 0; background: none; padding: 4px 14px; border-radius: 999px; font-size: 13px; color: var(--muted); }
-.section-nav button:hover { color: var(--accent); background: var(--surface-2); }
-#bazi-natal, #bazi-fortune, #bazi-combined { scroll-margin-top: 56px; }
+.section-nav button {
+  position: relative; z-index: 1; padding: 0 2px; border: 0; border-radius: 8px;
+  background: none; color: var(--muted); font-size: 13px; transition: color 0.25s, background-color 0.25s;
+}
+.section-nav button:hover, .section-nav button.on { color: var(--accent); }
+.section-nav-end { height: 28px; font-size: 14px !important; line-height: 1; }
+.section-nav-end:hover { background: var(--surface-2) !important; }
+.section-nav-tabs { position: relative; display: flex; flex-direction: column; margin: 2px 0; }
+.section-nav-tabs button { height: var(--tab-h); }
+.section-nav-text { display: block; width: 1em; line-height: 1.15; word-break: break-all; }
+.section-nav-thumb {
+  position: absolute; top: 0; left: 0; right: 0; height: var(--tab-h); border-radius: 8px;
+  background: var(--accent-soft); transform: translateY(calc(var(--active, 0) * var(--tab-h)));
+  transition: transform 0.3s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+@media (prefers-reduced-motion: reduce) { .section-nav-thumb, .section-nav button { transition: none; } }
+#bazi-natal, #bazi-fortune, #bazi-combined,
+#ziwei-board, #ziwei-fortune, #star-natal, #star-overlay, #star-houses { scroll-margin-top: 16px; }
 .ghost.toggle.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 /* Horizontal scrollers fade out on the side that has more (useScrollHints sets the classes). */
 .fortune-row { position: relative; }
@@ -869,15 +928,27 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
   .star-wheel .house-sector, .star-wheel .planet, .star-wheel .aspect-line, .star-table tbody tr, .house-cell, .aspect-chip { transition: none; }
 }
 
-/* ---------- 八字：岁运 side panel + 岁运盘 in one card ---------- */
+/* ---------- 八字：岁运 panel laid over the 岁运盘, in one card ---------- */
+/* Open, the 岁运 panel covers the 岁运盘 (from the left, the whole card on phones);
+   it has to be closed again to see the full 岁运盘. */
 .fortune-combo {
-  display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 0 24px; align-items: start;
-  transition: grid-template-columns 0.3s ease;
+  position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 0 24px; align-items: start;
 }
-.fortune-combo:not(.side-open) { grid-template-columns: 40px minmax(0, 1fr); }
-.fortune-side { min-width: 0; padding-right: 24px; margin-right: -24px; border-right: 1px solid var(--border); animation: side-in 0.25s ease-out; }
+.fortune-side {
+  position: absolute; z-index: 5; top: 0; bottom: 0; left: 0; width: min(420px, 100%); box-sizing: border-box;
+  overflow-y: auto; overscroll-behavior: contain; padding: 16px;
+  background: var(--surface); border-right: 1px solid var(--border); border-radius: var(--radius) 0 0 var(--radius);
+  box-shadow: 8px 0 32px rgb(0 0 0 / 0.18); animation: side-slide 0.25s ease-out;
+}
 .fortune-side[hidden] { display: none; }
-.fortune-side .fortunes-head { gap: 6px; }
+@keyframes side-slide { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+/* The head (with 收起) stays put while the panel scrolls. */
+.fortune-side .fortunes-head {
+  gap: 6px; position: sticky; top: -16px; z-index: 2;
+  margin: -16px -16px 8px; padding: 16px 16px 8px; background: var(--surface);
+}
+/* Thin, faint scrollbars in the 岁运 card. */
+.fortune-combo, .fortune-combo * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--muted) 30%, transparent) transparent; }
 .fortune-side .fortunes-head h3 { margin-right: auto; }
 .fortune-main { min-width: 0; }
 .side-handle {
@@ -890,23 +961,33 @@ th .tip-label { border-bottom-color: color-mix(in srgb, currentColor 50%, transp
 .side-handle-title { font-weight: 700; font-size: 15px; }
 .side-handle-sub { font-size: 12px; color: var(--muted); }
 @keyframes side-in { from { opacity: 0; } to { opacity: 1; } }
+/* 岁运 / 紫微运限 chips: smaller type with a little air between the lines. */
+.fortune-side .fortune-row, .ziwei-fortunes .fortune-row { gap: 8px; }
+.fortune-side .fortune, .ziwei-fortunes .fortune { gap: 3px; padding: 8px 2px; line-height: 1.15; }
+.fortune-side .fortune small, .ziwei-fortunes .fortune small { font-size: 10px; letter-spacing: 0.02em; }
+.fortune-side .fortune .char.small { font-size: 17px; line-height: 1.05; }
+.ziwei-fortunes .fortune strong { font-size: 13px; letter-spacing: 0.04em; }
+/* 流日 has the most chips, so they are a size smaller all round. */
+.fortune-side .fortune-row.days, .ziwei-fortunes .fortune-row.days { gap: 6px; }
+.fortune-side .days .fortune, .ziwei-fortunes .days .fortune { gap: 2px; padding: 5px 1px; border-radius: 8px; }
+.fortune-side .days .fortune small, .ziwei-fortunes .days .fortune small { font-size: 9.5px; letter-spacing: 0; }
+.fortune-side .days .fortune .char.small { font-size: 14px; }
+.ziwei-fortunes .days .fortune strong { font-size: 11.5px; letter-spacing: 0.02em; }
+.ziwei-fortunes .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); }
+.ziwei-fortunes, .ziwei-fortunes * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--muted) 30%, transparent) transparent; }
 @media (min-width: 901px) {
   /* In the side panel the chips wrap instead of scrolling sideways. */
   .fortune-side .fortune-row,
   .fortune-side .fortune-row.months,
   .fortune-side .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); overflow: visible; mask-image: none; }
-  .fortune-side .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
-}
-/* The 岁运盘 stays in view while picking further down the side panel (only where it fits the screen). */
-@media (min-width: 901px) and (min-height: 860px) {
-  .fortune-combo.side-open .fortune-main { position: sticky; top: 64px; }
+  .fortune-side .fortune-row.days { grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); }
 }
 @media (max-width: 900px) {
-  .fortune-combo, .fortune-combo:not(.side-open) { grid-template-columns: minmax(0, 1fr); }
-  .fortune-side { padding: 0 0 12px; margin: 0 0 16px; border-right: 0; border-bottom: 1px solid var(--border); }
+  .fortune-combo { grid-template-columns: minmax(0, 1fr); }
+  .fortune-side { width: 100%; border-right: 0; border-radius: var(--radius); box-shadow: none; }
   .side-handle { flex-direction: row; justify-content: center; padding: 8px 12px; margin-bottom: 16px; }
   .side-handle-title, .side-handle-sub { width: auto; }
   .side-close { font-size: 0 !important; }
   .side-close::after { content: '收起 ▴'; font-size: 13px; }
 }
-@media (prefers-reduced-motion: reduce) { .fortune-combo { transition: none; } .fortune-side, .side-handle { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .fortune-side, .side-handle { animation: none; } }
