@@ -23,6 +23,7 @@ import { useSettings, useTerm } from '../settingsContext'
 import { BirthForm } from './BirthForm'
 import { FortuneRow } from './FortuneRow'
 import { TitleMark } from './Logo'
+import { smoothUpdate } from './smoothUpdate'
 import { SchoolSettingsPanel } from './Schools'
 import { SectionNav } from './SectionNav'
 import { SanFangTip, StarTip } from './ZiweiTips'
@@ -108,7 +109,10 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
   // Clicking the picked chip of a shown level again peels the board back to the
   // level above and shuts the finer rows; picking a level that was not shown
   // opens the next finer row to pick from.
-  const choose = (kind: LayerKind, again: boolean, pick: () => void) => {
+  // The board crossfades its new or departing 运限 (styles.css: [data-vt='ziwei']).
+  const choose = (kind: LayerKind, again: boolean, pick: () => void) =>
+    smoothUpdate('ziwei', () => chooseNow(kind, again, pick))
+  const chooseNow = (kind: LayerKind, again: boolean, pick: () => void) => {
     const i = LAYER_ORDER.indexOf(kind)
     if (again && shows(kind)) {
       setDepth(DEPTHS[i].value)
@@ -294,7 +298,7 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
           </h3>
           <div className="seg small" role="group" aria-label="叠加到">
             {DEPTHS.map((d) => (
-              <button key={d.value} className={depth === d.value ? 'on' : undefined} onClick={() => setDepth(d.value)}>
+              <button key={d.value} className={depth === d.value ? 'on' : undefined} onClick={() => smoothUpdate('ziwei', () => setDepth(d.value))}>
                 {term(d.label)}
               </button>
             ))}

@@ -29,6 +29,7 @@ import { STAR_SCHOOLS, cityPlace } from '../lib/starPrefs'
 import { BirthForm } from './BirthForm'
 import { InfoTip, TipLine } from './InfoTip'
 import { TitleMark } from './Logo'
+import { smoothUpdate } from './smoothUpdate'
 import { SchoolSettingsPanel } from './Schools'
 import { SectionNav } from './SectionNav'
 
@@ -127,7 +128,7 @@ export function StarChartView({ input, onChange, place, onPlaceChange, settings,
                 ['progressed', '推运'],
               ] as const
             ).map(([v, label]) => (
-              <button key={v} className={mode === v ? 'on' : undefined} onClick={() => setMode(v)}>
+              <button key={v} className={mode === v ? 'on' : undefined} onClick={() => mode !== v && smoothUpdate('star', () => setMode(v))}>
                 {label}
               </button>
             ))}
