@@ -1,11 +1,11 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { flushSync } from 'react-dom'
 import { CalendarView } from './components/CalendarView'
 import { BaziView } from './components/BaziView'
 import { AboutBadges } from './components/AboutBadges'
 import { Logo } from './components/Logo'
 import { SavedChartsDrawer } from './components/SavedCharts'
 import { SettingsMenu } from './components/SettingsMenu'
+import { smoothUpdate } from './components/smoothUpdate'
 import { SPLASH_FADE_IN_MS, SplashOverlay, SplashSignal, holdSplash } from './components/Splash'
 import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
@@ -41,7 +41,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 export function App() {
   const [tab, setTab] = useState<Tab>('calendar')
   // Switching pages slides the old one out and the new one in, towards the
-  // side of the new tab (styles.css: ::view-transition-*(page)).
+  // side of the new tab (styles.css: [data-vt='page']).
   const goTab = (next: Tab) => {
     if (next === tab) return
     const root = document.documentElement
@@ -60,24 +60,7 @@ export function App() {
         .finally(release)
       return
     }
-    if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setTab(next)
-      return
-    }
-    // The transition waits for a painted frame before switching; if none comes
-    // soon (a page that is not being drawn), skip it and switch anyway.
-    let switched = false
-    const transition = document.startViewTransition(() => {
-      if (switched) return
-      switched = true
-      flushSync(() => setTab(next))
-    })
-    setTimeout(() => {
-      if (switched) return
-      switched = true
-      transition.skipTransition()
-      setTab(next)
-    }, 300)
+    smoothUpdate('page', () => setTab(next))
   }
   const [baziInput, setBaziInput] = useState<BaziInput>(() => {
     const last = loadLastInput()

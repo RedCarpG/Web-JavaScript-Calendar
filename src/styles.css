@@ -112,18 +112,35 @@ a { color: var(--accent); }
 :root[data-scale='115'] { --ui-zoom: 1.15; }
 :root[data-scale='130'] { --ui-zoom: 1.3; }
 
-/* Page switches (App goTab): the old page slides out and fades while the new one
-   slides in from the side of the new tab. data-page-dir says which way. */
+/* View transitions (smoothUpdate). <html data-vt> names the kind of change.
+   Page switches: the old page slides out and fades while the new one slides in
+   from the side of the new tab (data-page-dir says which way). */
 main { view-transition-name: page; }
-:root { --page-shift: 48px; }
+:root { --page-shift: 48px; --vt-ease: cubic-bezier(0.33, 1, 0.68, 1); }
 :root[data-page-dir='back'] { --page-shift: -48px; }
-::view-transition-group(page) { animation-duration: 0.4s; animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1); }
-::view-transition-old(page) { animation: page-out 0.25s ease-in both; }
-::view-transition-new(page) { animation: page-in 0.4s cubic-bezier(0.33, 1, 0.68, 1) 0.05s both; }
+:root[data-vt='page']::view-transition-group(page) { animation-duration: 0.4s; animation-timing-function: var(--vt-ease); }
+:root[data-vt='page']::view-transition-old(page) { animation: page-out 0.25s ease-in both; }
+:root[data-vt='page']::view-transition-new(page) { animation: page-in 0.4s var(--vt-ease) 0.05s both; }
 @keyframes page-out { to { opacity: 0; transform: translateX(calc(-1 * var(--page-shift))); } }
 @keyframes page-in { from { opacity: 0; transform: translateX(var(--page-shift)); } }
+/* In-page changes: 紫微 运限 layers on the board, 星盘 行运 / 推运. Only the named
+   blocks animate: what they gain fades in, what they lose fades out, and blocks
+   that move glide; the rest of the page just updates. */
+:root[data-vt='ziwei'] #ziwei-board { view-transition-name: zw-board; }
+:root[data-vt='ziwei'] #ziwei-fortune { view-transition-name: zw-fortune; }
+:root[data-vt='star'] #star-natal { view-transition-name: star-natal; }
+:root[data-vt='star'] #star-overlay { view-transition-name: star-overlay; }
+:root[data-vt='star'] #star-houses { view-transition-name: star-houses; }
+:root:is([data-vt='ziwei'], [data-vt='star'])::view-transition-group(*) { animation-duration: 0.4s; animation-timing-function: var(--vt-ease); }
+:root:is([data-vt='ziwei'], [data-vt='star'])::view-transition-old(*) { animation-duration: 0.3s; }
+:root:is([data-vt='ziwei'], [data-vt='star'])::view-transition-new(*) { animation-duration: 0.4s; }
+/* The rest of the page, and the 运限 picker (whose rows slide on their own), switch at once. */
+:root:is([data-vt='ziwei'], [data-vt='star'])::view-transition-old(page),
+:root[data-vt='ziwei']::view-transition-old(zw-fortune) { display: none; }
+:root:is([data-vt='ziwei'], [data-vt='star'])::view-transition-new(page),
+:root[data-vt='ziwei']::view-transition-new(zw-fortune) { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-group(page), ::view-transition-old(page), ::view-transition-new(page) { animation: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none; }
 }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
