@@ -1,7 +1,7 @@
 /** The 星曆 mark: a ringed star. Colours come from --logo-* in styles.css so it reads on light and dark. */
-export function Logo({ size = 32 }: { size?: number }) {
+export function Logo({ size = 32, className = 'logo' }: { size?: number; className?: string }) {
   return (
-    <svg className="logo" width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+    <svg className={className} width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <circle cx="32" cy="32" r="23" fill="none" stroke="var(--logo-line)" strokeWidth="1.2" />
       <ellipse
         cx="32"
@@ -17,4 +17,9 @@ export function Logo({ size = 32 }: { size?: number }) {
       <circle cx="32" cy="32" r="3" fill="var(--logo-line)" />
     </svg>
   )
+}
+
+/** The small mark set before a section heading. */
+export function TitleMark() {
+  return <Logo size={14} className="title-mark" />
 }

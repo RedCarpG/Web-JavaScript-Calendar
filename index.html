@@ -9,8 +9,68 @@
     <meta name="theme-color" content="#1b1714" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)" />
     <title>星曆 ChroniQ · 萬年曆、八字、紫微與星盤</title>
+    <script>
+      // Apply the saved colour mode before the first paint, so the loading screen matches it too.
+      try {
+        var theme = JSON.parse(localStorage.getItem('chroniq-settings') || '{}').theme
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch (e) {}
+    </script>
+    <style>
+      /* Loading screen: shown here until the app mounts, and by <Splash> while a tab's code loads.
+         It lives here, not in styles.css, so it is styled before any script or stylesheet arrives. */
+      :root {
+        --splash-bg: #f6f3ee; --splash-text: #2b2724; --splash-muted: #8a8079;
+        --splash-line: #b48a4c; --splash-star: #d7a765; --splash-en: #b48a4c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --splash-bg: #161412; --splash-text: #ece6de; --splash-muted: #9b918a;
+          --splash-line: #d7a765; --splash-star: #f4d9a2; --splash-en: #d7a765;
+        }
+      }
+      :root[data-theme='dark'] {
+        --splash-bg: #161412; --splash-text: #ece6de; --splash-muted: #9b918a;
+        --splash-line: #d7a765; --splash-star: #f4d9a2; --splash-en: #d7a765;
+      }
+      .splash {
+        position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: var(--splash-bg); color: var(--splash-text); text-align: center;
+        font-family: system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        transition: opacity 0.4s ease;
+      }
+      .splash.done { opacity: 0; pointer-events: none; }
+      /* A tab's loading screen fades in over the page; the first one is there from the start,
+         so only its contents fade in. Both stay a moment (SPLASH_MIN_MS) before fading out. */
+      .splash.fade-in, #splash > * { animation: splash-in 0.3s ease backwards; }
+      .splash-mark { width: 88px; height: 88px; overflow: visible; }
+      .splash-ring { transform-origin: 32px 32px; animation: splash-spin 6s linear infinite; }
+      .splash-star { transform-origin: 32px 32px; animation: splash-pulse 1.6s ease-in-out infinite; }
+      .splash-title { margin: 18px 0 0; padding-left: 0.2em; font-size: 40px; font-weight: 700; letter-spacing: 0.2em; line-height: 1.2; }
+      .splash-en { margin-top: 4px; font-size: 22px; font-weight: 600; color: var(--splash-en); letter-spacing: 0.02em; }
+      .splash-tag { margin-top: 12px; padding-left: 0.15em; font-size: 14px; color: var(--splash-muted); letter-spacing: 0.15em; }
+      @keyframes splash-in { from { opacity: 0; } }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
+      @keyframes splash-pulse { 50% { transform: scale(0.82); opacity: 0.7; } }
+      @media (prefers-reduced-motion: reduce) {
+        .splash, .splash.fade-in, #splash > *, .splash-ring, .splash-star { transition: none; animation: none; }
+      }
+    </style>
   </head>
   <body>
+    <div id="splash" class="splash" role="status" aria-label="正在加载">
+      <svg class="splash-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <g class="splash-ring">
+          <circle cx="32" cy="32" r="23" fill="none" stroke="var(--splash-line)" stroke-width="1.2" />
+          <ellipse cx="32" cy="32" rx="27" ry="11" fill="none" stroke="var(--splash-line)" stroke-width=".9" transform="rotate(-35 32 32)" />
+        </g>
+        <path class="splash-star" d="M32 18 L35.5 28.5 L46 32 L35.5 35.5 L32 46 L28.5 35.5 L18 32 L28.5 28.5 Z" fill="var(--splash-star)" />
+        <circle cx="32" cy="32" r="3" fill="var(--splash-line)" />
+      </svg>
+      <div class="splash-title">星曆</div>
+      <div class="splash-en">ChroniQ</div>
+      <div class="splash-tag">觀星象 · 知曆數 · 察時變</div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
