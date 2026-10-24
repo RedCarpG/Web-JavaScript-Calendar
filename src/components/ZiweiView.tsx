@@ -43,6 +43,7 @@ const DEPTHS: { value: Depth; label: string }[] = [
 const LAYER_ORDER: LayerKind[] = ['decadal', 'yearly', 'monthly', 'daily', 'hourly']
 /** The 运限 row each layer is picked in */
 const ROW_OF = { decadal: 'decade', yearly: 'year', monthly: 'month', daily: 'day', hourly: 'hour' } as const
+const INITIAL_OPEN = { decade: true, year: false, month: false, day: false, hour: false }
 /** One-character layer prefix: 大命, 年财, 月兄, 日福, 时官 … */
 const LAYER_CHAR: Record<LayerKind, string> = { decadal: '大', yearly: '年', monthly: '月', daily: '日', hourly: '时' }
 const LAYER_NAME: Record<LayerKind, string> = {
@@ -100,7 +101,9 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
         DEPTHS.findIndex((d) => d.value === depth),
       ).map((k) => horoscope[k])
     : []
-  const [open, setOpen] = useState({ decade: true, year: true, month: true, day: true, hour: true })
+  // The board starts at 本命 and 运限 are picked one level at a time, so only the
+  // 大限 row starts open; picking a level opens the next one.
+  const [open, setOpen] = useState(INITIAL_OPEN)
   const toggle = (key: keyof typeof open) => setOpen((o) => ({ ...o, [key]: !o[key] }))
   // Clicking the picked chip of a shown level again peels the board back to the
   // level above and shuts the finer rows; picking a level that was not shown
@@ -158,6 +161,7 @@ export function ZiweiView({ input, onChange, schools, onSchoolsChange }: Props) 
     })
   const update = (next: BaziInput) => {
     setDepth('natal')
+    setOpen(INITIAL_OPEN)
     setPickedDecade(null)
     setPickedYear(null)
     setPickedMonth(null)

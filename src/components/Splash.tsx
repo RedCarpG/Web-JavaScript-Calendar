@@ -2,11 +2,13 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 /** A loading screen stays at least this long, so a quick load fades in and out instead of flashing. */
 export const SPLASH_MIN_MS = 900
+/** How long the loading screen takes to fade in (matches .splash.fade-in in index.html) */
+export const SPLASH_FADE_IN_MS = 300
 /** How long the loading screen takes to fade out (matches .splash.done in index.html) */
 export const SPLASH_FADE_MS = 400
 
-// How many <SplashSignal>s (Suspense fallbacks) are showing right now.
-let pending = 0
+// How many holds on the loading screen there are right now.
+let holds = 0
 const listeners = new Set<() => void>()
 const emit = () => listeners.forEach((l) => l())
 const subscribe = (l: () => void) => {
@@ -14,26 +16,32 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l)
 }
 
+/** Puts the loading screen up until the returned release is called. */
+export function holdSplash(): () => void {
+  holds++
+  emit()
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    holds--
+    emit()
+  }
+}
+
 /** Suspense fallback: while it is mounted, <SplashOverlay> shows the loading screen. */
 export function SplashSignal() {
-  useEffect(() => {
-    pending++
-    emit()
-    return () => {
-      pending--
-      emit()
-    }
-  }, [])
+  useEffect(() => holdSplash(), [])
   return null
 }
 
 /**
- * The loading screen while a tab's code loads: it fades in when a
- * <SplashSignal> appears, and fades out once they are all gone, but never
- * before SPLASH_MIN_MS.
+ * The loading screen while a tab's code loads: it fades in on the first hold
+ * (holdSplash or a <SplashSignal>), and fades out once they are all released,
+ * but never before SPLASH_MIN_MS.
  */
 export function SplashOverlay() {
-  const loading = useSyncExternalStore(subscribe, () => pending > 0)
+  const loading = useSyncExternalStore(subscribe, () => holds > 0)
   const [shown, setShown] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const since = useRef(0)

@@ -6,7 +6,7 @@ import { AboutBadges } from './components/AboutBadges'
 import { Logo } from './components/Logo'
 import { SavedChartsDrawer } from './components/SavedCharts'
 import { SettingsMenu } from './components/SettingsMenu'
-import { SplashOverlay, SplashSignal } from './components/Splash'
+import { SPLASH_FADE_IN_MS, SplashOverlay, SplashSignal, holdSplash } from './components/Splash'
 import type { BaziInput } from './lib/bazi'
 import { loadLastInput, saveLastInput } from './lib/savedCharts'
 import { loadSchools, saveSchools, type SchoolSettings } from './lib/schools'
@@ -28,9 +28,15 @@ type Tab = 'calendar' | 'bazi' | 'ziwei' | 'star'
 const TAB_ORDER: Tab[] = ['calendar', 'bazi', 'ziwei', 'star']
 
 // 紫微斗数 pulls in iztro (~150 KB gzip); load it only when the tab is opened.
-const ZiweiView = lazy(() => import('./components/ZiweiView').then((m) => ({ default: m.ZiweiView })))
+const loadZiwei = () => import('./components/ZiweiView')
+const ZiweiView = lazy(() => loadZiwei().then((m) => ({ default: m.ZiweiView })))
 // 星盘 pulls in astronomy-engine; likewise only loaded when its tab opens.
-const StarChartView = lazy(() => import('./components/StarChartView').then((m) => ({ default: m.StarChartView })))
+const loadStar = () => import('./components/StarChartView')
+const StarChartView = lazy(() => loadStar().then((m) => ({ default: m.StarChartView })))
+/** The tabs whose code loads on first visit, and which of them have loaded */
+const LOADERS: Partial<Record<Tab, () => Promise<unknown>>> = { ziwei: loadZiwei, star: loadStar }
+const loadedTabs = new Set<Tab>()
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export function App() {
   const [tab, setTab] = useState<Tab>('calendar')
@@ -40,6 +46,20 @@ export function App() {
     if (next === tab) return
     const root = document.documentElement
     root.dataset.pageDir = TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(tab) ? 'next' : 'back'
+    // First visit to a page whose code is not loaded yet: put the loading screen
+    // up first, load the code, and switch under it, rather than sliding into a
+    // page that is still loading.
+    const load = LOADERS[next]
+    if (load && !loadedTabs.has(next)) {
+      const release = holdSplash()
+      Promise.all([load(), sleep(SPLASH_FADE_IN_MS)])
+        .then(() => {
+          loadedTabs.add(next)
+          setTab(next)
+        })
+        .finally(release)
+      return
+    }
     if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setTab(next)
       return
