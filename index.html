@@ -17,6 +17,15 @@
       } catch (e) {}
     </script>
     <style>
+      /* The page's scrollbar: as thin and faint as it goes, and always there (its track is
+         transparent, so a short page shows nothing), so the page does not shift sideways when
+         the content grows past the screen, e.g. as the loading screen goes. (scrollbar-gutter
+         alone is not honoured on the root everywhere.) Set here, not in styles.css, so it is
+         in place from the first paint. */
+      html {
+        overflow-y: scroll; scrollbar-gutter: stable; scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--splash-muted) 40%, transparent) transparent;
+      }
       /* Loading screen: shown here until the app mounts, and by <Splash> while a tab's code loads.
          It lives here, not in styles.css, so it is styled before any script or stylesheet arrives. */
       :root {
